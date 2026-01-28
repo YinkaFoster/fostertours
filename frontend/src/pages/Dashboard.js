@@ -260,7 +260,7 @@ const Dashboard = () => {
                     <Map className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                     <h3 className="font-serif text-xl mb-2">No itineraries yet</h3>
                     <p className="text-muted-foreground mb-4">Create your perfect trip plan!</p>
-                    <Link to="/itinerary/new">
+                    <Link to="/itinerary/builder">
                       <Button className="btn-pill bg-primary">Create Itinerary</Button>
                     </Link>
                   </CardContent>
