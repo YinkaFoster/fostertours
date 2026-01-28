@@ -4,7 +4,7 @@ import { Input } from './ui/input';
 import { Separator } from './ui/separator';
 import {
   Plane, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Youtube,
-  ArrowRight
+  ArrowRight, MessageCircle
 } from 'lucide-react';
 
 const Footer = () => {
@@ -19,23 +19,35 @@ const Footer = () => {
               <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
                 <Plane className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="text-2xl font-serif font-semibold">JourneyQuest</span>
+              <span className="text-2xl font-serif font-semibold">Foster Tours</span>
             </Link>
             <p className="text-slate-400 text-sm leading-relaxed">
               Your trusted partner for unforgettable travel experiences. Explore the world with confidence.
             </p>
             <div className="flex gap-3">
+              <a 
+                href="https://wa.me/234958681268" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center hover:bg-green-500 transition-colors"
+                title="Chat on WhatsApp"
+              >
+                <MessageCircle className="w-5 h-5" />
+              </a>
+              <a 
+                href="https://instagram.com/foster_tours" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 to-pink-500 flex items-center justify-center hover:opacity-90 transition-opacity"
+                title="Follow us on Instagram"
+              >
+                <Instagram className="w-5 h-5" />
+              </a>
               <a href="#" className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-primary transition-colors">
                 <Facebook className="w-5 h-5" />
               </a>
               <a href="#" className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-primary transition-colors">
                 <Twitter className="w-5 h-5" />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-primary transition-colors">
-                <Instagram className="w-5 h-5" />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-primary transition-colors">
-                <Youtube className="w-5 h-5" />
               </a>
             </div>
           </div>
@@ -88,7 +100,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Newsletter */}
+          {/* Newsletter & Contact */}
           <div>
             <h4 className="font-semibold text-lg mb-4">Stay Updated</h4>
             <p className="text-slate-400 text-sm mb-4">
@@ -105,17 +117,27 @@ const Footer = () => {
               </Button>
             </div>
             <div className="mt-6 space-y-3">
+              <a 
+                href="https://wa.me/234958681268" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 text-sm text-slate-400 hover:text-green-400 transition-colors"
+              >
+                <MessageCircle className="w-4 h-4" />
+                +234 958 681 268 (WhatsApp)
+              </a>
+              <a 
+                href="https://instagram.com/foster_tours" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 text-sm text-slate-400 hover:text-pink-400 transition-colors"
+              >
+                <Instagram className="w-4 h-4" />
+                @foster_tours
+              </a>
               <div className="flex items-center gap-3 text-sm text-slate-400">
                 <Mail className="w-4 h-4" />
-                support@journeyquest.com
-              </div>
-              <div className="flex items-center gap-3 text-sm text-slate-400">
-                <Phone className="w-4 h-4" />
-                +1 (555) 123-4567
-              </div>
-              <div className="flex items-center gap-3 text-sm text-slate-400">
-                <MapPin className="w-4 h-4" />
-                123 Travel Street, NYC
+                support@fostertours.com
               </div>
             </div>
           </div>
@@ -127,7 +149,7 @@ const Footer = () => {
         <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-slate-400 text-sm">
-              © {new Date().getFullYear()} JourneyQuest. All rights reserved.
+              © {new Date().getFullYear()} Foster Tours. All rights reserved.
             </p>
             <div className="flex items-center gap-6">
               <img src="https://upload.wikimedia.org/wikipedia/commons/0/04/Visa.svg" alt="Visa" className="h-6" />
