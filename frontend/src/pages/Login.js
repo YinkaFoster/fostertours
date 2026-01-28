@@ -105,10 +105,21 @@ const Login = () => {
         <div className="w-full max-w-md">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 mb-8 justify-center lg:justify-start">
-            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-              <Plane className="w-5 h-5 text-primary-foreground" />
+            <img 
+              src="https://customer-assets.emergentagent.com/job_journeyquest-9/artifacts/mdvh6cnk_Untitled%20design%20-%202.PNG"
+              alt="Foster Tours" 
+              className="h-12 w-auto object-contain"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
+            />
+            <div className="hidden items-center gap-2">
+              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
+                <Plane className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <span className="text-2xl font-serif font-semibold">Foster Tours</span>
             </div>
-            <span className="text-2xl font-serif font-semibold">Foster Tours</span>
           </Link>
 
           <Card className="border-0 shadow-soft">
