@@ -16,9 +16,11 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import {
   Plane, Hotel, Calendar, Car, FileText, ShoppingBag, Map, Menu, X,
-  Sun, Moon, User, LogOut, Settings, Wallet, BookOpen, Image, LayoutDashboard, Sparkles
+  Sun, Moon, User, LogOut, Settings, Wallet, BookOpen, Image, LayoutDashboard, Sparkles,
+  Search, Gift, MessageCircle, Users
 } from 'lucide-react';
 import LocaleSelector from './LocaleSelector';
+import GlobalSearch from './GlobalSearch';
 
 // Foster Tours Logo
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_journeyquest-9/artifacts/1gd2bkdd_Rectangle%201.png";
