@@ -20,15 +20,17 @@ const Footer = () => {
           {/* Brand */}
           <div className="space-y-4">
             <Link to="/" className="inline-block">
-              <img 
-                src={LOGO_STACKED_URL} 
-                alt="Foster Tours" 
-                className="h-16 w-auto object-contain"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'flex';
-                }}
-              />
+              <div className="h-20 w-20 overflow-hidden rounded-2xl bg-white p-2 shadow-lg">
+                <img 
+                  src={LOGO_STACKED_URL} 
+                  alt="Foster Tours" 
+                  className="h-full w-full object-contain object-center"
+                  onError={(e) => {
+                    e.target.parentElement.style.display = 'none';
+                    e.target.parentElement.nextSibling.style.display = 'flex';
+                  }}
+                />
+              </div>
               <div className="hidden items-center gap-2">
                 <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
                   <Plane className="w-5 h-5 text-primary-foreground" />
@@ -42,7 +44,7 @@ const Footer = () => {
             <div className="flex gap-3">
               <a 
                 href="https://wa.me/2349058681268" 
-                target="_blank" 
+                target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center hover:bg-green-500 transition-colors"
                 title="Chat on WhatsApp"
