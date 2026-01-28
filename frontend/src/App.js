@@ -98,6 +98,28 @@ const AppRouter = () => {
       <Route path="/covid-updates" element={<CovidUpdatesPage />} />
       <Route path="/press" element={<PressRoomPage />} />
       
+      {/* Rewards & Referral */}
+      <Route path="/rewards" element={<RewardsPage />} />
+      <Route path="/referral" element={<ReferralPage />} />
+      
+      {/* Messages */}
+      <Route
+        path="/messages"
+        element={
+          <ProtectedRoute>
+            <MessagesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/messages/:conversationId"
+        element={
+          <ProtectedRoute>
+            <MessagesPage />
+          </ProtectedRoute>
+        }
+      />
+      
       {/* Payment Callbacks */}
       <Route path="/payment/success" element={<PaymentSuccess />} />
       <Route path="/payment/cancel" element={<PaymentCancel />} />
