@@ -91,6 +91,24 @@ const AppRouter = () => {
         }
       />
       <Route path="/profile/:userId" element={<UserProfilePage />} />
+      
+      {/* AI Itinerary Planner */}
+      <Route
+        path="/itinerary/ai"
+        element={
+          <ProtectedRoute>
+            <AIItineraryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/itinerary/ai/:sessionId"
+        element={
+          <ProtectedRoute>
+            <AIItineraryPage />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Catch all - redirect to home */}
       <Route path="*" element={<LandingPage />} />
