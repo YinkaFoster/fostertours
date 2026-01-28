@@ -49,7 +49,7 @@ if AMADEUS_API_KEY and AMADEUS_API_SECRET:
 
 # SendGrid Client
 SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY')
-SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'noreply@journeyquest.app')
+SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'noreply@fostertours.com')
 
 # Create the main app
 app = FastAPI(title="Foster Tours API", version="1.0.0")
