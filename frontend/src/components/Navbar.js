@@ -298,6 +298,9 @@ const Navbar = () => {
           </div>
         </div>
       </div>
+
+      {/* Global Search Modal */}
+      <GlobalSearch isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </nav>
   );
 };
