@@ -91,6 +91,17 @@ const Navbar = () => {
 
           {/* Right Side */}
           <div className="flex items-center gap-2">
+            {/* Search Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSearchOpen(true)}
+              className="rounded-full"
+              data-testid="nav-search"
+            >
+              <Search className="w-5 h-5" />
+            </Button>
+
             {/* Locale Selector */}
             <div className="hidden sm:flex">
               <LocaleSelector variant="compact" />
