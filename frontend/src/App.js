@@ -38,6 +38,13 @@ import DestinationsPage from "./pages/DestinationsPage";
 import PackagesPage from "./pages/PackagesPage";
 import CareersPage from "./pages/CareersPage";
 import PartnerPage from "./pages/PartnerPage";
+import HelpCenterPage from "./pages/HelpCenterPage";
+import FAQsPage from "./pages/FAQsPage";
+import CancellationPolicyPage from "./pages/CancellationPolicyPage";
+import SafetyResourcesPage from "./pages/SafetyResourcesPage";
+import AccessibilityPage from "./pages/AccessibilityPage";
+import CovidUpdatesPage from "./pages/CovidUpdatesPage";
+import PressRoomPage from "./pages/PressRoomPage";
 
 // Router wrapper to handle auth callback
 const AppRouter = () => {
