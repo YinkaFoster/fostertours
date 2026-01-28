@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import uuid
 
 class TravelToursAPITester:
-    def __init__(self, base_url="https://journeyquest-8.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://journeyquest-9.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.token = None
         self.user_id = None
@@ -318,7 +318,7 @@ class TravelToursAPITester:
         checkout_data = {
             "amount": 100.00,
             "booking_type": "wallet",
-            "origin_url": "https://journeyquest-8.preview.emergentagent.com"
+            "origin_url": "https://journeyquest-9.preview.emergentagent.com"
         }
         
         return self.run_test("Stripe Checkout", "POST", "payments/stripe/checkout", 200, checkout_data)
