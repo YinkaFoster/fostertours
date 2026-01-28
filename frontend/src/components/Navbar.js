@@ -56,13 +56,13 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2" data-testid="nav-logo">
-            <div className="h-12 px-2 flex items-center">
+            <div className="h-14 px-1 flex items-center">
               <img 
                 src={LOGO_URL} 
                 alt="Foster Tours" 
-                className="h-10 w-auto object-contain drop-shadow-md"
+                className="h-12 w-auto object-contain drop-shadow-lg hover:scale-105 transition-transform"
                 onError={(e) => {
-                  e.target.parentElement.innerHTML = '<div class="flex items-center gap-2"><div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg></div><span class="text-xl font-serif font-semibold">Foster Tours</span></div>';
+                  e.target.parentElement.innerHTML = '<div class="flex items-center gap-2"><div class="w-10 h-10 rounded-full bg-teal-500 flex items-center justify-center"><svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg></div><span class="text-xl font-serif font-bold text-primary">Foster Tours</span></div>';
                 }}
               />
             </div>
