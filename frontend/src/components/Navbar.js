@@ -15,7 +15,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import {
   Plane, Hotel, Calendar, Car, FileText, ShoppingBag, Map, Menu, X,
-  Sun, Moon, User, LogOut, Settings, Wallet, BookOpen, Image, LayoutDashboard
+  Sun, Moon, User, LogOut, Settings, Wallet, BookOpen, Image, LayoutDashboard, Sparkles
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -34,6 +34,7 @@ const Navbar = () => {
     { href: '/visa', label: 'Visa', icon: FileText },
     { href: '/store', label: 'Store', icon: ShoppingBag },
     { href: '/blog', label: 'Blog', icon: BookOpen },
+    { href: '/itinerary/ai', label: 'AI Planner', icon: Sparkles },
   ];
 
   const handleLogout = async () => {
