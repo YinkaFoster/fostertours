@@ -162,6 +162,7 @@ function App() {
         <AuthProvider>
           <CartProvider>
             <AppRouter />
+            <ChatBot />
             <Toaster position="top-right" richColors />
           </CartProvider>
         </AuthProvider>
