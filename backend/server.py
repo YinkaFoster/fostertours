@@ -563,27 +563,44 @@ async def logout(request: Request):
 
 # =============== FLIGHTS ROUTES ===============
 
-# Mock flight data generator
+# Airline logos mapping
+AIRLINE_LOGOS = {
+    "EK": "https://upload.wikimedia.org/wikipedia/commons/d/d0/Emirates_logo.svg",
+    "QR": "https://upload.wikimedia.org/wikipedia/en/9/9b/Qatar_Airways_Logo.svg",
+    "SQ": "https://upload.wikimedia.org/wikipedia/en/6/6b/Singapore_Airlines_Logo_2.svg",
+    "LH": "https://upload.wikimedia.org/wikipedia/commons/b/b8/Lufthansa_Logo_2018.svg",
+    "BA": "https://upload.wikimedia.org/wikipedia/en/4/42/British_Airways_Logo.svg",
+    "AA": "https://upload.wikimedia.org/wikipedia/en/2/23/American_Airlines_logo_2013.svg",
+    "UA": "https://upload.wikimedia.org/wikipedia/en/e/e0/United_Airlines_Logo.svg",
+    "DL": "https://upload.wikimedia.org/wikipedia/commons/d/d1/Delta_logo.svg",
+    "AF": "https://upload.wikimedia.org/wikipedia/commons/4/44/Air_France_Logo.svg",
+    "KL": "https://upload.wikimedia.org/wikipedia/commons/c/c7/KLM_logo.svg"
+}
+
+# City names mapping
+CITY_NAMES = {
+    "NYC": "New York", "LAX": "Los Angeles", "LHR": "London", "DXB": "Dubai",
+    "SIN": "Singapore", "HKG": "Hong Kong", "CDG": "Paris", "NRT": "Tokyo",
+    "SYD": "Sydney", "JFK": "New York", "ORD": "Chicago", "MIA": "Miami",
+    "SFO": "San Francisco", "BOS": "Boston", "SEA": "Seattle", "ATL": "Atlanta",
+    "MAD": "Madrid", "BCN": "Barcelona", "FCO": "Rome", "AMS": "Amsterdam"
+}
+
+# Mock flight data generator (fallback)
 def generate_mock_flights(origin: str, destination: str, date: str, passengers: int) -> List[dict]:
     airlines = [
-        {"name": "Emirates", "code": "EK", "logo": "https://upload.wikimedia.org/wikipedia/commons/d/d0/Emirates_logo.svg"},
-        {"name": "Qatar Airways", "code": "QR", "logo": "https://upload.wikimedia.org/wikipedia/en/9/9b/Qatar_Airways_Logo.svg"},
-        {"name": "Singapore Airlines", "code": "SQ", "logo": "https://upload.wikimedia.org/wikipedia/en/6/6b/Singapore_Airlines_Logo_2.svg"},
-        {"name": "Lufthansa", "code": "LH", "logo": "https://upload.wikimedia.org/wikipedia/commons/b/b8/Lufthansa_Logo_2018.svg"},
-        {"name": "British Airways", "code": "BA", "logo": "https://upload.wikimedia.org/wikipedia/en/4/42/British_Airways_Logo.svg"},
+        {"name": "Emirates", "code": "EK", "logo": AIRLINE_LOGOS.get("EK", "")},
+        {"name": "Qatar Airways", "code": "QR", "logo": AIRLINE_LOGOS.get("QR", "")},
+        {"name": "Singapore Airlines", "code": "SQ", "logo": AIRLINE_LOGOS.get("SQ", "")},
+        {"name": "Lufthansa", "code": "LH", "logo": AIRLINE_LOGOS.get("LH", "")},
+        {"name": "British Airways", "code": "BA", "logo": AIRLINE_LOGOS.get("BA", "")},
     ]
-    
-    cities = {
-        "NYC": "New York", "LAX": "Los Angeles", "LHR": "London", "DXB": "Dubai",
-        "SIN": "Singapore", "HKG": "Hong Kong", "CDG": "Paris", "NRT": "Tokyo",
-        "SYD": "Sydney", "JFK": "New York", "ORD": "Chicago", "MIA": "Miami"
-    }
     
     flights = []
     base_prices = [450, 520, 680, 890, 1200, 350, 750]
     
     for i, airline in enumerate(airlines):
-        for j in range(2):  # 2 flights per airline
+        for j in range(2):
             flight_num = f"{airline['code']}{100 + i * 10 + j}"
             stops = j % 3
             base_price = base_prices[(i + j) % len(base_prices)]
@@ -594,9 +611,9 @@ def generate_mock_flights(origin: str, destination: str, date: str, passengers: 
                 "airline_logo": airline["logo"],
                 "flight_number": flight_num,
                 "origin": origin,
-                "origin_city": cities.get(origin, origin),
+                "origin_city": CITY_NAMES.get(origin, origin),
                 "destination": destination,
-                "destination_city": cities.get(destination, destination),
+                "destination_city": CITY_NAMES.get(destination, destination),
                 "departure_time": f"{6 + i * 3}:{'00' if j == 0 else '30'}",
                 "arrival_time": f"{14 + i * 2}:{'45' if j == 0 else '15'}",
                 "duration": f"{8 + stops * 2}h {30 + j * 15}m",
@@ -608,15 +625,123 @@ def generate_mock_flights(origin: str, destination: str, date: str, passengers: 
     
     return flights
 
+def parse_amadeus_flights(response_data: list, origin: str, destination: str) -> List[dict]:
+    """Parse Amadeus flight offers response into our format"""
+    flights = []
+    
+    for offer in response_data[:15]:  # Limit to 15 results
+        try:
+            price_info = offer.get("price", {})
+            itineraries = offer.get("itineraries", [])
+            
+            if not itineraries:
+                continue
+            
+            first_itinerary = itineraries[0]
+            segments = first_itinerary.get("segments", [])
+            
+            if not segments:
+                continue
+            
+            first_segment = segments[0]
+            last_segment = segments[-1]
+            
+            # Get airline code
+            airline_code = first_segment.get("carrierCode", "")
+            airline_name = offer.get("validatingAirlineCodes", [airline_code])[0] if offer.get("validatingAirlineCodes") else airline_code
+            
+            # Parse duration (PT2H30M -> 2h 30m)
+            duration = first_itinerary.get("duration", "")
+            if duration.startswith("PT"):
+                duration = duration[2:].lower().replace("h", "h ").replace("m", "m").strip()
+            
+            # Get departure and arrival times
+            dep_time = first_segment.get("departure", {}).get("at", "")
+            arr_time = last_segment.get("arrival", {}).get("at", "")
+            
+            # Format times (2024-01-15T10:30:00 -> 10:30)
+            if "T" in dep_time:
+                dep_time = dep_time.split("T")[1][:5]
+            if "T" in arr_time:
+                arr_time = arr_time.split("T")[1][:5]
+            
+            flights.append({
+                "flight_id": f"fl_{offer.get('id', uuid.uuid4().hex[:8])}",
+                "airline": airline_name,
+                "airline_logo": AIRLINE_LOGOS.get(airline_code, ""),
+                "flight_number": f"{airline_code}{first_segment.get('number', '')}",
+                "origin": first_segment.get("departure", {}).get("iataCode", origin),
+                "origin_city": CITY_NAMES.get(first_segment.get("departure", {}).get("iataCode", ""), origin),
+                "destination": last_segment.get("arrival", {}).get("iataCode", destination),
+                "destination_city": CITY_NAMES.get(last_segment.get("arrival", {}).get("iataCode", ""), destination),
+                "departure_time": dep_time,
+                "arrival_time": arr_time,
+                "duration": duration,
+                "price": float(price_info.get("total", 0)),
+                "currency": price_info.get("currency", "USD"),
+                "stops": len(segments) - 1,
+                "cabin_class": "economy",
+                "available_seats": offer.get("numberOfBookableSeats", 9)
+            })
+        except Exception as e:
+            logger.error(f"Error parsing flight offer: {e}")
+            continue
+    
+    return flights
+
 @api_router.post("/flights/search")
 async def search_flights(search: FlightSearch):
+    """Search for flights using Amadeus API with fallback to mock data"""
+    
+    # Try Amadeus API first
+    if amadeus_client:
+        try:
+            logger.info(f"Searching flights: {search.origin} -> {search.destination} on {search.departure_date}")
+            
+            search_params = {
+                "originLocationCode": search.origin.upper(),
+                "destinationLocationCode": search.destination.upper(),
+                "departureDate": search.departure_date,
+                "adults": search.passengers
+            }
+            
+            if search.return_date:
+                search_params["returnDate"] = search.return_date
+            
+            response = amadeus_client.shopping.flight_offers_search.get(**search_params)
+            
+            if response.data:
+                flights = parse_amadeus_flights(response.data, search.origin, search.destination)
+                
+                # Save search to database
+                search_record = {
+                    "origin": search.origin,
+                    "destination": search.destination,
+                    "departure_date": search.departure_date,
+                    "return_date": search.return_date,
+                    "passengers": search.passengers,
+                    "results_count": len(flights),
+                    "source": "amadeus",
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+                await db.flight_searches.insert_one(search_record)
+                
+                return {"flights": flights, "total": len(flights), "source": "amadeus"}
+            
+        except AmadeusResponseError as e:
+            logger.error(f"Amadeus API error: {e}")
+        except Exception as e:
+            logger.error(f"Flight search error: {e}")
+    
+    # Fallback to mock data
+    logger.info("Using mock flight data")
     flights = generate_mock_flights(
         search.origin,
         search.destination,
         search.departure_date,
         search.passengers
     )
-    return {"flights": flights, "total": len(flights)}
+    return {"flights": flights, "total": len(flights), "source": "mock"}
 
 @api_router.get("/flights/{flight_id}")
 async def get_flight(flight_id: str):
