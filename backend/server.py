@@ -1246,6 +1246,88 @@ async def remove_from_cart(request: Request, product_id: str):
     
     return {"message": "Item removed from cart"}
 
+@api_router.delete("/cart/clear")
+async def clear_cart(request: Request):
+    user = await require_auth(request)
+    await db.carts.delete_one({"user_id": user["user_id"]})
+    return {"message": "Cart cleared"}
+
+# =============== STORE ORDERS ROUTES ===============
+
+@api_router.post("/store/orders")
+async def create_store_order(request: Request):
+    user = await require_auth(request)
+    body = await request.json()
+    
+    order_id = f"ord_{uuid.uuid4().hex[:12]}"
+    order_doc = {
+        "order_id": order_id,
+        "user_id": user["user_id"],
+        "items": body.get("items", []),
+        "subtotal": body.get("subtotal", 0),
+        "shipping": body.get("shipping", 0),
+        "total": body.get("total", 0),
+        "shipping_address": body.get("shipping_address", {}),
+        "payment_method": body.get("payment_method", "stripe"),
+        "wallet_used": body.get("wallet_used", 0),
+        "status": "pending",
+        "payment_status": "pending",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.store_orders.insert_one(order_doc)
+    
+    # If wallet was used, deduct from balance
+    if body.get("wallet_used", 0) > 0:
+        await db.users.update_one(
+            {"user_id": user["user_id"]},
+            {"$inc": {"wallet_balance": -body["wallet_used"]}}
+        )
+        
+        # Record wallet transaction
+        wallet_tx = {
+            "transaction_id": f"wtx_{uuid.uuid4().hex[:12]}",
+            "user_id": user["user_id"],
+            "amount": body["wallet_used"],
+            "transaction_type": "debit",
+            "description": f"Store order payment - {order_id}",
+            "reference": order_id,
+            "status": "completed",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.wallet_transactions.insert_one(wallet_tx)
+    
+    # Clear cart after order creation
+    await db.carts.delete_one({"user_id": user["user_id"]})
+    
+    return {"order_id": order_id, "status": "pending", "message": "Order created successfully"}
+
+@api_router.get("/store/orders")
+async def get_store_orders(request: Request):
+    user = await require_auth(request)
+    
+    orders = await db.store_orders.find(
+        {"user_id": user["user_id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+    
+    return {"orders": orders}
+
+@api_router.get("/store/orders/{order_id}")
+async def get_store_order(request: Request, order_id: str):
+    user = await require_auth(request)
+    
+    order = await db.store_orders.find_one(
+        {"order_id": order_id, "user_id": user["user_id"]},
+        {"_id": 0}
+    )
+    
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    return order
+
 # =============== WALLET ROUTES ===============
 
 @api_router.get("/wallet")
