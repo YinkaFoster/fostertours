@@ -104,13 +104,13 @@ const Login = () => {
       <div className="flex-1 flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md">
           {/* Logo */}
-          <Link to="/" className="flex items-center justify-center lg:justify-start mb-8">
+          <Link to="/" className="flex items-center justify-center lg:justify-start mb-8 group">
             <img 
               src="https://customer-assets.emergentagent.com/job_journeyquest-9/artifacts/s0ctic6y_Foster%20Tours%20-preview.png"
               alt="Foster Tours" 
-              className="h-14 w-auto object-contain drop-shadow-md"
+              className="h-16 w-auto object-contain drop-shadow-lg group-hover:scale-105 transition-transform"
               onError={(e) => {
-                e.target.parentElement.innerHTML = '<div class="flex items-center gap-2"><div class="w-10 h-10 rounded-full bg-teal-500 flex items-center justify-center"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg></div><span class="text-2xl font-serif font-semibold">Foster Tours</span></div>';
+                e.target.parentElement.innerHTML = '<div class="flex items-center gap-2"><div class="w-12 h-12 rounded-full bg-teal-500 flex items-center justify-center"><svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg></div><span class="text-2xl font-serif font-bold text-teal-500">Foster Tours</span></div>';
               }}
             />
           </Link>
