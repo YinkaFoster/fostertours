@@ -1168,6 +1168,9 @@ class TravelToursAPITester:
         # Admin Panel Tests
         self.run_admin_tests()
         
+        # AI Customer Care Chatbot Tests
+        self.run_chatbot_tests()
+        
         # Print summary
         print("\n" + "=" * 50)
         print("📊 TEST SUMMARY")
