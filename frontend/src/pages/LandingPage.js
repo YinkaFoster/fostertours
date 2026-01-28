@@ -316,7 +316,7 @@ const LandingPage = () => {
         <div className="relative z-10 max-w-4xl mx-auto text-center text-white">
           <h2 className="font-serif text-4xl md:text-5xl mb-6">Ready for Your Next Adventure?</h2>
           <p className="text-xl text-white/80 mb-8 max-w-2xl mx-auto">
-            Join thousands of travelers who trust JourneyQuest for their dream vacations. Sign up today and get exclusive deals.
+            Join thousands of travelers who trust Foster Tours for their dream vacations. Sign up today and get exclusive deals.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/register">
