@@ -94,10 +94,13 @@ const Footer = () => {
             <h4 className="font-semibold text-lg mb-4 text-teal-400">Quick Links</h4>
             <ul className="space-y-3">
               {[
-                { label: 'Home', href: '/' },
                 { label: 'About Us', href: '/about' },
+                { label: 'Destinations', href: '/destinations' },
+                { label: 'Travel Packages', href: '/packages' },
                 { label: 'Travel Blog', href: '/blog' },
+                { label: 'Careers', href: '/careers' },
                 { label: 'Photo Gallery', href: '/gallery' },
+                { label: 'Partner With Us', href: '/partner' },
                 { label: 'My Dashboard', href: '/dashboard' },
                 { label: 'My Wallet', href: '/wallet' },
               ].map((link) => (
