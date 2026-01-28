@@ -3169,6 +3169,117 @@ async def get_email_status(request: Request):
         "sender_email": SENDER_EMAIL if SENDGRID_API_KEY else None
     }
 
+# =============== AI CUSTOMER CARE CHATBOT ===============
+
+def get_chatbot_system_prompt():
+    return """You are a friendly and helpful AI customer care assistant for Foster Tours, a travel and tours company. Your role is to assist customers with:
+
+1. **Booking Inquiries**: Help with flights, hotels, events, vehicle rentals, and visa services
+2. **General Questions**: Answer questions about travel destinations, pricing, and services
+3. **Support**: Help resolve issues with existing bookings
+4. **Recommendations**: Suggest destinations, packages, and travel tips
+
+**Important Information:**
+- WhatsApp Support: +234 9058 681 268
+- Instagram: @foster_tours
+- Email: support@fostertours.com
+
+**Services Offered:**
+- Flight bookings (domestic & international)
+- Hotel reservations worldwide
+- Tour packages and events
+- Vehicle rentals (cars, bikes, vans)
+- Visa assistance and processing
+
+**Guidelines:**
+- Be warm, professional, and helpful
+- If you don't know something specific, direct them to WhatsApp or email support
+- Keep responses concise but informative
+- Use emojis sparingly to be friendly
+- Always offer to help with anything else at the end
+
+Remember: You represent Foster Tours - make every customer feel valued!"""
+
+# Store chatbot conversations in memory (per session)
+chatbot_sessions: Dict[str, List[Dict[str, str]]] = {}
+
+class ChatbotMessage(BaseModel):
+    message: str
+    session_id: Optional[str] = None
+
+@api_router.post("/chatbot/message")
+async def chatbot_respond(data: ChatbotMessage):
+    """Handle chatbot conversation"""
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    
+    session_id = data.session_id or str(uuid.uuid4())
+    
+    # Get or create session history
+    if session_id not in chatbot_sessions:
+        chatbot_sessions[session_id] = []
+    
+    history = chatbot_sessions[session_id]
+    
+    # Add user message to history
+    history.append({"role": "user", "content": data.message})
+    
+    # Keep only last 10 messages to manage context
+    if len(history) > 10:
+        history = history[-10:]
+        chatbot_sessions[session_id] = history
+    
+    try:
+        llm_key = os.environ.get('EMERGENT_LLM_KEY')
+        if not llm_key:
+            return {
+                "response": "I apologize, but I'm temporarily unavailable. Please contact us on WhatsApp at +234 9058 681 268 for immediate assistance! 📱",
+                "session_id": session_id
+            }
+        
+        # Build conversation for LLM
+        chat = LlmChat(
+            api_key=llm_key,
+            system_prompt=get_chatbot_system_prompt()
+        ).with_model("openai", "gpt-5.2")
+        
+        # Add conversation history
+        for msg in history[:-1]:  # Exclude the latest user message
+            if msg["role"] == "user":
+                chat = chat.with_message(UserMessage(msg["content"]))
+            else:
+                # For assistant messages, we'll include them in context
+                chat = chat.with_message(UserMessage(f"[Previous assistant response: {msg['content']}]"))
+        
+        # Add current user message
+        chat = chat.with_message(UserMessage(data.message))
+        
+        # Get response
+        response = chat.chat()
+        assistant_message = response.message if hasattr(response, 'message') else str(response)
+        
+        # Add assistant response to history
+        history.append({"role": "assistant", "content": assistant_message})
+        chatbot_sessions[session_id] = history
+        
+        return {
+            "response": assistant_message,
+            "session_id": session_id
+        }
+        
+    except Exception as e:
+        logger.error(f"Chatbot error: {e}")
+        return {
+            "response": "I'm having a little trouble right now. For immediate help, please reach out to us on WhatsApp at +234 9058 681 268 or Instagram @foster_tours. We're here to help! 🙏",
+            "session_id": session_id
+        }
+
+@api_router.delete("/chatbot/session/{session_id}")
+async def clear_chatbot_session(session_id: str):
+    """Clear chatbot session history"""
+    if session_id in chatbot_sessions:
+        del chatbot_sessions[session_id]
+    return {"message": "Session cleared"}
+
 # Health check endpoint
 @api_router.get("/health")
 async def health_check():
