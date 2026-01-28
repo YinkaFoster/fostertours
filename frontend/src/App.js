@@ -49,6 +49,9 @@ import BookingDetailPage from "./pages/BookingDetailPage";
 import BookingCheckoutPage from "./pages/BookingCheckoutPage";
 import PaystackMockPage from "./pages/PaystackMockPage";
 import BookingSuccessPage from "./pages/BookingSuccessPage";
+import RewardsPage from "./pages/RewardsPage";
+import ReferralPage from "./pages/ReferralPage";
+import MessagesPage from "./pages/MessagesPage";
 
 // Router wrapper to handle auth callback
 const AppRouter = () => {
