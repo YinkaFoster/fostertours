@@ -125,15 +125,18 @@ backend:
 
   - task: "Admin Panel API endpoints"
     implemented: true
-    working: NA
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: NA
         agent: "main"
         comment: "Added admin routes: /api/admin/stats, /api/admin/users, /api/admin/bookings, /api/admin/orders, admin privilege management"
+      - working: true
+        agent: "testing"
+        comment: "✅ All admin API endpoints tested successfully. Security working correctly: 401 for unauthenticated requests, 403 for non-admin users. Tested all 10 admin endpoints: GET /api/admin/stats (dashboard stats), GET /api/admin/users (user management with pagination/search), PUT /api/admin/users/{user_id} (update user), DELETE /api/admin/users/{user_id} (delete user), GET /api/admin/bookings (booking management with filters), PUT /api/admin/bookings/{booking_id} (update booking status), GET /api/admin/orders (order management), PUT /api/admin/orders/{order_id} (update order status), POST /api/admin/make-admin/{user_id} (grant admin), POST /api/admin/revoke-admin/{user_id} (revoke admin). All endpoints properly protected and returning expected responses."
 
   - task: "Itinerary CRUD API endpoints"
     implemented: true
