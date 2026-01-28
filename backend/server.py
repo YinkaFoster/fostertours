@@ -3153,7 +3153,7 @@ async def send_welcome_email(request: Request, background_tasks: BackgroundTasks
     user = await require_auth(request)
     
     html_content = get_welcome_email_html(user["name"])
-    subject = "Welcome to JourneyQuest! 🌍"
+    subject = "Welcome to Foster Tours! 🌍"
     
     background_tasks.add_task(send_email_sync, user["email"], subject, html_content)
     
