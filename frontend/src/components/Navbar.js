@@ -56,15 +56,17 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2" data-testid="nav-logo">
-            <img 
-              src={LOGO_URL} 
-              alt="Foster Tours" 
-              className="h-10 w-auto object-contain"
-              onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.nextSibling.style.display = 'flex';
-              }}
-            />
+            <div className="h-11 w-auto overflow-hidden rounded-xl bg-white dark:bg-slate-800 p-1 shadow-sm">
+              <img 
+                src={LOGO_URL} 
+                alt="Foster Tours" 
+                className="h-full w-auto object-contain object-center"
+                onError={(e) => {
+                  e.target.parentElement.style.display = 'none';
+                  e.target.parentElement.nextSibling.style.display = 'flex';
+                }}
+              />
+            </div>
             <div className="hidden w-9 h-9 rounded-full bg-primary items-center justify-center">
               <Plane className="w-5 h-5 text-primary-foreground" />
             </div>
