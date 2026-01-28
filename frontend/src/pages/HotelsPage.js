@@ -339,13 +339,13 @@ const HotelsPage = () => {
                               {/* Price & Book */}
                               <div className="md:text-right mt-4 md:mt-0 md:ml-6 md:border-l md:border-border md:pl-6">
                                 <p className="text-sm text-muted-foreground">per night</p>
-                                <p className="text-3xl font-bold text-primary">${hotel.price_per_night}</p>
+                                <p className="text-3xl font-bold text-primary">{formatPrice(hotel.price_per_night)}</p>
                                 <Button
                                   className="btn-pill bg-secondary mt-3"
                                   onClick={() => handleViewHotel(hotel)}
                                   data-testid={`view-hotel-${index}`}
                                 >
-                                  View Details
+                                  {t('viewDetails')}
                                 </Button>
                               </div>
                             </div>
