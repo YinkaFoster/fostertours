@@ -110,6 +110,16 @@ const AppRouter = () => {
           </ProtectedRoute>
         }
       />
+      
+      {/* Admin Panel */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            <AdminPage />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Catch all - redirect to home */}
       <Route path="*" element={<LandingPage />} />
