@@ -195,6 +195,18 @@ backend:
         agent: "testing"
         comment: "✅ SendGrid Email Integration tested successfully. Email endpoints implemented correctly: GET /api/email/status (admin-only, returns 403 for non-admin users as expected), POST /api/email/welcome (authenticated users, returns 200 with 'Welcome email sent' message). Authentication and authorization working properly. SendGrid API key returns 401 Unauthorized when tested directly (likely invalid/expired test credentials), but email queuing system is functional. Email service gracefully handles API failures and provides appropriate user feedback."
 
+  - task: "AI Customer Care Chatbot API endpoints"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ AI Customer Care Chatbot tested successfully. All 3 test scenarios passed: 1) Initial message (POST /api/chatbot/message) - Returns AI response with session_id, responds intelligently about Foster Tours visa services, includes contact details (WhatsApp: +234 9058 681 268, Instagram: @foster_tours). 2) Follow-up message with session - Maintains conversation context correctly, provides contextual response knowing we're talking about visas, session_id maintained properly. 3) Clear session (DELETE /api/chatbot/session/{session_id}) - Returns success message and clears session correctly. Chatbot uses GPT-5.2 model via Emergent LLM integration and handles errors gracefully with fallback messages containing contact information."
+
 frontend:
   - task: "AI Itinerary Planner routing"
     implemented: true
