@@ -3088,10 +3088,11 @@ def get_welcome_email_html(user_name: str) -> str:
                 </p>
                 
                 <p>Happy travels! 🌍</p>
-                <p>- The JourneyQuest Team</p>
+                <p>- The Foster Tours Team</p>
             </div>
             <div class="footer">
-                <p>© 2025 JourneyQuest. All rights reserved.</p>
+                <p>© 2025 Foster Tours. All rights reserved.</p>
+                <p>WhatsApp: +234 958 681 268 | Instagram: @foster_tours</p>
             </div>
         </div>
     </body>
