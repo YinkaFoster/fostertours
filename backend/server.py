@@ -2264,6 +2264,246 @@ async def get_booking(request: Request, booking_id: str):
     
     return booking
 
+# =============== PAYSTACK PAYMENT ROUTES ===============
+
+class PaystackInitialize(BaseModel):
+    email: str
+    amount: int  # Amount in kobo (smallest currency unit)
+    booking_id: str
+    callback_url: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+class PaystackVerify(BaseModel):
+    reference: str
+
+PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY')
+PAYSTACK_PUBLIC_KEY = os.environ.get('PAYSTACK_PUBLIC_KEY')
+
+@api_router.post("/payments/paystack/initialize")
+async def initialize_paystack_payment(request: Request, payment: PaystackInitialize):
+    """Initialize a Paystack payment transaction"""
+    user = await require_auth(request)
+    
+    # Generate unique reference
+    reference = f"PSK_{uuid.uuid4().hex[:16].upper()}"
+    
+    # Check if we have real Paystack keys
+    if PAYSTACK_SECRET_KEY and PAYSTACK_SECRET_KEY.startswith('sk_'):
+        # Real Paystack integration
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    "https://api.paystack.co/transaction/initialize",
+                    json={
+                        "email": payment.email,
+                        "amount": payment.amount,
+                        "reference": reference,
+                        "callback_url": payment.callback_url,
+                        "metadata": {
+                            "booking_id": payment.booking_id,
+                            "user_id": user["user_id"],
+                            **(payment.metadata or {})
+                        }
+                    },
+                    headers={
+                        "Authorization": f"Bearer {PAYSTACK_SECRET_KEY}",
+                        "Content-Type": "application/json"
+                    },
+                    timeout=30.0
+                )
+                response.raise_for_status()
+                paystack_data = response.json()
+                
+                if paystack_data.get("status"):
+                    return {
+                        "status": True,
+                        "message": "Payment initialized",
+                        "data": {
+                            "authorization_url": paystack_data["data"]["authorization_url"],
+                            "access_code": paystack_data["data"]["access_code"],
+                            "reference": reference
+                        }
+                    }
+                else:
+                    raise HTTPException(status_code=400, detail=paystack_data.get("message", "Failed to initialize payment"))
+        except httpx.HTTPError as e:
+            logger.error(f"Paystack API error: {e}")
+            raise HTTPException(status_code=502, detail="Payment service unavailable")
+    else:
+        # Mock Paystack for development
+        logger.info(f"Using mock Paystack payment for reference: {reference}")
+        
+        # Store payment record
+        payment_record = {
+            "reference": reference,
+            "booking_id": payment.booking_id,
+            "user_id": user["user_id"],
+            "email": payment.email,
+            "amount": payment.amount,
+            "status": "pending",
+            "payment_method": "paystack",
+            "is_mock": True,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.payment_transactions.insert_one(payment_record)
+        
+        return {
+            "status": True,
+            "message": "Payment initialized (Mock Mode)",
+            "data": {
+                "authorization_url": f"/booking/checkout/paystack-mock?reference={reference}&amount={payment.amount}&email={payment.email}",
+                "access_code": f"ACC_{uuid.uuid4().hex[:12].upper()}",
+                "reference": reference
+            },
+            "is_mock": True
+        }
+
+@api_router.post("/payments/paystack/verify")
+async def verify_paystack_payment(request: Request, verification: PaystackVerify):
+    """Verify a Paystack payment transaction"""
+    user = await require_auth(request)
+    
+    reference = verification.reference
+    
+    # Check if we have real Paystack keys
+    if PAYSTACK_SECRET_KEY and PAYSTACK_SECRET_KEY.startswith('sk_'):
+        # Real Paystack verification
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"https://api.paystack.co/transaction/verify/{reference}",
+                    headers={
+                        "Authorization": f"Bearer {PAYSTACK_SECRET_KEY}"
+                    },
+                    timeout=30.0
+                )
+                response.raise_for_status()
+                paystack_data = response.json()
+                
+                if paystack_data.get("status") and paystack_data["data"]["status"] == "success":
+                    # Update booking status
+                    payment_record = await db.payment_transactions.find_one({"reference": reference})
+                    if payment_record:
+                        await db.bookings.update_one(
+                            {"booking_id": payment_record["booking_id"]},
+                            {
+                                "$set": {
+                                    "payment_status": "paid",
+                                    "status": "confirmed",
+                                    "payment_reference": reference,
+                                    "updated_at": datetime.now(timezone.utc).isoformat()
+                                }
+                            }
+                        )
+                    
+                    return {
+                        "status": True,
+                        "message": "Payment verified successfully",
+                        "data": paystack_data["data"]
+                    }
+                else:
+                    return {
+                        "status": False,
+                        "message": "Payment verification failed",
+                        "data": paystack_data.get("data")
+                    }
+        except httpx.HTTPError as e:
+            logger.error(f"Paystack verification error: {e}")
+            raise HTTPException(status_code=502, detail="Payment verification service unavailable")
+    else:
+        # Mock verification
+        payment_record = await db.payment_transactions.find_one({"reference": reference})
+        
+        if not payment_record:
+            raise HTTPException(status_code=404, detail="Payment record not found")
+        
+        # Update payment and booking status
+        await db.payment_transactions.update_one(
+            {"reference": reference},
+            {
+                "$set": {
+                    "status": "success",
+                    "verified_at": datetime.now(timezone.utc).isoformat()
+                }
+            }
+        )
+        
+        await db.bookings.update_one(
+            {"booking_id": payment_record["booking_id"]},
+            {
+                "$set": {
+                    "payment_status": "paid",
+                    "status": "confirmed",
+                    "payment_reference": reference,
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }
+            }
+        )
+        
+        return {
+            "status": True,
+            "message": "Payment verified successfully (Mock Mode)",
+            "data": {
+                "reference": reference,
+                "amount": payment_record["amount"],
+                "status": "success",
+                "is_mock": True
+            }
+        }
+
+@api_router.post("/payments/paystack/mock-complete")
+async def mock_complete_payment(request: Request, reference: str = Query(...)):
+    """Complete a mock Paystack payment (for development only)"""
+    user = await require_auth(request)
+    
+    payment_record = await db.payment_transactions.find_one({"reference": reference})
+    
+    if not payment_record:
+        raise HTTPException(status_code=404, detail="Payment record not found")
+    
+    if payment_record["user_id"] != user["user_id"]:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    
+    # Update payment status
+    await db.payment_transactions.update_one(
+        {"reference": reference},
+        {
+            "$set": {
+                "status": "success",
+                "completed_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    # Update booking status
+    await db.bookings.update_one(
+        {"booking_id": payment_record["booking_id"]},
+        {
+            "$set": {
+                "payment_status": "paid",
+                "status": "confirmed",
+                "payment_reference": reference,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    return {
+        "status": True,
+        "message": "Mock payment completed successfully",
+        "booking_id": payment_record["booking_id"],
+        "reference": reference
+    }
+
+@api_router.get("/payments/config")
+async def get_payment_config():
+    """Get payment configuration (public key only)"""
+    return {
+        "paystack_public_key": PAYSTACK_PUBLIC_KEY if PAYSTACK_PUBLIC_KEY else None,
+        "is_mock_mode": not (PAYSTACK_SECRET_KEY and PAYSTACK_SECRET_KEY.startswith('sk_')),
+        "supported_methods": ["paystack", "wallet", "stripe"]
+    }
+
 # =============== ITINERARY ROUTES ===============
 
 @api_router.get("/itineraries")
