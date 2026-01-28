@@ -8,8 +8,8 @@ import {
 } from 'lucide-react';
 import LocaleSelector from './LocaleSelector';
 
-// Foster Tours Logo (main square version for footer)
-const LOGO_URL = "https://customer-assets.emergentagent.com/job_journeyquest-9/artifacts/5q5kd3xp_Foster%20Tours.png";
+// Foster Tours Logo
+const LOGO_URL = "https://customer-assets.emergentagent.com/job_journeyquest-9/artifacts/1gd2bkdd_Rectangle%201.png";
 
 const Footer = () => {
   return (
