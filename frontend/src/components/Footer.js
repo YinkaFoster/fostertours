@@ -19,14 +19,14 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Brand */}
           <div className="space-y-4">
-            <Link to="/" className="inline-block">
-              <div className="h-24 w-24 flex items-center justify-center">
+            <Link to="/" className="inline-block group">
+              <div className="h-28 w-28 flex items-center justify-center transform group-hover:scale-105 transition-transform">
                 <img 
                   src={LOGO_URL} 
                   alt="Foster Tours" 
-                  className="h-full w-full object-contain drop-shadow-lg"
+                  className="h-full w-full object-contain drop-shadow-xl"
                   onError={(e) => {
-                    e.target.parentElement.innerHTML = '<div class="flex items-center gap-2"><div class="w-12 h-12 rounded-full bg-teal-500 flex items-center justify-center"><svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg></div><span class="text-2xl font-serif font-semibold text-white">Foster Tours</span></div>';
+                    e.target.parentElement.innerHTML = '<div class="flex items-center gap-2"><div class="w-14 h-14 rounded-full bg-teal-500 flex items-center justify-center"><svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg></div><span class="text-2xl font-serif font-semibold text-white">Foster Tours</span></div>';
                   }}
                 />
               </div>
