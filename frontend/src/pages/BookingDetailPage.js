@@ -59,6 +59,7 @@ const BookingDetailPage = () => {
     // For now, use the URL params as item details
     setItemDetails(bookingData);
     setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingType, itemId]);
 
   const getBookingIcon = () => {
