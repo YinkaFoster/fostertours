@@ -104,24 +104,15 @@ const Login = () => {
       <div className="flex-1 flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 mb-8 justify-center lg:justify-start">
-            <div className="h-14 w-auto overflow-hidden rounded-xl bg-white dark:bg-slate-800 p-1.5 shadow-md">
-              <img 
-                src="https://customer-assets.emergentagent.com/job_journeyquest-9/artifacts/mdvh6cnk_Untitled%20design%20-%202.PNG"
-                alt="Foster Tours" 
-                className="h-full w-auto object-contain object-center"
-                onError={(e) => {
-                  e.target.parentElement.style.display = 'none';
-                  e.target.parentElement.nextSibling.style.display = 'flex';
-                }}
-              />
-            </div>
-            <div className="hidden items-center gap-2">
-              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-                <Plane className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <span className="text-2xl font-serif font-semibold">Foster Tours</span>
-            </div>
+          <Link to="/" className="flex items-center justify-center lg:justify-start mb-8">
+            <img 
+              src="https://customer-assets.emergentagent.com/job_journeyquest-9/artifacts/s0ctic6y_Foster%20Tours%20-preview.png"
+              alt="Foster Tours" 
+              className="h-14 w-auto object-contain drop-shadow-md"
+              onError={(e) => {
+                e.target.parentElement.innerHTML = '<div class="flex items-center gap-2"><div class="w-10 h-10 rounded-full bg-teal-500 flex items-center justify-center"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg></div><span class="text-2xl font-serif font-semibold">Foster Tours</span></div>';
+              }}
+            />
           </Link>
 
           <Card className="border-0 shadow-soft">
