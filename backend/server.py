@@ -3010,12 +3010,12 @@ def get_booking_confirmation_html(booking: Dict[str, Any], user_name: str) -> st
     <body>
         <div class="container">
             <div class="header">
-                <h1 style="margin: 0;">✈️ JourneyQuest</h1>
+                <h1 style="margin: 0;">✈️ Foster Tours</h1>
                 <p style="margin: 10px 0 0 0;">Your {booking_type} is Confirmed!</p>
             </div>
             <div class="content">
                 <p>Dear <strong>{user_name}</strong>,</p>
-                <p>Thank you for booking with JourneyQuest! Your {booking_type.lower()} has been successfully confirmed.</p>
+                <p>Thank you for booking with Foster Tours! Your {booking_type.lower()} has been successfully confirmed.</p>
                 
                 <div class="booking-id">
                     <p style="margin: 0; font-size: 12px; color: #666;">Booking Reference</p>
