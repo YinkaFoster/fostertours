@@ -159,15 +159,17 @@ const AppRouter = () => {
 function App() {
   return (
     <ThemeProvider>
-      <BrowserRouter>
-        <AuthProvider>
-          <CartProvider>
-            <AppRouter />
-            <ChatBot />
-            <Toaster position="top-right" richColors />
-          </CartProvider>
-        </AuthProvider>
-      </BrowserRouter>
+      <LocaleProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <CartProvider>
+              <AppRouter />
+              <ChatBot />
+              <Toaster position="top-right" richColors />
+            </CartProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </LocaleProvider>
     </ThemeProvider>
   );
 }
