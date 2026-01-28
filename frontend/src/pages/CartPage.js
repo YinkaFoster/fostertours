@@ -264,21 +264,21 @@ const CartPage = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Subtotal</span>
-                        <span>${subtotal.toFixed(2)}</span>
+                        <span>{formatPrice(subtotal)}</span>
                       </div>
                       {discount > 0 && (
                         <div className="flex justify-between text-green-500">
                           <span>Discount ({discount}%)</span>
-                          <span>-${discountAmount.toFixed(2)}</span>
+                          <span>-{formatPrice(discountAmount)}</span>
                         </div>
                       )}
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Shipping</span>
-                        <span>{shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}</span>
+                        <span>{shipping === 0 ? 'Free' : formatPrice(shipping)}</span>
                       </div>
                       {subtotal < 50 && (
                         <p className="text-xs text-muted-foreground">
-                          Add ${(50 - subtotal).toFixed(2)} more for free shipping
+                          Add {formatPrice(50 - subtotal)} more for free shipping
                         </p>
                       )}
                     </div>
@@ -287,7 +287,7 @@ const CartPage = () => {
 
                     <div className="flex justify-between text-lg font-bold">
                       <span>Total</span>
-                      <span className="text-primary" data-testid="cart-total">${total.toFixed(2)}</span>
+                      <span className="text-primary" data-testid="cart-total">{formatPrice(total)}</span>
                     </div>
 
                     <Button
