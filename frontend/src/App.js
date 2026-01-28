@@ -33,6 +33,11 @@ import AIItineraryPage from "./pages/AIItineraryPage";
 import AdminPage from "./pages/AdminPage";
 import ItineraryBuilderPage from "./pages/ItineraryBuilderPage";
 import { PaymentSuccess, PaymentCancel } from "./pages/PaymentPages";
+import AboutPage from "./pages/AboutPage";
+import DestinationsPage from "./pages/DestinationsPage";
+import PackagesPage from "./pages/PackagesPage";
+import CareersPage from "./pages/CareersPage";
+import PartnerPage from "./pages/PartnerPage";
 
 // Router wrapper to handle auth callback
 const AppRouter = () => {
