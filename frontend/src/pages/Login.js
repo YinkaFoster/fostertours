@@ -106,7 +106,7 @@ const Login = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center justify-center lg:justify-start mb-8 group">
             <img 
-              src="https://customer-assets.emergentagent.com/job_journeyquest-9/artifacts/s0ctic6y_Foster%20Tours%20-preview.png"
+              src="https://customer-assets.emergentagent.com/job_journeyquest-9/artifacts/1gd2bkdd_Rectangle%201.png"
               alt="Foster Tours" 
               className="h-16 w-auto object-contain drop-shadow-lg group-hover:scale-105 transition-transform"
               onError={(e) => {
