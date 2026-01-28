@@ -3066,14 +3066,14 @@ def get_welcome_email_html(user_name: str) -> str:
     <body>
         <div class="container">
             <div class="header">
-                <h1 style="margin: 0; font-size: 36px;">✈️ Welcome to JourneyQuest!</h1>
+                <h1 style="margin: 0; font-size: 36px;">✈️ Welcome to Foster Tours!</h1>
                 <p style="margin: 15px 0 0 0; font-size: 18px;">Your journey begins here</p>
             </div>
             <div class="content">
                 <p>Hello <strong>{user_name}</strong>! 👋</p>
-                <p>Welcome to JourneyQuest - your all-in-one travel companion! We're thrilled to have you on board.</p>
+                <p>Welcome to Foster Tours - your all-in-one travel companion! We're thrilled to have you on board.</p>
                 
-                <h3>What you can do with JourneyQuest:</h3>
+                <h3>What you can do with Foster Tours:</h3>
                 <ul style="padding-left: 20px;">
                     <li>🛫 <strong>Book Flights</strong> - Find the best deals on flights worldwide</li>
                     <li>🏨 <strong>Reserve Hotels</strong> - Discover perfect accommodations</li>
