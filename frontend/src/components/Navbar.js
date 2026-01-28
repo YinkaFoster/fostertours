@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { useLocale } from '../context/LocaleContext';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import {
@@ -17,24 +18,29 @@ import {
   Plane, Hotel, Calendar, Car, FileText, ShoppingBag, Map, Menu, X,
   Sun, Moon, User, LogOut, Settings, Wallet, BookOpen, Image, LayoutDashboard, Sparkles
 } from 'lucide-react';
+import LocaleSelector from './LocaleSelector';
+
+// Foster Tours Logo
+const LOGO_URL = "https://customer-assets.emergentagent.com/job_journeyquest-9/artifacts/mdvh6cnk_Untitled%20design%20-%202.PNG";
 
 const Navbar = () => {
   const { theme, toggleTheme } = useTheme();
   const { user, isAuthenticated, logout } = useAuth();
   const { itemCount } = useCart();
+  const { t, formatPrice } = useLocale();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { href: '/flights', label: 'Flights', icon: Plane },
-    { href: '/hotels', label: 'Hotels', icon: Hotel },
-    { href: '/events', label: 'Events', icon: Calendar },
-    { href: '/vehicles', label: 'Vehicles', icon: Car },
-    { href: '/visa', label: 'Visa', icon: FileText },
-    { href: '/store', label: 'Store', icon: ShoppingBag },
-    { href: '/blog', label: 'Blog', icon: BookOpen },
-    { href: '/itinerary/ai', label: 'AI Planner', icon: Sparkles },
+    { href: '/flights', label: t('flights'), icon: Plane },
+    { href: '/hotels', label: t('hotels'), icon: Hotel },
+    { href: '/events', label: t('events'), icon: Calendar },
+    { href: '/vehicles', label: t('vehicles'), icon: Car },
+    { href: '/visa', label: t('visa'), icon: FileText },
+    { href: '/store', label: t('store'), icon: ShoppingBag },
+    { href: '/blog', label: t('blog'), icon: BookOpen },
+    { href: '/itinerary/ai', label: t('aiPlanner'), icon: Sparkles },
   ];
 
   const handleLogout = async () => {
@@ -50,10 +56,18 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2" data-testid="nav-logo">
-            <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center">
+            <img 
+              src={LOGO_URL} 
+              alt="Foster Tours" 
+              className="h-10 w-auto object-contain"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
+            />
+            <div className="hidden w-9 h-9 rounded-full bg-primary items-center justify-center">
               <Plane className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-serif font-semibold hidden sm:block">Foster Tours</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -76,6 +90,11 @@ const Navbar = () => {
 
           {/* Right Side */}
           <div className="flex items-center gap-2">
+            {/* Locale Selector */}
+            <div className="hidden sm:flex">
+              <LocaleSelector variant="compact" />
+            </div>
+
             {/* Theme Toggle */}
             <Button
               variant="ghost"
@@ -128,15 +147,15 @@ const Navbar = () => {
                   <DropdownMenuItem asChild>
                     <Link to="/dashboard" className="flex items-center gap-2" data-testid="nav-dashboard">
                       <LayoutDashboard className="w-4 h-4" />
-                      Dashboard
+                      {t('dashboard')}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/wallet" className="flex items-center gap-2" data-testid="nav-wallet">
                       <Wallet className="w-4 h-4" />
-                      Wallet
+                      {t('wallet')}
                       <span className="ml-auto text-primary font-medium">
-                        ${user?.wallet_balance?.toFixed(2) || '0.00'}
+                        {formatPrice(user?.wallet_balance || 0)}
                       </span>
                     </Link>
                   </DropdownMenuItem>
@@ -155,7 +174,7 @@ const Navbar = () => {
                   <DropdownMenuItem asChild>
                     <Link to="/settings" className="flex items-center gap-2" data-testid="nav-settings">
                       <Settings className="w-4 h-4" />
-                      Settings
+                      {t('settings')}
                     </Link>
                   </DropdownMenuItem>
                   {user?.is_admin && (
@@ -172,17 +191,17 @@ const Navbar = () => {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="text-destructive" data-testid="nav-logout">
                     <LogOut className="w-4 h-4 mr-2" />
-                    Sign Out
+                    {t('logout')}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
               <div className="hidden sm:flex items-center gap-2">
                 <Link to="/login">
-                  <Button variant="ghost" data-testid="nav-login">Sign In</Button>
+                  <Button variant="ghost" data-testid="nav-login">{t('login')}</Button>
                 </Link>
                 <Link to="/login">
-                  <Button className="btn-pill bg-primary" data-testid="nav-signup">Sign Up</Button>
+                  <Button className="btn-pill bg-primary" data-testid="nav-signup">{t('signUp')}</Button>
                 </Link>
               </div>
             )}
@@ -196,6 +215,11 @@ const Navbar = () => {
               </SheetTrigger>
               <SheetContent side="right" className="w-80">
                 <div className="flex flex-col gap-4 mt-8">
+                  {/* Locale Selector in Mobile */}
+                  <div className="px-4 pb-4 border-b">
+                    <LocaleSelector />
+                  </div>
+                  
                   {navLinks.map((link) => (
                     <Link
                       key={link.href}
@@ -218,7 +242,7 @@ const Navbar = () => {
                     className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent"
                   >
                     <ShoppingBag className="w-5 h-5" />
-                    Store
+                    {t('store')}
                   </Link>
                   <Link
                     to="/gallery"
@@ -231,10 +255,10 @@ const Navbar = () => {
                   {!isAuthenticated && (
                     <div className="mt-4 space-y-2">
                       <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-                        <Button className="w-full" variant="outline">Sign In</Button>
+                        <Button className="w-full" variant="outline">{t('login')}</Button>
                       </Link>
                       <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-                        <Button className="w-full bg-primary">Sign Up</Button>
+                        <Button className="w-full bg-primary">{t('signUp')}</Button>
                       </Link>
                     </div>
                   )}
