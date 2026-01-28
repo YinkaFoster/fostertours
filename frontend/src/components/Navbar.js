@@ -32,6 +32,7 @@ const Navbar = () => {
     { href: '/events', label: 'Events', icon: Calendar },
     { href: '/vehicles', label: 'Vehicles', icon: Car },
     { href: '/visa', label: 'Visa', icon: FileText },
+    { href: '/store', label: 'Store', icon: ShoppingBag },
     { href: '/blog', label: 'Blog', icon: BookOpen },
   ];
 
