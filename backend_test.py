@@ -598,6 +598,20 @@ class TravelToursAPITester:
         # Test no authentication (should all fail with 401)
         self.test_admin_endpoints_no_auth()
         
+        # Test with admin user (would need actual admin setup)
+        self.test_admin_stats_authorized()
+        
+        # Test admin functionality with real admin user
+        self.test_admin_functionality_with_real_admin()
+        
+        # Test admin endpoints with invalid data
+        self.test_admin_endpoints_with_invalid_data()
+        
+        # Test admin endpoints with non-existent IDs
+        self.test_admin_endpoints_with_nonexistent_ids()
+        
+        print(f"\n📊 Admin Tests Summary: {self.tests_passed}/{self.tests_run} passed")
+        
     def test_admin_functionality_with_real_admin(self):
         """Test admin endpoints with actual admin user"""
         # First, create a regular user
