@@ -171,11 +171,11 @@ const StorePage = () => {
                       <div className="flex items-center gap-2">
                         {product.sale_price ? (
                           <>
-                            <span className="text-xl font-bold text-primary">${product.sale_price}</span>
-                            <span className="text-sm text-muted-foreground line-through">${product.price}</span>
+                            <span className="text-xl font-bold text-primary">{formatPrice(product.sale_price)}</span>
+                            <span className="text-sm text-muted-foreground line-through">{formatPrice(product.price)}</span>
                           </>
                         ) : (
-                          <span className="text-xl font-bold text-primary">${product.price}</span>
+                          <span className="text-xl font-bold text-primary">{formatPrice(product.price)}</span>
                         )}
                       </div>
                     </CardContent>
