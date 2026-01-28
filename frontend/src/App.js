@@ -28,6 +28,7 @@ import GalleryPage from "./pages/GalleryPage";
 import EditProfilePage from "./pages/EditProfilePage";
 import UserProfilePage from "./pages/UserProfilePage";
 import AIItineraryPage from "./pages/AIItineraryPage";
+import AdminPage from "./pages/AdminPage";
 import { PaymentSuccess, PaymentCancel } from "./pages/PaymentPages";
 
 // Router wrapper to handle auth callback
