@@ -3038,7 +3038,7 @@ def get_booking_confirmation_html(booking: Dict[str, Any], user_name: str) -> st
             <div class="footer">
                 <p>© 2025 Foster Tours. All rights reserved.</p>
                 <p>This is an automated email. Please do not reply directly.</p>
-                <p>WhatsApp: +234 958 681 268 | Instagram: @foster_tours</p>
+                <p>WhatsApp: +234 9058 681 268 | Instagram: @foster_tours</p>
             </div>
         </div>
     </body>
@@ -3092,7 +3092,7 @@ def get_welcome_email_html(user_name: str) -> str:
             </div>
             <div class="footer">
                 <p>© 2025 Foster Tours. All rights reserved.</p>
-                <p>WhatsApp: +234 958 681 268 | Instagram: @foster_tours</p>
+                <p>WhatsApp: +234 9058 681 268 | Instagram: @foster_tours</p>
             </div>
         </div>
     </body>
