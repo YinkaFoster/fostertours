@@ -33,6 +33,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const navLinks = [
     { href: '/flights', label: t('flights'), icon: Plane },
