@@ -925,6 +925,12 @@ class TravelToursAPITester:
         self.test_flight_search()
         self.test_hotel_search()
         
+        # NEW: Amadeus API Integration Tests
+        print("\n🌍 Testing Amadeus API Integration")
+        print("=" * 40)
+        self.test_amadeus_flight_search()
+        self.test_amadeus_hotel_search()
+        
         # Store endpoints
         self.test_store_product_detail()
         
@@ -932,6 +938,15 @@ class TravelToursAPITester:
         self.test_user_registration()
         self.test_user_login()
         self.test_get_current_user()
+        
+        # NEW: SendGrid Email Integration Tests
+        print("\n📧 Testing SendGrid Email Integration")
+        print("=" * 40)
+        self.test_email_status_unauthorized()
+        self.test_email_status_non_admin()
+        self.test_email_status_admin_simulation()
+        self.test_send_welcome_email_unauthorized()
+        self.test_send_welcome_email_authenticated()
         
         # Authenticated endpoints
         self.test_wallet_endpoint()
