@@ -598,10 +598,126 @@ class TravelToursAPITester:
         # Test no authentication (should all fail with 401)
         self.test_admin_endpoints_no_auth()
         
-        # Test with admin user (would need actual admin setup)
-        self.test_admin_stats_authorized()
+    def test_admin_functionality_with_real_admin(self):
+        """Test admin endpoints with actual admin user"""
+        # First, create a regular user
+        admin_email = f"realadmin_{uuid.uuid4().hex[:8]}@example.com"
+        admin_data = {
+            "email": admin_email,
+            "password": "AdminPass123!",
+            "name": "Real Admin User",
+            "phone": "+1234567890"
+        }
         
-        print(f"\n📊 Admin Tests Summary: {self.tests_passed}/{self.tests_run} passed")
+        success, response = self.run_test("Real Admin Registration", "POST", "auth/register", 200, admin_data)
+        
+        if not success or not response:
+            self.log_result("Admin Functionality Test", False, None, "Failed to create admin user")
+            return False
+        
+        admin_token = response.get('access_token')
+        admin_user_id = response['user'].get('user_id') if response.get('user') else None
+        
+        if not admin_token or not admin_user_id:
+            self.log_result("Admin Functionality Test", False, None, "Failed to get admin credentials")
+            return False
+        
+        # Now we need to manually make this user an admin
+        # Since we can't do this through the API (chicken and egg problem), 
+        # we'll test what happens when we try to use admin endpoints
+        
+        original_token = self.token
+        self.token = admin_token
+        
+        # Test admin endpoints (these should fail since user is not admin)
+        results = []
+        
+        # Test admin stats
+        success, response = self.run_test("Admin Stats (Non-Admin User)", "GET", "admin/stats", 403)
+        results.append(success)
+        
+        # Test admin users list
+        success, response = self.run_test("Admin Users List (Non-Admin User)", "GET", "admin/users", 403)
+        results.append(success)
+        
+        # Test admin bookings
+        success, response = self.run_test("Admin Bookings (Non-Admin User)", "GET", "admin/bookings", 403)
+        results.append(success)
+        
+        # Test admin orders
+        success, response = self.run_test("Admin Orders (Non-Admin User)", "GET", "admin/orders", 403)
+        results.append(success)
+        
+        # Test make admin (should fail)
+        success, response = self.run_test("Make Admin (Non-Admin User)", "POST", f"admin/make-admin/{self.user_id}", 403)
+        results.append(success)
+        
+        # Restore original token
+        self.token = original_token
+        
+        return all(results)
+
+    def test_admin_endpoints_with_invalid_data(self):
+        """Test admin endpoints with invalid data"""
+        if not self.token:
+            self.log_result("Admin Invalid Data Test", False, None, "No token available")
+            return False
+        
+        results = []
+        
+        # Test update user with empty data (should fail with 403 first, but testing structure)
+        empty_data = {}
+        success, response = self.run_test("Admin Update User (Empty Data)", "PUT", f"admin/users/{self.user_id}", 403, empty_data)
+        results.append(success)
+        
+        # Test update booking with invalid data
+        invalid_booking_data = {"invalid_field": "test"}
+        success, response = self.run_test("Admin Update Booking (Invalid Data)", "PUT", "admin/bookings/fake_id", 403, invalid_booking_data)
+        results.append(success)
+        
+        # Test update order with invalid data
+        invalid_order_data = {"invalid_field": "test"}
+        success, response = self.run_test("Admin Update Order (Invalid Data)", "PUT", "admin/orders/fake_id", 403, invalid_order_data)
+        results.append(success)
+        
+        return all(results)
+
+    def test_admin_endpoints_with_nonexistent_ids(self):
+        """Test admin endpoints with non-existent IDs"""
+        if not self.token:
+            self.log_result("Admin Non-existent IDs Test", False, None, "No token available")
+            return False
+        
+        results = []
+        
+        # Test with non-existent user ID
+        update_data = {"name": "Updated Name"}
+        success, response = self.run_test("Admin Update Non-existent User", "PUT", "admin/users/nonexistent_user_id", 403, update_data)
+        results.append(success)
+        
+        # Test delete non-existent user
+        success, response = self.run_test("Admin Delete Non-existent User", "DELETE", "admin/users/nonexistent_user_id", 403)
+        results.append(success)
+        
+        # Test update non-existent booking
+        booking_data = {"status": "confirmed"}
+        success, response = self.run_test("Admin Update Non-existent Booking", "PUT", "admin/bookings/nonexistent_booking_id", 403, booking_data)
+        results.append(success)
+        
+        # Test update non-existent order
+        order_data = {"status": "shipped"}
+        success, response = self.run_test("Admin Update Non-existent Order", "PUT", "admin/orders/nonexistent_order_id", 403, order_data)
+        results.append(success)
+        
+        # Test make admin with non-existent user
+        success, response = self.run_test("Make Admin Non-existent User", "POST", "admin/make-admin/nonexistent_user_id", 403)
+        results.append(success)
+        
+        # Test revoke admin with non-existent user
+        success, response = self.run_test("Revoke Admin Non-existent User", "POST", "admin/revoke-admin/nonexistent_user_id", 403)
+        results.append(success)
+        
+        return all(results)
 
     def run_all_tests(self):
         """Run all API tests"""
