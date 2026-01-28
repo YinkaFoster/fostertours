@@ -20,6 +20,7 @@ const API = process.env.REACT_APP_BACKEND_URL + '/api';
 
 const HotelsPage = () => {
   const navigate = useNavigate();
+  const { formatPrice, t } = useLocale();
   const [loading, setLoading] = useState(false);
   const [hotels, setHotels] = useState([]);
   const [searched, setSearched] = useState(false);
