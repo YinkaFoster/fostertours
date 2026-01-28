@@ -207,15 +207,15 @@ const CartPage = () => {
                               {item.sale_price ? (
                                 <div>
                                   <span className="text-lg font-bold text-primary">
-                                    ${(item.sale_price * item.quantity).toFixed(2)}
+                                    {formatPrice(item.sale_price * item.quantity)}
                                   </span>
                                   <span className="text-sm text-muted-foreground line-through ml-2">
-                                    ${(item.price * item.quantity).toFixed(2)}
+                                    {formatPrice(item.price * item.quantity)}
                                   </span>
                                 </div>
                               ) : (
                                 <span className="text-lg font-bold text-primary">
-                                  ${(item.price * item.quantity).toFixed(2)}
+                                  {formatPrice(item.price * item.quantity)}
                                 </span>
                               )}
                             </div>
