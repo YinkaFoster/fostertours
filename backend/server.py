@@ -3243,24 +3243,21 @@ async def chatbot_respond(data: ChatbotMessage):
             system_message=get_chatbot_system_prompt()
         ).with_model("openai", "gpt-5.2")
         
-        # Add conversation history
-        for msg in history[:-1]:  # Exclude the latest user message
+        # Replay previous messages to restore context
+        for msg in history[:-1]:
             if msg["role"] == "user":
-                chat = chat.with_message(UserMessage(msg["content"]))
+                await chat.send_message(UserMessage(text=msg["content"]))
         
-        # Add current user message
-        chat = chat.with_message(UserMessage(data.message))
-        
-        # Get response
-        response = chat.chat()
-        assistant_message = response.message if hasattr(response, 'message') else str(response)
+        # Send current user message
+        user_msg = UserMessage(text=data.message)
+        response = await chat.send_message(user_msg)
         
         # Add assistant response to history
-        history.append({"role": "assistant", "content": assistant_message})
+        history.append({"role": "assistant", "content": response})
         chatbot_sessions[session_id] = history
         
         return {
-            "response": assistant_message,
+            "response": response,
             "session_id": session_id
         }
         
