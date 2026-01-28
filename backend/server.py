@@ -3239,16 +3239,14 @@ async def chatbot_respond(data: ChatbotMessage):
         # Build conversation for LLM
         chat = LlmChat(
             api_key=llm_key,
-            system_prompt=get_chatbot_system_prompt()
+            session_id=f"chatbot_{session_id}",
+            system_message=get_chatbot_system_prompt()
         ).with_model("openai", "gpt-5.2")
         
         # Add conversation history
         for msg in history[:-1]:  # Exclude the latest user message
             if msg["role"] == "user":
                 chat = chat.with_message(UserMessage(msg["content"]))
-            else:
-                # For assistant messages, we'll include them in context
-                chat = chat.with_message(UserMessage(f"[Previous assistant response: {msg['content']}]"))
         
         # Add current user message
         chat = chat.with_message(UserMessage(data.message))
