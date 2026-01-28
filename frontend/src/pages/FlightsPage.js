@@ -337,7 +337,7 @@ const FlightsPage = () => {
 
                             {/* Price & Book */}
                             <div className="text-right">
-                              <p className="text-3xl font-bold text-primary">${flight.price}</p>
+                              <p className="text-3xl font-bold text-primary">{formatPrice(flight.price)}</p>
                               <p className="text-xs text-muted-foreground mb-2">per person</p>
                               <Button
                                 className="btn-pill bg-secondary"
