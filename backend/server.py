@@ -1038,9 +1038,12 @@ async def get_blog_posts(
     return {"posts": posts[:limit], "total": len(posts)}
 
 @api_router.get("/blog/posts/{slug}")
-async def get_blog_post(slug: str):
-    return {
-        "post_id": f"post_{uuid.uuid4().hex[:8]}",
+async def get_blog_post(slug: str, request: Request):
+    user = await get_current_user(request)
+    user_id = user["user_id"] if user else None
+    
+    post = {
+        "post_id": f"post_{slug[:8]}",
         "title": "10 Hidden Gems in Southeast Asia You Must Visit",
         "slug": slug,
         "excerpt": "Discover the most beautiful off-the-beaten-path destinations in Southeast Asia.",
@@ -1058,6 +1061,7 @@ async def get_blog_post(slug: str):
         <p>Often called "Ha Long Bay on land," this stunning region features limestone karsts, ancient temples, and peaceful boat rides through flooded rice paddies.</p>
         """,
         "author": "Sarah Johnson",
+        "author_id": "user_sarah123",
         "author_image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
         "image_url": "https://images.unsplash.com/photo-1552733407-5d5c46c3bb3b?w=800",
         "category": "Destinations",
@@ -1068,6 +1072,346 @@ async def get_blog_post(slug: str):
         "featured": True,
         "related_posts": []
     }
+    
+    # Get like count and check if user liked
+    likes_count = await db.post_likes.count_documents({"post_id": post["post_id"]})
+    user_liked = False
+    if user_id:
+        user_liked = await db.post_likes.find_one({"post_id": post["post_id"], "user_id": user_id}) is not None
+    
+    # Get comments
+    comments = await db.post_comments.find(
+        {"post_id": post["post_id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(50).to_list(50)
+    
+    # Get share count
+    shares_count = await db.post_shares.count_documents({"post_id": post["post_id"]})
+    
+    post["likes_count"] = likes_count
+    post["user_liked"] = user_liked
+    post["comments"] = comments
+    post["comments_count"] = len(comments)
+    post["shares_count"] = shares_count
+    
+    return post
+
+# =============== SOCIAL FEATURES ===============
+
+# Follow/Unfollow
+@api_router.post("/social/follow/{target_user_id}")
+async def follow_user(request: Request, target_user_id: str):
+    user = await require_auth(request)
+    
+    if user["user_id"] == target_user_id:
+        raise HTTPException(status_code=400, detail="Cannot follow yourself")
+    
+    # Check if already following
+    existing = await db.follows.find_one({
+        "follower_id": user["user_id"],
+        "following_id": target_user_id
+    })
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="Already following this user")
+    
+    follow_doc = {
+        "follower_id": user["user_id"],
+        "following_id": target_user_id,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.follows.insert_one(follow_doc)
+    
+    return {"message": "Successfully followed user", "following": True}
+
+@api_router.delete("/social/follow/{target_user_id}")
+async def unfollow_user(request: Request, target_user_id: str):
+    user = await require_auth(request)
+    
+    result = await db.follows.delete_one({
+        "follower_id": user["user_id"],
+        "following_id": target_user_id
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Not following this user")
+    
+    return {"message": "Successfully unfollowed user", "following": False}
+
+@api_router.get("/social/followers/{user_id}")
+async def get_followers(user_id: str, limit: int = Query(default=50, le=100)):
+    followers = await db.follows.find(
+        {"following_id": user_id},
+        {"_id": 0}
+    ).limit(limit).to_list(limit)
+    
+    # Get follower details
+    follower_ids = [f["follower_id"] for f in followers]
+    users = await db.users.find(
+        {"user_id": {"$in": follower_ids}},
+        {"_id": 0, "password": 0}
+    ).to_list(len(follower_ids))
+    
+    return {"followers": users, "count": len(users)}
+
+@api_router.get("/social/following/{user_id}")
+async def get_following(user_id: str, limit: int = Query(default=50, le=100)):
+    following = await db.follows.find(
+        {"follower_id": user_id},
+        {"_id": 0}
+    ).limit(limit).to_list(limit)
+    
+    # Get following details
+    following_ids = [f["following_id"] for f in following]
+    users = await db.users.find(
+        {"user_id": {"$in": following_ids}},
+        {"_id": 0, "password": 0}
+    ).to_list(len(following_ids))
+    
+    return {"following": users, "count": len(users)}
+
+@api_router.get("/social/is-following/{target_user_id}")
+async def check_following(request: Request, target_user_id: str):
+    user = await get_current_user(request)
+    if not user:
+        return {"is_following": False}
+    
+    existing = await db.follows.find_one({
+        "follower_id": user["user_id"],
+        "following_id": target_user_id
+    })
+    
+    return {"is_following": existing is not None}
+
+# Likes
+@api_router.post("/social/like/{post_id}")
+async def like_post(request: Request, post_id: str):
+    user = await require_auth(request)
+    
+    # Check if already liked
+    existing = await db.post_likes.find_one({
+        "post_id": post_id,
+        "user_id": user["user_id"]
+    })
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="Already liked this post")
+    
+    like_doc = {
+        "post_id": post_id,
+        "user_id": user["user_id"],
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.post_likes.insert_one(like_doc)
+    
+    likes_count = await db.post_likes.count_documents({"post_id": post_id})
+    
+    return {"message": "Post liked", "liked": True, "likes_count": likes_count}
+
+@api_router.delete("/social/like/{post_id}")
+async def unlike_post(request: Request, post_id: str):
+    user = await require_auth(request)
+    
+    result = await db.post_likes.delete_one({
+        "post_id": post_id,
+        "user_id": user["user_id"]
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Haven't liked this post")
+    
+    likes_count = await db.post_likes.count_documents({"post_id": post_id})
+    
+    return {"message": "Post unliked", "liked": False, "likes_count": likes_count}
+
+# Comments
+@api_router.post("/social/comment/{post_id}")
+async def add_comment(request: Request, post_id: str):
+    user = await require_auth(request)
+    body = await request.json()
+    
+    content = body.get("content", "").strip()
+    if not content:
+        raise HTTPException(status_code=400, detail="Comment cannot be empty")
+    
+    comment_id = f"cmt_{uuid.uuid4().hex[:12]}"
+    comment_doc = {
+        "comment_id": comment_id,
+        "post_id": post_id,
+        "user_id": user["user_id"],
+        "user_name": user["name"],
+        "user_image": user.get("picture"),
+        "content": content,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "likes_count": 0
+    }
+    
+    await db.post_comments.insert_one(comment_doc)
+    
+    # Return without _id
+    comment_doc.pop("_id", None)
+    
+    return {"message": "Comment added", "comment": comment_doc}
+
+@api_router.get("/social/comments/{post_id}")
+async def get_comments(post_id: str, limit: int = Query(default=50, le=100)):
+    comments = await db.post_comments.find(
+        {"post_id": post_id},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(limit).to_list(limit)
+    
+    return {"comments": comments, "count": len(comments)}
+
+@api_router.delete("/social/comment/{comment_id}")
+async def delete_comment(request: Request, comment_id: str):
+    user = await require_auth(request)
+    
+    result = await db.post_comments.delete_one({
+        "comment_id": comment_id,
+        "user_id": user["user_id"]
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Comment not found or not authorized")
+    
+    return {"message": "Comment deleted"}
+
+# Shares
+@api_router.post("/social/share/{post_id}")
+async def share_post(request: Request, post_id: str):
+    user = await get_current_user(request)
+    body = await request.json()
+    
+    share_doc = {
+        "share_id": f"shr_{uuid.uuid4().hex[:12]}",
+        "post_id": post_id,
+        "user_id": user["user_id"] if user else None,
+        "platform": body.get("platform", "link"),  # twitter, facebook, linkedin, link
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.post_shares.insert_one(share_doc)
+    
+    shares_count = await db.post_shares.count_documents({"post_id": post_id})
+    
+    return {"message": "Share recorded", "shares_count": shares_count}
+
+# =============== USER PROFILE ===============
+
+@api_router.get("/users/{user_id}/profile")
+async def get_user_profile(user_id: str, request: Request):
+    current_user = await get_current_user(request)
+    
+    user = await db.users.find_one(
+        {"user_id": user_id},
+        {"_id": 0, "password": 0}
+    )
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get follower/following counts
+    followers_count = await db.follows.count_documents({"following_id": user_id})
+    following_count = await db.follows.count_documents({"follower_id": user_id})
+    
+    # Check if current user is following
+    is_following = False
+    if current_user and current_user["user_id"] != user_id:
+        existing = await db.follows.find_one({
+            "follower_id": current_user["user_id"],
+            "following_id": user_id
+        })
+        is_following = existing is not None
+    
+    # Get user's posts count (if they have any)
+    posts_count = await db.user_posts.count_documents({"user_id": user_id})
+    
+    created_at = user.get("created_at")
+    if isinstance(created_at, str):
+        created_at = datetime.fromisoformat(created_at)
+    
+    return {
+        "user_id": user["user_id"],
+        "name": user["name"],
+        "email": user["email"],
+        "phone": user.get("phone"),
+        "picture": user.get("picture"),
+        "bio": user.get("bio", ""),
+        "location": user.get("location", ""),
+        "website": user.get("website", ""),
+        "created_at": created_at.isoformat() if created_at else None,
+        "followers_count": followers_count,
+        "following_count": following_count,
+        "posts_count": posts_count,
+        "is_following": is_following,
+        "is_own_profile": current_user["user_id"] == user_id if current_user else False
+    }
+
+@api_router.put("/users/profile")
+async def update_profile(request: Request):
+    user = await require_auth(request)
+    body = await request.json()
+    
+    # Fields that can be updated
+    allowed_fields = ["name", "phone", "bio", "location", "website", "picture"]
+    update_data = {k: v for k, v in body.items() if k in allowed_fields}
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No valid fields to update")
+    
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.users.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Return updated user
+    updated_user = await db.users.find_one(
+        {"user_id": user["user_id"]},
+        {"_id": 0, "password": 0}
+    )
+    
+    return {"message": "Profile updated", "user": updated_user}
+
+@api_router.put("/users/password")
+async def change_password(request: Request):
+    user = await require_auth(request)
+    body = await request.json()
+    
+    current_password = body.get("current_password")
+    new_password = body.get("new_password")
+    
+    if not current_password or not new_password:
+        raise HTTPException(status_code=400, detail="Both current and new password required")
+    
+    if len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="New password must be at least 6 characters")
+    
+    # Get user with password
+    full_user = await db.users.find_one({"user_id": user["user_id"]})
+    
+    if not full_user.get("password"):
+        raise HTTPException(status_code=400, detail="OAuth users cannot change password")
+    
+    if not verify_password(current_password, full_user["password"]):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    
+    # Update password
+    await db.users.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {
+            "password": hash_password(new_password),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"message": "Password updated successfully"}
 
 # =============== STORE (E-COMMERCE) ROUTES ===============
 
