@@ -2439,6 +2439,278 @@ async def get_featured_destinations():
     
     return {"destinations": destinations}
 
+# =============== ADMIN ROUTES ===============
+
+@api_router.get("/admin/stats")
+async def get_admin_stats(request: Request):
+    """Get dashboard statistics for admin panel"""
+    await require_admin(request)
+    
+    # Get counts
+    users_count = await db.users.count_documents({})
+    bookings_count = await db.bookings.count_documents({})
+    orders_count = await db.store_orders.count_documents({})
+    itineraries_count = await db.itineraries.count_documents({})
+    
+    # Calculate revenue
+    bookings = await db.bookings.find({"payment_status": "paid"}, {"total_amount": 1}).to_list(1000)
+    bookings_revenue = sum(b.get("total_amount", 0) for b in bookings)
+    
+    orders = await db.store_orders.find({"payment_status": "paid"}, {"total": 1}).to_list(1000)
+    orders_revenue = sum(o.get("total", 0) for o in orders)
+    
+    # Recent activity
+    recent_users = await db.users.find(
+        {}, {"_id": 0, "password": 0}
+    ).sort("created_at", -1).limit(5).to_list(5)
+    
+    recent_bookings = await db.bookings.find(
+        {}, {"_id": 0}
+    ).sort("created_at", -1).limit(5).to_list(5)
+    
+    return {
+        "stats": {
+            "users": users_count,
+            "bookings": bookings_count,
+            "orders": orders_count,
+            "itineraries": itineraries_count,
+            "revenue": bookings_revenue + orders_revenue
+        },
+        "recent_users": recent_users,
+        "recent_bookings": recent_bookings
+    }
+
+@api_router.get("/admin/users")
+async def get_admin_users(
+    request: Request,
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=20, le=100),
+    search: Optional[str] = None
+):
+    """Get all users for admin panel"""
+    await require_admin(request)
+    
+    query = {}
+    if search:
+        query = {"$or": [
+            {"name": {"$regex": search, "$options": "i"}},
+            {"email": {"$regex": search, "$options": "i"}}
+        ]}
+    
+    skip = (page - 1) * limit
+    total = await db.users.count_documents(query)
+    
+    users = await db.users.find(
+        query, {"_id": 0, "password": 0}
+    ).skip(skip).limit(limit).sort("created_at", -1).to_list(limit)
+    
+    return {
+        "users": users,
+        "total": total,
+        "page": page,
+        "pages": (total + limit - 1) // limit
+    }
+
+@api_router.put("/admin/users/{user_id}")
+async def update_admin_user(request: Request, user_id: str):
+    """Update user details (admin only)"""
+    await require_admin(request)
+    body = await request.json()
+    
+    allowed_fields = ["name", "email", "phone", "is_admin", "wallet_balance"]
+    update_data = {k: v for k, v in body.items() if k in allowed_fields}
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No valid fields to update")
+    
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.users.update_one(
+        {"user_id": user_id},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {"message": "User updated successfully"}
+
+@api_router.delete("/admin/users/{user_id}")
+async def delete_admin_user(request: Request, user_id: str):
+    """Delete a user (admin only)"""
+    admin = await require_admin(request)
+    
+    if admin["user_id"] == user_id:
+        raise HTTPException(status_code=400, detail="Cannot delete yourself")
+    
+    result = await db.users.delete_one({"user_id": user_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Also delete related data
+    await db.bookings.delete_many({"user_id": user_id})
+    await db.carts.delete_one({"user_id": user_id})
+    await db.follows.delete_many({"$or": [{"follower_id": user_id}, {"following_id": user_id}]})
+    
+    return {"message": "User deleted successfully"}
+
+@api_router.get("/admin/bookings")
+async def get_admin_bookings(
+    request: Request,
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=20, le=100),
+    status: Optional[str] = None,
+    booking_type: Optional[str] = None
+):
+    """Get all bookings for admin panel"""
+    await require_admin(request)
+    
+    query = {}
+    if status:
+        query["status"] = status
+    if booking_type:
+        query["booking_type"] = booking_type
+    
+    skip = (page - 1) * limit
+    total = await db.bookings.count_documents(query)
+    
+    bookings = await db.bookings.find(
+        query, {"_id": 0}
+    ).skip(skip).limit(limit).sort("created_at", -1).to_list(limit)
+    
+    # Enrich with user info
+    for booking in bookings:
+        user = await db.users.find_one(
+            {"user_id": booking["user_id"]},
+            {"_id": 0, "name": 1, "email": 1}
+        )
+        booking["user"] = user
+    
+    return {
+        "bookings": bookings,
+        "total": total,
+        "page": page,
+        "pages": (total + limit - 1) // limit
+    }
+
+@api_router.put("/admin/bookings/{booking_id}")
+async def update_admin_booking(request: Request, booking_id: str):
+    """Update booking status (admin only)"""
+    await require_admin(request)
+    body = await request.json()
+    
+    allowed_fields = ["status", "payment_status"]
+    update_data = {k: v for k, v in body.items() if k in allowed_fields}
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No valid fields to update")
+    
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.bookings.update_one(
+        {"booking_id": booking_id},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    return {"message": "Booking updated successfully"}
+
+@api_router.get("/admin/orders")
+async def get_admin_orders(
+    request: Request,
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=20, le=100),
+    status: Optional[str] = None
+):
+    """Get all store orders for admin panel"""
+    await require_admin(request)
+    
+    query = {}
+    if status:
+        query["status"] = status
+    
+    skip = (page - 1) * limit
+    total = await db.store_orders.count_documents(query)
+    
+    orders = await db.store_orders.find(
+        query, {"_id": 0}
+    ).skip(skip).limit(limit).sort("created_at", -1).to_list(limit)
+    
+    # Enrich with user info
+    for order in orders:
+        user = await db.users.find_one(
+            {"user_id": order["user_id"]},
+            {"_id": 0, "name": 1, "email": 1}
+        )
+        order["user"] = user
+    
+    return {
+        "orders": orders,
+        "total": total,
+        "page": page,
+        "pages": (total + limit - 1) // limit
+    }
+
+@api_router.put("/admin/orders/{order_id}")
+async def update_admin_order(request: Request, order_id: str):
+    """Update order status (admin only)"""
+    await require_admin(request)
+    body = await request.json()
+    
+    allowed_fields = ["status", "payment_status"]
+    update_data = {k: v for k, v in body.items() if k in allowed_fields}
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No valid fields to update")
+    
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.store_orders.update_one(
+        {"order_id": order_id},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    return {"message": "Order updated successfully"}
+
+@api_router.post("/admin/make-admin/{user_id}")
+async def make_user_admin(request: Request, user_id: str):
+    """Grant admin privileges to a user"""
+    await require_admin(request)
+    
+    result = await db.users.update_one(
+        {"user_id": user_id},
+        {"$set": {"is_admin": True, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {"message": "User is now an admin"}
+
+@api_router.post("/admin/revoke-admin/{user_id}")
+async def revoke_user_admin(request: Request, user_id: str):
+    """Revoke admin privileges from a user"""
+    admin = await require_admin(request)
+    
+    if admin["user_id"] == user_id:
+        raise HTTPException(status_code=400, detail="Cannot revoke your own admin status")
+    
+    result = await db.users.update_one(
+        {"user_id": user_id},
+        {"$set": {"is_admin": False, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {"message": "Admin privileges revoked"}
+
 # Health check endpoint
 @api_router.get("/health")
 async def health_check():
