@@ -6,6 +6,10 @@ import {
   Plane, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Youtube,
   ArrowRight, MessageCircle
 } from 'lucide-react';
+import LocaleSelector from './LocaleSelector';
+
+// Foster Tours Logo (stacked version for footer)
+const LOGO_STACKED_URL = "https://customer-assets.emergentagent.com/job_journeyquest-9/artifacts/pfeq0xxl_Untitled%20design%20-%201.PNG";
 
 const Footer = () => {
   return (
@@ -15,11 +19,22 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Brand */}
           <div className="space-y-4">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-                <Plane className="w-5 h-5 text-primary-foreground" />
+            <Link to="/" className="inline-block">
+              <img 
+                src={LOGO_STACKED_URL} 
+                alt="Foster Tours" 
+                className="h-16 w-auto object-contain"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+              <div className="hidden items-center gap-2">
+                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
+                  <Plane className="w-5 h-5 text-primary-foreground" />
+                </div>
+                <span className="text-2xl font-serif font-semibold">Foster Tours</span>
               </div>
-              <span className="text-2xl font-serif font-semibold">Foster Tours</span>
             </Link>
             <p className="text-slate-400 text-sm leading-relaxed">
               Your trusted partner for unforgettable travel experiences. Explore the world with confidence.
