@@ -172,6 +172,24 @@ const Navbar = () => {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
+                    <Link to="/rewards" className="flex items-center gap-2" data-testid="nav-rewards">
+                      <Gift className="w-4 h-4" />
+                      Rewards
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/referral" className="flex items-center gap-2" data-testid="nav-referral">
+                      <Users className="w-4 h-4" />
+                      Refer Friends
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/messages" className="flex items-center gap-2" data-testid="nav-messages">
+                      <MessageCircle className="w-4 h-4" />
+                      Messages
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link to="/itinerary" className="flex items-center gap-2" data-testid="nav-itinerary">
                       <Map className="w-4 h-4" />
                       My Itineraries
