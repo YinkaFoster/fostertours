@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useLocale } from '../context/LocaleContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Button } from '../components/ui/button';
@@ -20,6 +21,7 @@ const API = process.env.REACT_APP_BACKEND_URL + '/api';
 const StorePage = () => {
   const { addToCart } = useCart();
   const { isAuthenticated } = useAuth();
+  const { formatPrice, t } = useLocale();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState('all');
