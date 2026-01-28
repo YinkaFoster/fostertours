@@ -1413,6 +1413,273 @@ async def change_password(request: Request):
     
     return {"message": "Password updated successfully"}
 
+# =============== AI ITINERARY PLANNER ===============
+
+from emergentintegrations.llm.chat import LlmChat, UserMessage
+
+# Store active chat sessions
+ai_chat_sessions = {}
+
+def get_travel_system_prompt():
+    return """You are an expert AI travel planner for JourneyQuest. Your role is to help users plan amazing trips by creating detailed, personalized itineraries.
+
+When creating itineraries, include:
+- Day-by-day breakdown with times
+- Specific attractions, restaurants, and activities
+- Estimated costs where possible
+- Transportation recommendations
+- Pro tips and local insights
+- Weather considerations
+- Cultural etiquette tips
+
+Format your responses clearly with:
+- Use headers for each day (## Day 1: ...)
+- Bullet points for activities
+- Time slots (e.g., 9:00 AM - Visit...)
+- Cost estimates in USD
+- Emojis to make it engaging (🏛️ 🍕 ✈️ etc.)
+
+Be enthusiastic, helpful, and provide practical advice. If users want to modify the plan, be flexible and suggest alternatives.
+
+Always ask clarifying questions if needed:
+- Travel dates
+- Budget range
+- Interests (culture, food, adventure, relaxation)
+- Pace preference (packed or relaxed)
+- Any special requirements (accessibility, dietary, etc.)"""
+
+@api_router.post("/ai/itinerary/start")
+async def start_ai_itinerary(request: Request):
+    """Start a new AI itinerary planning session"""
+    user = await require_auth(request)
+    body = await request.json()
+    
+    session_id = f"itn_ai_{uuid.uuid4().hex[:12]}"
+    
+    # Get initial context from user
+    destination = body.get("destination", "")
+    start_date = body.get("start_date", "")
+    end_date = body.get("end_date", "")
+    budget = body.get("budget", "moderate")
+    interests = body.get("interests", [])
+    travelers = body.get("travelers", 1)
+    
+    # Create chat session
+    llm_key = os.environ.get('EMERGENT_LLM_KEY')
+    
+    chat = LlmChat(
+        api_key=llm_key,
+        session_id=session_id,
+        system_message=get_travel_system_prompt()
+    ).with_model("openai", "gpt-5.2")
+    
+    ai_chat_sessions[session_id] = chat
+    
+    # Save session to database
+    session_doc = {
+        "session_id": session_id,
+        "user_id": user["user_id"],
+        "destination": destination,
+        "start_date": start_date,
+        "end_date": end_date,
+        "budget": budget,
+        "interests": interests,
+        "travelers": travelers,
+        "messages": [],
+        "itinerary": None,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.ai_sessions.insert_one(session_doc)
+    
+    # Generate initial prompt
+    interests_str = ", ".join(interests) if interests else "general sightseeing"
+    initial_message = f"""Please create a travel itinerary for me:
+
+🌍 **Destination:** {destination}
+📅 **Dates:** {start_date} to {end_date}
+💰 **Budget:** {budget}
+👥 **Travelers:** {travelers}
+❤️ **Interests:** {interests_str}
+
+Please create a detailed day-by-day itinerary with activities, restaurants, and tips!"""
+    
+    try:
+        user_msg = UserMessage(text=initial_message)
+        response = await chat.send_message(user_msg)
+        
+        # Save messages
+        await db.ai_sessions.update_one(
+            {"session_id": session_id},
+            {"$push": {"messages": {
+                "$each": [
+                    {"role": "user", "content": initial_message, "timestamp": datetime.now(timezone.utc).isoformat()},
+                    {"role": "assistant", "content": response, "timestamp": datetime.now(timezone.utc).isoformat()}
+                ]
+            }}}
+        )
+        
+        return {
+            "session_id": session_id,
+            "message": response,
+            "destination": destination
+        }
+    except Exception as e:
+        logger.error(f"AI error: {e}")
+        raise HTTPException(status_code=500, detail=f"AI service error: {str(e)}")
+
+@api_router.post("/ai/itinerary/{session_id}/chat")
+async def chat_with_ai(request: Request, session_id: str):
+    """Continue conversation with AI planner"""
+    user = await require_auth(request)
+    body = await request.json()
+    
+    message = body.get("message", "").strip()
+    if not message:
+        raise HTTPException(status_code=400, detail="Message cannot be empty")
+    
+    # Get or recreate chat session
+    chat = ai_chat_sessions.get(session_id)
+    
+    if not chat:
+        # Recreate from database
+        session = await db.ai_sessions.find_one(
+            {"session_id": session_id, "user_id": user["user_id"]},
+            {"_id": 0}
+        )
+        
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        llm_key = os.environ.get('EMERGENT_LLM_KEY')
+        chat = LlmChat(
+            api_key=llm_key,
+            session_id=session_id,
+            system_message=get_travel_system_prompt()
+        ).with_model("openai", "gpt-5.2")
+        
+        # Replay previous messages to restore context
+        for msg in session.get("messages", []):
+            if msg["role"] == "user":
+                await chat.send_message(UserMessage(text=msg["content"]))
+        
+        ai_chat_sessions[session_id] = chat
+    
+    try:
+        user_msg = UserMessage(text=message)
+        response = await chat.send_message(user_msg)
+        
+        # Save messages
+        await db.ai_sessions.update_one(
+            {"session_id": session_id},
+            {
+                "$push": {"messages": {
+                    "$each": [
+                        {"role": "user", "content": message, "timestamp": datetime.now(timezone.utc).isoformat()},
+                        {"role": "assistant", "content": response, "timestamp": datetime.now(timezone.utc).isoformat()}
+                    ]
+                }},
+                "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}
+            }
+        )
+        
+        return {"message": response}
+    except Exception as e:
+        logger.error(f"AI chat error: {e}")
+        raise HTTPException(status_code=500, detail=f"AI service error: {str(e)}")
+
+@api_router.get("/ai/itinerary/{session_id}")
+async def get_ai_session(request: Request, session_id: str):
+    """Get AI session details and chat history"""
+    user = await require_auth(request)
+    
+    session = await db.ai_sessions.find_one(
+        {"session_id": session_id, "user_id": user["user_id"]},
+        {"_id": 0}
+    )
+    
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    return session
+
+@api_router.get("/ai/itinerary")
+async def get_ai_sessions(request: Request):
+    """Get all AI sessions for user"""
+    user = await require_auth(request)
+    
+    sessions = await db.ai_sessions.find(
+        {"user_id": user["user_id"]},
+        {"_id": 0, "messages": 0}
+    ).sort("updated_at", -1).limit(20).to_list(20)
+    
+    return {"sessions": sessions}
+
+@api_router.post("/ai/itinerary/{session_id}/save")
+async def save_ai_itinerary(request: Request, session_id: str):
+    """Save the AI-generated itinerary to user's itineraries"""
+    user = await require_auth(request)
+    body = await request.json()
+    
+    session = await db.ai_sessions.find_one(
+        {"session_id": session_id, "user_id": user["user_id"]},
+        {"_id": 0}
+    )
+    
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    # Create itinerary from AI session
+    itinerary_id = f"itn_{uuid.uuid4().hex[:12]}"
+    
+    # Get the last AI response as the itinerary content
+    messages = session.get("messages", [])
+    itinerary_content = ""
+    for msg in reversed(messages):
+        if msg["role"] == "assistant":
+            itinerary_content = msg["content"]
+            break
+    
+    itinerary_doc = {
+        "itinerary_id": itinerary_id,
+        "user_id": user["user_id"],
+        "title": body.get("title", f"Trip to {session.get('destination', 'Unknown')}"),
+        "description": f"AI-generated itinerary for {session.get('destination', '')}",
+        "start_date": session.get("start_date"),
+        "end_date": session.get("end_date"),
+        "destinations": [session.get("destination", "")] if session.get("destination") else [],
+        "days": [],
+        "ai_content": itinerary_content,
+        "ai_session_id": session_id,
+        "total_budget": None,
+        "is_public": False,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.itineraries.insert_one(itinerary_doc)
+    
+    return {"itinerary_id": itinerary_id, "message": "Itinerary saved successfully"}
+
+@api_router.delete("/ai/itinerary/{session_id}")
+async def delete_ai_session(request: Request, session_id: str):
+    """Delete an AI session"""
+    user = await require_auth(request)
+    
+    result = await db.ai_sessions.delete_one({
+        "session_id": session_id,
+        "user_id": user["user_id"]
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    # Remove from memory
+    ai_chat_sessions.pop(session_id, None)
+    
+    return {"message": "Session deleted"}
+
 # =============== STORE (E-COMMERCE) ROUTES ===============
 
 @api_router.get("/store/products")
