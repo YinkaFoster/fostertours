@@ -45,6 +45,10 @@ import SafetyResourcesPage from "./pages/SafetyResourcesPage";
 import AccessibilityPage from "./pages/AccessibilityPage";
 import CovidUpdatesPage from "./pages/CovidUpdatesPage";
 import PressRoomPage from "./pages/PressRoomPage";
+import BookingDetailPage from "./pages/BookingDetailPage";
+import BookingCheckoutPage from "./pages/BookingCheckoutPage";
+import PaystackMockPage from "./pages/PaystackMockPage";
+import BookingSuccessPage from "./pages/BookingSuccessPage";
 
 // Router wrapper to handle auth callback
 const AppRouter = () => {
