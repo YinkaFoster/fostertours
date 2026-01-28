@@ -905,6 +905,209 @@ class TravelToursAPITester:
         
         return all(results)
 
+    # =============== AI CUSTOMER CARE CHATBOT TESTS ===============
+    
+    def test_chatbot_initial_message(self):
+        """Test chatbot with initial message (no session)"""
+        message_data = {
+            "message": "What are your visa services?"
+        }
+        
+        print(f"\n🤖 Testing AI Customer Care Chatbot...")
+        print(f"   Initial message: {message_data['message']}")
+        
+        success, response = self.run_test("Chatbot Initial Message", "POST", "chatbot/message", 200, message_data)
+        
+        if success and response:
+            # Check response structure
+            if isinstance(response, dict):
+                ai_response = response.get('response', '')
+                session_id = response.get('session_id', '')
+                
+                print(f"   AI Response: {ai_response[:100]}...")
+                print(f"   Session ID: {session_id}")
+                
+                # Verify response contains expected elements
+                if ai_response and session_id:
+                    # Check if response mentions visa services
+                    if 'visa' in ai_response.lower():
+                        print("   ✅ Response mentions visa services")
+                    else:
+                        print("   ⚠️  Response doesn't mention visa services")
+                    
+                    # Check if contact details are included
+                    if '+234 9058 681 268' in ai_response or '@foster_tours' in ai_response:
+                        print("   ✅ Contact details included")
+                    else:
+                        print("   ⚠️  Contact details not found in response")
+                    
+                    # Store session_id for follow-up test
+                    self.chatbot_session_id = session_id
+                    return True, response
+                else:
+                    self.log_result("Chatbot Response Structure", False, response, "Missing response or session_id")
+                    return False, response
+        
+        return success, response
+
+    def test_chatbot_follow_up_message(self):
+        """Test chatbot with follow-up message using session"""
+        if not hasattr(self, 'chatbot_session_id'):
+            self.log_result("Chatbot Follow-up Message", False, None, "No session_id from initial test")
+            return False, {}
+        
+        message_data = {
+            "message": "How much does it cost?",
+            "session_id": self.chatbot_session_id
+        }
+        
+        print(f"\n🤖 Testing Chatbot Follow-up...")
+        print(f"   Follow-up message: {message_data['message']}")
+        print(f"   Using session_id: {self.chatbot_session_id}")
+        
+        success, response = self.run_test("Chatbot Follow-up Message", "POST", "chatbot/message", 200, message_data)
+        
+        if success and response:
+            # Check response structure
+            if isinstance(response, dict):
+                ai_response = response.get('response', '')
+                session_id = response.get('session_id', '')
+                
+                print(f"   AI Response: {ai_response[:100]}...")
+                
+                # Verify contextual response
+                if ai_response:
+                    # Check if response shows context awareness (mentions visa or cost)
+                    if 'visa' in ai_response.lower() or 'cost' in ai_response.lower() or 'price' in ai_response.lower():
+                        print("   ✅ Response shows context awareness")
+                    else:
+                        print("   ⚠️  Response may not show context awareness")
+                    
+                    # Verify same session_id returned
+                    if session_id == self.chatbot_session_id:
+                        print("   ✅ Session ID maintained correctly")
+                    else:
+                        print(f"   ⚠️  Session ID changed: {session_id}")
+                    
+                    return True, response
+                else:
+                    self.log_result("Chatbot Follow-up Response", False, response, "Empty response")
+                    return False, response
+        
+        return success, response
+
+    def test_chatbot_clear_session(self):
+        """Test clearing chatbot session"""
+        if not hasattr(self, 'chatbot_session_id'):
+            self.log_result("Chatbot Clear Session", False, None, "No session_id available")
+            return False, {}
+        
+        print(f"\n🤖 Testing Chatbot Session Clear...")
+        print(f"   Clearing session: {self.chatbot_session_id}")
+        
+        success, response = self.run_test("Chatbot Clear Session", "DELETE", f"chatbot/session/{self.chatbot_session_id}", 200)
+        
+        if success and response:
+            if isinstance(response, dict):
+                message = response.get('message', '')
+                print(f"   Clear response: {message}")
+                
+                if 'cleared' in message.lower():
+                    print("   ✅ Session cleared successfully")
+                    return True, response
+                else:
+                    print("   ⚠️  Unexpected clear response")
+        
+        return success, response
+
+    def test_chatbot_invalid_session_clear(self):
+        """Test clearing non-existent chatbot session"""
+        fake_session_id = "fake_session_12345"
+        
+        print(f"\n🤖 Testing Chatbot Invalid Session Clear...")
+        print(f"   Clearing fake session: {fake_session_id}")
+        
+        success, response = self.run_test("Chatbot Clear Invalid Session", "DELETE", f"chatbot/session/{fake_session_id}", 200)
+        
+        # Should still return success even for non-existent session
+        return success, response
+
+    def test_chatbot_empty_message(self):
+        """Test chatbot with empty message"""
+        message_data = {
+            "message": ""
+        }
+        
+        success, response = self.run_test("Chatbot Empty Message", "POST", "chatbot/message", 200, message_data)
+        
+        if success and response:
+            # Should handle empty message gracefully
+            ai_response = response.get('response', '')
+            if ai_response:
+                print(f"   Empty message handled: {ai_response[:50]}...")
+        
+        return success, response
+
+    def test_chatbot_long_conversation(self):
+        """Test chatbot with multiple messages in sequence"""
+        messages = [
+            "Hello, I need help with travel planning",
+            "I want to visit Dubai",
+            "What hotels do you recommend?",
+            "What about flights from Lagos?",
+            "Thank you for your help"
+        ]
+        
+        session_id = None
+        results = []
+        
+        print(f"\n🤖 Testing Chatbot Long Conversation...")
+        
+        for i, message in enumerate(messages):
+            message_data = {
+                "message": message
+            }
+            if session_id:
+                message_data["session_id"] = session_id
+            
+            print(f"   Message {i+1}: {message}")
+            
+            success, response = self.run_test(f"Chatbot Message {i+1}", "POST", "chatbot/message", 200, message_data)
+            results.append(success)
+            
+            if success and response:
+                if not session_id:
+                    session_id = response.get('session_id')
+                    print(f"   Session started: {session_id}")
+                
+                ai_response = response.get('response', '')
+                print(f"   AI Response {i+1}: {ai_response[:50]}...")
+        
+        # Clean up session
+        if session_id:
+            self.run_test("Cleanup Long Conversation Session", "DELETE", f"chatbot/session/{session_id}", 200)
+        
+        return all(results)
+
+    def run_chatbot_tests(self):
+        """Run all chatbot tests"""
+        print("\n🤖 Starting AI Customer Care Chatbot Tests")
+        print("=" * 50)
+        
+        # Test basic chatbot functionality
+        self.test_chatbot_initial_message()
+        self.test_chatbot_follow_up_message()
+        self.test_chatbot_clear_session()
+        
+        # Test edge cases
+        self.test_chatbot_invalid_session_clear()
+        self.test_chatbot_empty_message()
+        
+        # Test conversation flow
+        self.test_chatbot_long_conversation()
+        
+        print(f"\n📊 Chatbot Tests Summary: {self.tests_passed}/{self.tests_run} passed")
+
     def run_all_tests(self):
         """Run all API tests"""
         print("🚀 Starting Travel & Tours API Tests")
