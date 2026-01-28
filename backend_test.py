@@ -343,6 +343,9 @@ class TravelToursAPITester:
         self.test_flight_search()
         self.test_hotel_search()
         
+        # Store endpoints
+        self.test_store_product_detail()
+        
         # Authentication tests
         self.test_user_registration()
         self.test_user_login()
@@ -353,6 +356,11 @@ class TravelToursAPITester:
         self.test_bookings_endpoint()
         self.test_itineraries_endpoint()
         self.test_create_booking()
+        
+        # Store authenticated endpoints
+        self.test_cart_operations()
+        self.test_store_orders_endpoint()
+        self.test_create_store_order()
         
         # Payment tests
         self.test_stripe_checkout()
