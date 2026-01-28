@@ -121,6 +121,32 @@ const AppRouter = () => {
           </ProtectedRoute>
         }
       />
+      
+      {/* Itinerary Builder */}
+      <Route
+        path="/itinerary/builder"
+        element={
+          <ProtectedRoute>
+            <ItineraryBuilderPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/itinerary/builder/:itineraryId"
+        element={
+          <ProtectedRoute>
+            <ItineraryBuilderPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/itinerary/:itineraryId"
+        element={
+          <ProtectedRoute>
+            <ItineraryBuilderPage />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Catch all - redirect to home */}
       <Route path="*" element={<LandingPage />} />
