@@ -81,7 +81,7 @@ const Dashboard = () => {
     { icon: Plane, label: 'Book Flight', href: '/flights', color: 'text-blue-500' },
     { icon: Hotel, label: 'Find Hotel', href: '/hotels', color: 'text-amber-500' },
     { icon: Calendar, label: 'Browse Events', href: '/events', color: 'text-emerald-500' },
-    { icon: Map, label: 'Plan Trip', href: '/itinerary/new', color: 'text-purple-500' },
+    { icon: Map, label: 'Plan Trip', href: '/itinerary/builder', color: 'text-purple-500' },
   ];
 
   return (
