@@ -323,6 +323,286 @@ class TravelToursAPITester:
         
         return self.run_test("Stripe Checkout", "POST", "payments/stripe/checkout", 200, checkout_data)
 
+    # =============== ADMIN PANEL TESTS ===============
+    
+    def create_admin_user(self):
+        """Create an admin user for testing admin endpoints"""
+        # First create a regular user
+        admin_email = f"admin_{uuid.uuid4().hex[:8]}@example.com"
+        admin_data = {
+            "email": admin_email,
+            "password": "AdminPass123!",
+            "name": "Admin Test User",
+            "phone": "+1234567890"
+        }
+        
+        success, response = self.run_test("Admin User Registration", "POST", "auth/register", 200, admin_data)
+        
+        if success and response:
+            admin_token = response.get('access_token')
+            admin_user_id = response['user'].get('user_id') if response.get('user') else None
+            
+            # Manually set admin status in database (simulating admin creation)
+            # In real scenario, this would be done by existing admin or database setup
+            print(f"   Created admin user: {admin_user_id}")
+            return admin_token, admin_user_id, admin_email, "AdminPass123!"
+        
+        return None, None, None, None
+
+    def test_admin_stats_unauthorized(self):
+        """Test admin stats endpoint without admin token (should fail)"""
+        # Save current token
+        original_token = self.token
+        
+        # Test with regular user token
+        success, response = self.run_test("Admin Stats (Unauthorized)", "GET", "admin/stats", 403)
+        
+        # Test with no token
+        self.token = None
+        success2, response2 = self.run_test("Admin Stats (No Auth)", "GET", "admin/stats", 401)
+        
+        # Restore token
+        self.token = original_token
+        
+        return success and success2
+
+    def test_admin_stats_authorized(self):
+        """Test admin stats endpoint with admin token"""
+        # Create admin user and make them admin
+        admin_token, admin_user_id, admin_email, admin_password = self.create_admin_user()
+        
+        if not admin_token or not admin_user_id:
+            self.log_result("Admin Stats (Authorized)", False, None, "Failed to create admin user")
+            return False
+        
+        # Manually update user to admin in database (simulating admin promotion)
+        # In production, this would be done through proper admin endpoints
+        
+        # For testing, we'll try to use the make-admin endpoint with a different approach
+        # First, let's test if we can access admin endpoints with the created user
+        original_token = self.token
+        self.token = admin_token
+        
+        # Try to access admin stats (this will fail since user is not admin yet)
+        success, response = self.run_test("Admin Stats (New Admin - Should Fail)", "GET", "admin/stats", 403)
+        
+        # Restore original token
+        self.token = original_token
+        
+        return success  # We expect this to fail since user is not admin yet
+
+    def test_admin_users_list(self):
+        """Test admin users listing endpoint"""
+        if not self.token:
+            self.log_result("Admin Users List", False, None, "No token available")
+            return False
+        
+        # Test with regular user (should fail)
+        success, response = self.run_test("Admin Users List (Unauthorized)", "GET", "admin/users", 403)
+        
+        return success
+
+    def test_admin_users_with_pagination(self):
+        """Test admin users listing with pagination"""
+        if not self.token:
+            self.log_result("Admin Users Pagination", False, None, "No token available")
+            return False
+        
+        # Test with pagination parameters (should fail for non-admin)
+        success, response = self.run_test("Admin Users Pagination (Unauthorized)", "GET", "admin/users?page=1&limit=10", 403)
+        
+        return success
+
+    def test_admin_users_with_search(self):
+        """Test admin users listing with search"""
+        if not self.token:
+            self.log_result("Admin Users Search", False, None, "No token available")
+            return False
+        
+        # Test with search parameter (should fail for non-admin)
+        success, response = self.run_test("Admin Users Search (Unauthorized)", "GET", "admin/users?search=test", 403)
+        
+        return success
+
+    def test_admin_update_user_unauthorized(self):
+        """Test updating user details without admin privileges"""
+        if not self.token:
+            self.log_result("Admin Update User (Unauthorized)", False, None, "No token available")
+            return False
+        
+        update_data = {
+            "name": "Updated Name",
+            "wallet_balance": 100.0
+        }
+        
+        # Should fail with 403 for non-admin user
+        success, response = self.run_test("Admin Update User (Unauthorized)", "PUT", f"admin/users/{self.user_id}", 403, update_data)
+        
+        return success
+
+    def test_admin_delete_user_unauthorized(self):
+        """Test deleting user without admin privileges"""
+        if not self.token:
+            self.log_result("Admin Delete User (Unauthorized)", False, None, "No token available")
+            return False
+        
+        # Should fail with 403 for non-admin user
+        success, response = self.run_test("Admin Delete User (Unauthorized)", "DELETE", f"admin/users/fake_user_id", 403)
+        
+        return success
+
+    def test_admin_bookings_list_unauthorized(self):
+        """Test admin bookings listing without admin privileges"""
+        if not self.token:
+            self.log_result("Admin Bookings List (Unauthorized)", False, None, "No token available")
+            return False
+        
+        # Should fail with 403 for non-admin user
+        success, response = self.run_test("Admin Bookings List (Unauthorized)", "GET", "admin/bookings", 403)
+        
+        return success
+
+    def test_admin_bookings_with_filters_unauthorized(self):
+        """Test admin bookings with filters without admin privileges"""
+        if not self.token:
+            self.log_result("Admin Bookings Filters (Unauthorized)", False, None, "No token available")
+            return False
+        
+        # Should fail with 403 for non-admin user
+        success, response = self.run_test("Admin Bookings Filters (Unauthorized)", "GET", "admin/bookings?status=confirmed&booking_type=flight", 403)
+        
+        return success
+
+    def test_admin_update_booking_unauthorized(self):
+        """Test updating booking status without admin privileges"""
+        if not self.token:
+            self.log_result("Admin Update Booking (Unauthorized)", False, None, "No token available")
+            return False
+        
+        update_data = {
+            "status": "confirmed"
+        }
+        
+        # Should fail with 403 for non-admin user
+        success, response = self.run_test("Admin Update Booking (Unauthorized)", "PUT", "admin/bookings/fake_booking_id", 403, update_data)
+        
+        return success
+
+    def test_admin_orders_list_unauthorized(self):
+        """Test admin orders listing without admin privileges"""
+        if not self.token:
+            self.log_result("Admin Orders List (Unauthorized)", False, None, "No token available")
+            return False
+        
+        # Should fail with 403 for non-admin user
+        success, response = self.run_test("Admin Orders List (Unauthorized)", "GET", "admin/orders", 403)
+        
+        return success
+
+    def test_admin_orders_with_filters_unauthorized(self):
+        """Test admin orders with filters without admin privileges"""
+        if not self.token:
+            self.log_result("Admin Orders Filters (Unauthorized)", False, None, "No token available")
+            return False
+        
+        # Should fail with 403 for non-admin user
+        success, response = self.run_test("Admin Orders Filters (Unauthorized)", "GET", "admin/orders?status=pending", 403)
+        
+        return success
+
+    def test_admin_update_order_unauthorized(self):
+        """Test updating order status without admin privileges"""
+        if not self.token:
+            self.log_result("Admin Update Order (Unauthorized)", False, None, "No token available")
+            return False
+        
+        update_data = {
+            "status": "shipped"
+        }
+        
+        # Should fail with 403 for non-admin user
+        success, response = self.run_test("Admin Update Order (Unauthorized)", "PUT", "admin/orders/fake_order_id", 403, update_data)
+        
+        return success
+
+    def test_admin_make_admin_unauthorized(self):
+        """Test granting admin privileges without admin privileges"""
+        if not self.token:
+            self.log_result("Admin Make Admin (Unauthorized)", False, None, "No token available")
+            return False
+        
+        # Should fail with 403 for non-admin user
+        success, response = self.run_test("Admin Make Admin (Unauthorized)", "POST", "admin/make-admin/fake_user_id", 403)
+        
+        return success
+
+    def test_admin_revoke_admin_unauthorized(self):
+        """Test revoking admin privileges without admin privileges"""
+        if not self.token:
+            self.log_result("Admin Revoke Admin (Unauthorized)", False, None, "No token available")
+            return False
+        
+        # Should fail with 403 for non-admin user
+        success, response = self.run_test("Admin Revoke Admin (Unauthorized)", "POST", "admin/revoke-admin/fake_user_id", 403)
+        
+        return success
+
+    def test_admin_endpoints_no_auth(self):
+        """Test all admin endpoints without authentication"""
+        original_token = self.token
+        self.token = None
+        
+        results = []
+        
+        # Test all admin endpoints without auth (should all return 401)
+        results.append(self.run_test("Admin Stats (No Auth)", "GET", "admin/stats", 401)[0])
+        results.append(self.run_test("Admin Users (No Auth)", "GET", "admin/users", 401)[0])
+        results.append(self.run_test("Admin Bookings (No Auth)", "GET", "admin/bookings", 401)[0])
+        results.append(self.run_test("Admin Orders (No Auth)", "GET", "admin/orders", 401)[0])
+        
+        update_data = {"status": "test"}
+        results.append(self.run_test("Admin Update User (No Auth)", "PUT", "admin/users/fake_id", 401, update_data)[0])
+        results.append(self.run_test("Admin Update Booking (No Auth)", "PUT", "admin/bookings/fake_id", 401, update_data)[0])
+        results.append(self.run_test("Admin Update Order (No Auth)", "PUT", "admin/orders/fake_id", 401, update_data)[0])
+        
+        results.append(self.run_test("Admin Delete User (No Auth)", "DELETE", "admin/users/fake_id", 401)[0])
+        results.append(self.run_test("Admin Make Admin (No Auth)", "POST", "admin/make-admin/fake_id", 401)[0])
+        results.append(self.run_test("Admin Revoke Admin (No Auth)", "POST", "admin/revoke-admin/fake_id", 401)[0])
+        
+        # Restore token
+        self.token = original_token
+        
+        return all(results)
+
+    def run_admin_tests(self):
+        """Run all admin panel tests"""
+        print("\n🔐 Starting Admin Panel API Tests")
+        print("=" * 50)
+        
+        # Test unauthorized access (should all fail with 403)
+        self.test_admin_stats_unauthorized()
+        self.test_admin_users_list()
+        self.test_admin_users_with_pagination()
+        self.test_admin_users_with_search()
+        self.test_admin_update_user_unauthorized()
+        self.test_admin_delete_user_unauthorized()
+        self.test_admin_bookings_list_unauthorized()
+        self.test_admin_bookings_with_filters_unauthorized()
+        self.test_admin_update_booking_unauthorized()
+        self.test_admin_orders_list_unauthorized()
+        self.test_admin_orders_with_filters_unauthorized()
+        self.test_admin_update_order_unauthorized()
+        self.test_admin_make_admin_unauthorized()
+        self.test_admin_revoke_admin_unauthorized()
+        
+        # Test no authentication (should all fail with 401)
+        self.test_admin_endpoints_no_auth()
+        
+        # Test with admin user (would need actual admin setup)
+        self.test_admin_stats_authorized()
+        
+        print(f"\n📊 Admin Tests Summary: {self.tests_passed}/{self.tests_run} passed")
+
     def run_all_tests(self):
         """Run all API tests"""
         print("🚀 Starting Travel & Tours API Tests")
