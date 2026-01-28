@@ -17,11 +17,11 @@ const Footer = () => {
     <footer className="bg-slate-900 text-white" data-testid="footer">
       {/* Main Footer */}
       <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8">
           {/* Brand */}
           <div className="space-y-4 lg:col-span-1">
             <Link to="/" className="inline-block group">
-              <div className="h-24 w-24 flex items-center justify-center transform group-hover:scale-105 transition-transform">
+              <div className="h-20 w-20 flex items-center justify-center transform group-hover:scale-105 transition-transform">
                 <img 
                   src={LOGO_URL} 
                   alt="Foster Tours" 
@@ -33,14 +33,14 @@ const Footer = () => {
               </div>
             </Link>
             <p className="text-slate-400 text-sm leading-relaxed">
-              Your trusted partner for unforgettable travel experiences. Explore the world with confidence.
+              Your trusted partner for unforgettable travel experiences.
             </p>
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <a 
                 href="https://wa.me/2349058681268" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-full bg-green-600 flex items-center justify-center hover:bg-green-500 transition-colors"
+                className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center hover:bg-green-500 transition-colors"
                 title="Chat on WhatsApp"
               >
                 <MessageCircle className="w-4 h-4" />
@@ -49,15 +49,15 @@ const Footer = () => {
                 href="https://instagram.com/foster_tours" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-600 to-pink-500 flex items-center justify-center hover:opacity-90 transition-opacity"
+                className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-pink-500 flex items-center justify-center hover:opacity-90 transition-opacity"
                 title="Follow us on Instagram"
               >
                 <Instagram className="w-4 h-4" />
               </a>
-              <a href="#" className="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center hover:bg-primary transition-colors">
+              <a href="#" className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center hover:bg-primary transition-colors">
                 <Facebook className="w-4 h-4" />
               </a>
-              <a href="#" className="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center hover:bg-primary transition-colors">
+              <a href="#" className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center hover:bg-primary transition-colors">
                 <Twitter className="w-4 h-4" />
               </a>
             </div>
@@ -66,7 +66,7 @@ const Footer = () => {
           {/* Our Services */}
           <div>
             <h4 className="font-semibold text-lg mb-4 text-teal-400">Our Services</h4>
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               {[
                 { label: 'Flight Booking', href: '/flights', icon: Plane },
                 { label: 'Hotel Reservations', href: '/hotels', icon: Hotel },
@@ -81,7 +81,7 @@ const Footer = () => {
                     to={link.href}
                     className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm group"
                   >
-                    <link.icon className="w-4 h-4 text-teal-500 group-hover:text-teal-400" />
+                    <link.icon className="w-3.5 h-3.5 text-teal-500 group-hover:text-teal-400" />
                     {link.label}
                   </Link>
                 </li>
@@ -92,7 +92,7 @@ const Footer = () => {
           {/* Quick Links */}
           <div>
             <h4 className="font-semibold text-lg mb-4 text-teal-400">Quick Links</h4>
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               {[
                 { label: 'About Us', href: '/about' },
                 { label: 'Destinations', href: '/destinations' },
@@ -116,23 +116,49 @@ const Footer = () => {
             </ul>
           </div>
 
+          {/* Support */}
+          <div>
+            <h4 className="font-semibold text-lg mb-4 text-teal-400">Support</h4>
+            <ul className="space-y-2">
+              {[
+                { label: 'Help Center', href: '/help' },
+                { label: 'FAQs', href: '/faqs' },
+                { label: 'Cancellation Policy', href: '/cancellation-policy' },
+                { label: 'Safety Resources', href: '/safety' },
+                { label: 'Accessibility', href: '/accessibility' },
+                { label: 'COVID-19 Updates', href: '/covid-updates' },
+                { label: 'Partner With Us', href: '/partner' },
+                { label: 'Press Room', href: '/press' },
+              ].map((link) => (
+                <li key={link.href}>
+                  <Link
+                    to={link.href}
+                    className="text-slate-400 hover:text-white transition-colors text-sm"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           {/* Contact Information */}
           <div>
             <h4 className="font-semibold text-lg mb-4 text-teal-400">Contact Us</h4>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {/* WhatsApp */}
               <a 
                 href="https://wa.me/2349058681268" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex items-start gap-3 text-sm text-slate-400 hover:text-green-400 transition-colors group"
+                className="flex items-start gap-2 text-sm text-slate-400 hover:text-green-400 transition-colors group"
               >
-                <div className="w-8 h-8 rounded-full bg-green-600/20 flex items-center justify-center flex-shrink-0 group-hover:bg-green-600/30">
-                  <MessageCircle className="w-4 h-4 text-green-500" />
+                <div className="w-7 h-7 rounded-full bg-green-600/20 flex items-center justify-center flex-shrink-0 group-hover:bg-green-600/30">
+                  <MessageCircle className="w-3.5 h-3.5 text-green-500" />
                 </div>
                 <div>
-                  <p className="font-medium text-white text-xs mb-0.5">WhatsApp</p>
-                  <p>+234 9058 681 268</p>
+                  <p className="font-medium text-white text-xs">WhatsApp</p>
+                  <p className="text-xs">+234 9058 681 268</p>
                 </div>
               </a>
               
@@ -141,39 +167,39 @@ const Footer = () => {
                 href="https://instagram.com/foster_tours" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex items-start gap-3 text-sm text-slate-400 hover:text-pink-400 transition-colors group"
+                className="flex items-start gap-2 text-sm text-slate-400 hover:text-pink-400 transition-colors group"
               >
-                <div className="w-8 h-8 rounded-full bg-pink-600/20 flex items-center justify-center flex-shrink-0 group-hover:bg-pink-600/30">
-                  <Instagram className="w-4 h-4 text-pink-500" />
+                <div className="w-7 h-7 rounded-full bg-pink-600/20 flex items-center justify-center flex-shrink-0 group-hover:bg-pink-600/30">
+                  <Instagram className="w-3.5 h-3.5 text-pink-500" />
                 </div>
                 <div>
-                  <p className="font-medium text-white text-xs mb-0.5">Instagram</p>
-                  <p>@foster_tours</p>
+                  <p className="font-medium text-white text-xs">Instagram</p>
+                  <p className="text-xs">@foster_tours</p>
                 </div>
               </a>
               
               {/* Email */}
               <a 
                 href="mailto:support@fostertours.com"
-                className="flex items-start gap-3 text-sm text-slate-400 hover:text-teal-400 transition-colors group"
+                className="flex items-start gap-2 text-sm text-slate-400 hover:text-teal-400 transition-colors group"
               >
-                <div className="w-8 h-8 rounded-full bg-teal-600/20 flex items-center justify-center flex-shrink-0 group-hover:bg-teal-600/30">
-                  <Mail className="w-4 h-4 text-teal-500" />
+                <div className="w-7 h-7 rounded-full bg-teal-600/20 flex items-center justify-center flex-shrink-0 group-hover:bg-teal-600/30">
+                  <Mail className="w-3.5 h-3.5 text-teal-500" />
                 </div>
                 <div>
-                  <p className="font-medium text-white text-xs mb-0.5">Email</p>
-                  <p>support@fostertours.com</p>
+                  <p className="font-medium text-white text-xs">Email</p>
+                  <p className="text-xs">support@fostertours.com</p>
                 </div>
               </a>
 
               {/* Support Hours */}
-              <div className="flex items-start gap-3 text-sm text-slate-400">
-                <div className="w-8 h-8 rounded-full bg-orange-600/20 flex items-center justify-center flex-shrink-0">
-                  <Clock className="w-4 h-4 text-orange-500" />
+              <div className="flex items-start gap-2 text-sm text-slate-400">
+                <div className="w-7 h-7 rounded-full bg-orange-600/20 flex items-center justify-center flex-shrink-0">
+                  <Clock className="w-3.5 h-3.5 text-orange-500" />
                 </div>
                 <div>
-                  <p className="font-medium text-white text-xs mb-0.5">Support Hours</p>
-                  <p>Mon - Sat: 9AM - 6PM</p>
+                  <p className="font-medium text-white text-xs">Support Hours</p>
+                  <p className="text-xs">Mon - Sat: 9AM - 6PM</p>
                 </div>
               </div>
             </div>
@@ -182,29 +208,29 @@ const Footer = () => {
           {/* Newsletter */}
           <div>
             <h4 className="font-semibold text-lg mb-4 text-teal-400">Stay Updated</h4>
-            <p className="text-slate-400 text-sm mb-4">
-              Subscribe to our newsletter for exclusive deals and travel tips.
+            <p className="text-slate-400 text-sm mb-3">
+              Subscribe for exclusive deals and travel tips.
             </p>
             <div className="flex gap-2">
               <Input
                 type="email"
-                placeholder="Enter your email"
+                placeholder="Your email"
                 className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 text-sm"
               />
-              <Button className="btn-pill bg-primary hover:bg-primary/90">
+              <Button className="btn-pill bg-primary hover:bg-primary/90 px-3">
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </div>
             
             {/* Customer Support Badge */}
-            <div className="mt-6 p-4 bg-slate-800/50 rounded-xl border border-slate-700">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-teal-500/20 flex items-center justify-center">
-                  <Headphones className="w-5 h-5 text-teal-400" />
+            <div className="mt-4 p-3 bg-slate-800/50 rounded-xl border border-slate-700">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-teal-500/20 flex items-center justify-center">
+                  <Headphones className="w-4 h-4 text-teal-400" />
                 </div>
                 <div>
-                  <p className="font-medium text-white text-sm">24/7 AI Support</p>
-                  <p className="text-slate-400 text-xs">Chat with our AI assistant anytime</p>
+                  <p className="font-medium text-white text-xs">24/7 AI Support</p>
+                  <p className="text-slate-400 text-xs">Chat anytime</p>
                 </div>
               </div>
             </div>
