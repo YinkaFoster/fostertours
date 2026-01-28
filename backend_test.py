@@ -191,6 +191,79 @@ class TravelToursAPITester:
         """Test store products listing"""
         return self.run_test("Store Products", "GET", "store/products", 200)
 
+    def test_store_product_detail(self):
+        """Test individual product detail"""
+        # First get products to get a valid product_id
+        success, response = self.run_test("Store Products for Detail", "GET", "store/products", 200)
+        if success and response.get('products'):
+            product_id = response['products'][0]['product_id']
+            return self.run_test("Store Product Detail", "GET", f"store/products/{product_id}", 200)
+        else:
+            self.log_result("Store Product Detail", False, None, "No products available to test detail")
+            return False, {}
+
+    def test_cart_operations(self):
+        """Test cart operations (requires auth)"""
+        if not self.token:
+            self.log_result("Cart Operations", False, None, "No token available")
+            return False, {}
+        
+        # Get cart
+        success1, _ = self.run_test("Get Cart", "GET", "cart", 200)
+        
+        # Add item to cart
+        cart_item = {
+            "product_id": "prod_test123",
+            "quantity": 2
+        }
+        success2, _ = self.run_test("Add to Cart", "POST", "cart/add", 200, cart_item)
+        
+        # Remove item from cart
+        success3, _ = self.run_test("Remove from Cart", "DELETE", "cart/remove/prod_test123", 200)
+        
+        return success1 and success2 and success3
+
+    def test_store_orders_endpoint(self):
+        """Test store orders endpoint (requires auth)"""
+        if not self.token:
+            self.log_result("Store Orders", False, None, "No token available")
+            return False, {}
+        
+        return self.run_test("Store Orders List", "GET", "store/orders", 200)
+
+    def test_create_store_order(self):
+        """Test creating a store order (requires auth)"""
+        if not self.token:
+            self.log_result("Create Store Order", False, None, "No token available")
+            return False, {}
+        
+        order_data = {
+            "items": [
+                {
+                    "product_id": "prod_test123",
+                    "name": "Test Product",
+                    "price": 29.99,
+                    "quantity": 1
+                }
+            ],
+            "subtotal": 29.99,
+            "shipping": 9.99,
+            "total": 39.98,
+            "shipping_address": {
+                "firstName": "Test",
+                "lastName": "User",
+                "email": "test@example.com",
+                "address": "123 Test St",
+                "city": "Test City",
+                "state": "TS",
+                "zipCode": "12345"
+            },
+            "payment_method": "stripe",
+            "wallet_used": 0
+        }
+        
+        return self.run_test("Create Store Order", "POST", "store/orders", 200, order_data)
+
     def test_gallery_endpoint(self):
         """Test gallery endpoint"""
         return self.run_test("Gallery", "GET", "gallery", 200)
