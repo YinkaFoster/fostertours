@@ -83,6 +83,13 @@ const AppRouter = () => {
       <Route path="/packages" element={<PackagesPage />} />
       <Route path="/careers" element={<CareersPage />} />
       <Route path="/partner" element={<PartnerPage />} />
+      <Route path="/help" element={<HelpCenterPage />} />
+      <Route path="/faqs" element={<FAQsPage />} />
+      <Route path="/cancellation-policy" element={<CancellationPolicyPage />} />
+      <Route path="/safety" element={<SafetyResourcesPage />} />
+      <Route path="/accessibility" element={<AccessibilityPage />} />
+      <Route path="/covid-updates" element={<CovidUpdatesPage />} />
+      <Route path="/press" element={<PressRoomPage />} />
       
       {/* Payment Callbacks */}
       <Route path="/payment/success" element={<PaymentSuccess />} />
