@@ -13,12 +13,14 @@ import { Checkbox } from '../components/ui/checkbox';
 import {
   Plane, Search, ArrowRight, Clock, Loader2, Filter, SlidersHorizontal
 } from 'lucide-react';
+import { useLocale } from '../context/LocaleContext';
 import axios from 'axios';
 
 const API = process.env.REACT_APP_BACKEND_URL + '/api';
 
 const FlightsPage = () => {
   const navigate = useNavigate();
+  const { formatPrice, t } = useLocale();
   const [loading, setLoading] = useState(false);
   const [flights, setFlights] = useState([]);
   const [searched, setSearched] = useState(false);
