@@ -118,13 +118,13 @@ const Footer = () => {
             </div>
             <div className="mt-6 space-y-3">
               <a 
-                href="https://wa.me/234958681268" 
+                href="https://wa.me/2349058681268" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 text-sm text-slate-400 hover:text-green-400 transition-colors"
               >
                 <MessageCircle className="w-4 h-4" />
-                +234 958 681 268 (WhatsApp)
+                +234 9058 681 268 (WhatsApp)
               </a>
               <a 
                 href="https://instagram.com/foster_tours" 
