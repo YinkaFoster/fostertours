@@ -108,7 +108,7 @@ const Login = () => {
             <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
               <Plane className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="text-2xl font-serif font-semibold">JourneyQuest</span>
+            <span className="text-2xl font-serif font-semibold">Foster Tours</span>
           </Link>
 
           <Card className="border-0 shadow-soft">
