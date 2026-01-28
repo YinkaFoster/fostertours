@@ -1,0 +1,219 @@
+{
+  "identity": {
+    "name": "E1 - The Anti-AI Designer",
+    "mission": "Create a travel platform that feels like a premium editorial magazine mixed with a high-tech flight deck. Fusion of 'National Geographic' aesthetics and 'Fintech' precision.",
+    "principles": [
+      "Fusion over Imitation: Mix botanical aesthetics with aerospace precision.",
+      "Emotion First: Every pixel must evoke 'Wanderlust' or 'Security'.",
+      "Content is King: Destinations are the heroes; UI is the frame.",
+      "Zoom In: Use macro details for textures (sand, passport stamps).",
+      "Negative Space: Luxury is defined by what isn't there."
+    ]
+  },
+  "typography": {
+    "fonts": {
+      "headings": {
+        "family": "Playfair Display, serif",
+        "usage": "Hero titles, destination names, editorial sections",
+        "weights": ["400", "600", "700"],
+        "letterSpacing": "-0.02em"
+      },
+      "body": {
+        "family": "DM Sans, sans-serif",
+        "usage": "General text, descriptions, blog content",
+        "weights": ["400", "500", "700"]
+      },
+      "technical": {
+        "family": "Barlow Condensed, sans-serif",
+        "usage": "Flight numbers, prices, dates, dashboard metrics",
+        "weights": ["500", "600"],
+        "letterSpacing": "0.05em",
+        "transform": "uppercase"
+      }
+    },
+    "scale": {
+      "h1": "text-5xl md:text-7xl font-serif tracking-tight leading-none",
+      "h2": "text-4xl md:text-5xl font-serif tracking-tight",
+      "h3": "text-2xl md:text-3xl font-serif",
+      "body-lg": "text-lg md:text-xl font-sans leading-relaxed",
+      "body-base": "text-base font-sans leading-relaxed",
+      "caption": "text-sm font-condensed tracking-wider uppercase text-muted-foreground"
+    }
+  },
+  "colors": {
+    "palette": {
+      "primary": {
+        "name": "Ocean Depth",
+        "light": "#0D9488",
+        "dark": "#2DD4BF",
+        "usage": "Primary buttons, active states, key icons"
+      },
+      "secondary": {
+        "name": "Sunset Blaze",
+        "light": "#F97316",
+        "dark": "#FB923C",
+        "usage": "CTAs, discount badges, urgent notifications"
+      },
+      "neutral": {
+        "name": "Slate Stone",
+        "scale": "slate",
+        "light_bg": "#F8FAFC",
+        "dark_bg": "#020617",
+        "usage": "Backgrounds, borders, text"
+      }
+    },
+    "gradients": {
+      "hero_overlay": "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%)",
+      "brand_glow": "radial-gradient(circle at center, rgba(13, 148, 136, 0.15) 0%, rgba(0,0,0,0) 70%)"
+    },
+    "rules": [
+      "Never use pure black (#000000). Use Slate-950 (#020617).",
+      "Dark mode backgrounds must be deep blue-grey, not flat grey.",
+      "Primary color usage should be limited to <10% of the screen."
+    ]
+  },
+  "layout": {
+    "spacing": {
+      "base": "0.25rem",
+      "container_padding": "p-6 md:p-12 lg:p-20",
+      "section_gap": "gap-12 md:gap-24"
+    },
+    "grids": {
+      "marketing": {
+        "type": "Tetris Grid",
+        "classes": "grid grid-cols-1 md:grid-cols-12 gap-8",
+        "rules": "Use col-span-8 for hero images, col-span-4 for supporting text. Never fill 100% evenly."
+      },
+      "dashboard": {
+        "type": "High Density",
+        "classes": "grid grid-cols-1 md:grid-cols-4 gap-4",
+        "rules": "Compact cards. Use row-span-2 for tall lists."
+      }
+    },
+    "containers": {
+      "marketing": "max-w-7xl mx-auto",
+      "dashboard": "w-full px-4 md:px-8"
+    }
+  },
+  "components": {
+    "cards": {
+      "glass": {
+        "classes": "bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl",
+        "usage": "Overlays on images, floating widgets"
+      },
+      "solid": {
+        "classes": "bg-card border border-border shadow-sm hover:shadow-md transition-all duration-300",
+        "usage": "Dashboard items, product listings"
+      }
+    },
+    "buttons": {
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-8 py-3 font-medium transition-transform hover:scale-105 active:scale-95",
+      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-full px-6 py-2 font-medium",
+      "outline": "border-2 border-primary text-primary hover:bg-primary/10 rounded-full px-6 py-2 font-medium",
+      "ghost": "hover:bg-accent hover:text-accent-foreground rounded-md px-4 py-2"
+    },
+    "inputs": {
+      "style": "bg-background border-border focus:ring-2 focus:ring-primary/20 rounded-md h-12 px-4"
+    }
+  },
+  "visual_enhancers": {
+    "textures": {
+      "noise": "url('/assets/noise.png') opacity-5",
+      "grain": "Use SVG filters for subtle grain on solid backgrounds"
+    },
+    "shadows": {
+      "soft": "0 10px 40px -10px rgba(0,0,0,0.08)",
+      "glow": "0 0 20px rgba(13, 148, 136, 0.3)"
+    },
+    "borders": {
+      "subtle": "1px solid rgba(255,255,255,0.1)"
+    }
+  },
+  "motion": {
+    "libraries": ["framer-motion", "lenis"],
+    "transitions": {
+      "default": "transition-all duration-300 ease-out",
+      "page": "initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}"
+    },
+    "scroll": {
+      "behavior": "smooth",
+      "library": "lenis"
+    }
+  },
+  "assets": {
+    "image_urls": {
+      "hero": [
+        {
+          "url": "https://images.unsplash.com/photo-1653959747793-c7c3775665f0?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2OTV8MHwxfHNlYXJjaHwxfHx0cm9waWNhbCUyMGJlYWNoJTIwcGFyYWRpc2UlMjBhZXJpYWx8ZW58MHx8fHwxNzY5NjAxNDY0fDA&ixlib=rb-4.1.0&q=85",
+          "description": "Aerial view of tropical island - Main Hero"
+        },
+        {
+          "url": "https://images.unsplash.com/photo-1706066954162-d557cc64a163?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2OTV8MHwxfHNlYXJjaHwyfHx0cm9waWNhbCUyMGJlYWNoJTIwcGFyYWRpc2UlMjBhZXJpYWx8ZW58MHx8fHwxNzY5NjAxNDY0fDA&ixlib=rb-4.1.0&q=85",
+          "description": "Fiji top down view - Secondary Hero"
+        }
+      ],
+      "flights": [
+        {
+          "url": "https://images.unsplash.com/photo-1759173342374-f7702ead3a02?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODl8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBhaXJwbGFuZSUyMGNhYmluJTIwaW50ZXJpb3J8ZW58MHx8fHwxNzY5NjAxNDY2fDA&ixlib=rb-4.1.0&q=85",
+          "description": "Modern airplane cabin - Flight Booking Header"
+        },
+        {
+          "url": "https://images.unsplash.com/photo-1768346564210-f382cdf18375?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODl8MHwxfHNlYXJjaHwyfHxtb2Rlcm4lMjBhaXJwbGFuZSUyMGNhYmluJTIwaW50ZXJpb3J8ZW58MHx8fHwxNzY5NjAxNDY2fDA&ixlib=rb-4.1.0&q=85",
+          "description": "Private jet interior - Premium Flights"
+        }
+      ],
+      "hotels": [
+        {
+          "url": "https://images.unsplash.com/photo-1702830499141-a0634d87d6af?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBob3RlbCUyMHJvb20lMjBpbnRlcmlvciUyMG9jZWFuJTIwdmlld3xlbnwwfHx8fDE3Njk2MDE0ODJ8MA&ixlib=rb-4.1.0&q=85",
+          "description": "Luxury room with ocean view - Hotel Detail"
+        },
+        {
+          "url": "https://images.unsplash.com/photo-1709187516056-d4929b67e89f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjd8MHwxfHNlYXJjaHwyfHxsdXh1cnklMjBob3RlbCUyMHJvb20lMjBpbnRlcmlvciUyMG9jZWFuJTIwdmlld3xlbnwwfHx8fDE3Njk2MDE0ODJ8MA&ixlib=rb-4.1.0&q=85",
+          "description": "Hotel suite Mumbai - City Hotel"
+        }
+      ],
+      "vehicles": [
+        {
+          "url": "https://images.unsplash.com/photo-1674476459501-47466da1dbbc?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1ODR8MHwxfHNlYXJjaHwxfHxyZW50YWwlMjBjYXIlMjB3aGl0ZSUyMHN1diUyMG9uJTIwcm9hZHxlbnwwfHx8fDE3Njk2MDE0ODR8MA&ixlib=rb-4.1.0&q=85",
+          "description": "White SUV on road - Car Rental"
+        }
+      ],
+      "visa": [
+        {
+          "url": "https://images.unsplash.com/photo-1743193143977-bc57e2c100ad?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODF8MHwxfHNlYXJjaHwxfHxwYXNzcG9ydCUyMHN0YW1wcyUyMHZpc2ElMjBwYWdlc3xlbnwwfHx8fDE3Njk2MDE0ODd8MA&ixlib=rb-4.1.0&q=85",
+          "description": "Italian Passport - Visa Services"
+        }
+      ],
+      "blog": [
+        {
+          "url": "https://images.unsplash.com/photo-1600657644140-aa5b5e003829?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjV8MHwxfHNlYXJjaHwxfHxoYXBweSUyMHRyYXZlbGVycyUyMGNvdXBsZSUyMGhpa2luZ3xlbnwwfHx8fDE3Njk2MDE0ODl8MA&ixlib=rb-4.1.0&q=85",
+          "description": "Couple hiking - Blog Post"
+        },
+        {
+          "url": "https://images.unsplash.com/photo-1761472084994-61d80b8f4053?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjV8MHwxfHNlYXJjaHwzfHxoYXBweSUyMHRyYXZlbGVycyUyMGNvdXBsZSUyMGhpa2luZ3xlbnwwfHx8fDE3Njk2MDE0ODl8MA&ixlib=rb-4.1.0&q=85",
+          "description": "Friends on mountain - Community"
+        }
+      ]
+    }
+  },
+  "3d_libraries": {
+    "primary": "react-globe.gl",
+    "usage": "Interactive globe on landing page hero section to visualize destinations.",
+    "secondary": "framer-motion",
+    "usage": "All UI transitions and micro-interactions."
+  },
+  "universal_guidelines": [
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients.",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy.",
+    "Use glass-morphism effects with backdrop filters (12-24px blur).",
+    "You MUST NOT apply universal transition. Eg: transition: all. This results in breaking transforms.",
+    "You MUST NOT center align the app container.",
+    "Always use modern button styles like pill-shaped, or sharp button with interaction animations.",
+    "NEVER use AI assistant Emoji characters like 🤖🧠 etc.",
+    "Every interaction needs micro-animations.",
+    "Use 2-3x more spacing than feels comfortable.",
+    "All interactive and key informational elements MUST include a data-testid attribute."
+  ],
+  "instructions_to_main_agent": "Implement the 'Modern Explorer' theme. Start with the Landing Page using the Tetris Grid and the 3D Globe. Then build the Dashboard using the High Density Grid. Use the provided image URLs for their respective sections. Ensure the Dark/Light mode toggle works seamlessly with the defined color palette."
+}
