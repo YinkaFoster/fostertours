@@ -3036,8 +3036,9 @@ def get_booking_confirmation_html(booking: Dict[str, Any], user_name: str) -> st
                 <p>Happy travels! 🌍</p>
             </div>
             <div class="footer">
-                <p>© 2025 JourneyQuest. All rights reserved.</p>
+                <p>© 2025 Foster Tours. All rights reserved.</p>
                 <p>This is an automated email. Please do not reply directly.</p>
+                <p>WhatsApp: +234 958 681 268 | Instagram: @foster_tours</p>
             </div>
         </div>
     </body>
