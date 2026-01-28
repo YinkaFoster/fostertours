@@ -8,8 +8,8 @@ import {
 } from 'lucide-react';
 import LocaleSelector from './LocaleSelector';
 
-// Foster Tours Logo (stacked version for footer)
-const LOGO_STACKED_URL = "https://customer-assets.emergentagent.com/job_journeyquest-9/artifacts/pfeq0xxl_Untitled%20design%20-%201.PNG";
+// Foster Tours Logo (main square version for footer)
+const LOGO_URL = "https://customer-assets.emergentagent.com/job_journeyquest-9/artifacts/5q5kd3xp_Foster%20Tours.png";
 
 const Footer = () => {
   return (
@@ -20,22 +20,15 @@ const Footer = () => {
           {/* Brand */}
           <div className="space-y-4">
             <Link to="/" className="inline-block">
-              <div className="h-20 w-20 overflow-hidden rounded-2xl bg-white p-2 shadow-lg">
+              <div className="h-24 w-24 flex items-center justify-center">
                 <img 
-                  src={LOGO_STACKED_URL} 
+                  src={LOGO_URL} 
                   alt="Foster Tours" 
-                  className="h-full w-full object-contain object-center"
+                  className="h-full w-full object-contain drop-shadow-lg"
                   onError={(e) => {
-                    e.target.parentElement.style.display = 'none';
-                    e.target.parentElement.nextSibling.style.display = 'flex';
+                    e.target.parentElement.innerHTML = '<div class="flex items-center gap-2"><div class="w-12 h-12 rounded-full bg-teal-500 flex items-center justify-center"><svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg></div><span class="text-2xl font-serif font-semibold text-white">Foster Tours</span></div>';
                   }}
                 />
-              </div>
-              <div className="hidden items-center gap-2">
-                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-                  <Plane className="w-5 h-5 text-primary-foreground" />
-                </div>
-                <span className="text-2xl font-serif font-semibold">Foster Tours</span>
               </div>
             </Link>
             <p className="text-slate-400 text-sm leading-relaxed">
@@ -44,7 +37,7 @@ const Footer = () => {
             <div className="flex gap-3">
               <a 
                 href="https://wa.me/2349058681268" 
-                target="_blank"
+                target="_blank" 
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center hover:bg-green-500 transition-colors"
                 title="Chat on WhatsApp"
