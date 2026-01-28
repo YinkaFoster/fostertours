@@ -18,6 +18,10 @@ import VehiclesPage from "./pages/VehiclesPage";
 import VisaPage from "./pages/VisaPage";
 import BlogPage from "./pages/BlogPage";
 import StorePage from "./pages/StorePage";
+import ProductDetailPage from "./pages/ProductDetailPage";
+import CartPage from "./pages/CartPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import OrderSuccessPage from "./pages/OrderSuccessPage";
 import WalletPage from "./pages/WalletPage";
 import GalleryPage from "./pages/GalleryPage";
 import { PaymentSuccess, PaymentCancel } from "./pages/PaymentPages";
@@ -46,6 +50,10 @@ const AppRouter = () => {
       <Route path="/visa" element={<VisaPage />} />
       <Route path="/blog" element={<BlogPage />} />
       <Route path="/store" element={<StorePage />} />
+      <Route path="/store/product/:productId" element={<ProductDetailPage />} />
+      <Route path="/store/cart" element={<CartPage />} />
+      <Route path="/store/checkout" element={<CheckoutPage />} />
+      <Route path="/store/order-success" element={<OrderSuccessPage />} />
       <Route path="/gallery" element={<GalleryPage />} />
       
       {/* Payment Callbacks */}
