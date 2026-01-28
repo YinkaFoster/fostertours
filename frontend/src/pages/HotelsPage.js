@@ -388,10 +388,10 @@ const HotelsPage = () => {
                     </p>
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-muted-foreground">from</p>
-                        <p className="text-xl font-bold text-primary">${hotel.price}</p>
+                        <p className="text-sm text-muted-foreground">{t('from')}</p>
+                        <p className="text-xl font-bold text-primary">{formatPrice(hotel.price)}</p>
                       </div>
-                      <Button variant="outline" size="sm">View</Button>
+                      <Button variant="outline" size="sm">{t('viewDetails')}</Button>
                     </div>
                   </CardContent>
                 </Card>
