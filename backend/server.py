@@ -2939,6 +2939,234 @@ async def revoke_user_admin(request: Request, user_id: str):
     
     return {"message": "Admin privileges revoked"}
 
+# =============== EMAIL NOTIFICATION ROUTES ===============
+
+class EmailRequest(BaseModel):
+    to_email: EmailStr
+    subject: str
+    content: str
+    template_type: Optional[str] = "general"
+
+class BookingConfirmationEmail(BaseModel):
+    booking_id: str
+    booking_type: str
+    user_email: EmailStr
+    user_name: str
+    booking_details: Dict[str, Any]
+    total_amount: float
+
+def send_email_sync(to_email: str, subject: str, html_content: str) -> bool:
+    """Send email using SendGrid"""
+    if not SENDGRID_API_KEY:
+        logger.warning("SendGrid API key not configured")
+        return False
+    
+    try:
+        message = Mail(
+            from_email=Email(SENDER_EMAIL, "JourneyQuest"),
+            to_emails=To(to_email),
+            subject=subject,
+            html_content=Content("text/html", html_content)
+        )
+        
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        response = sg.send(message)
+        
+        logger.info(f"Email sent to {to_email}, status: {response.status_code}")
+        return response.status_code == 202
+    except Exception as e:
+        logger.error(f"Failed to send email: {e}")
+        return False
+
+def get_booking_confirmation_html(booking: Dict[str, Any], user_name: str) -> str:
+    """Generate booking confirmation HTML email"""
+    booking_type = booking.get("booking_type", "booking").title()
+    booking_id = booking.get("booking_id", "N/A")
+    total = booking.get("total_amount", 0)
+    details = booking.get("booking_details", {})
+    
+    # Format details
+    details_html = ""
+    for key, value in details.items():
+        formatted_key = key.replace("_", " ").title()
+        details_html += f"<tr><td style='padding: 8px; border-bottom: 1px solid #eee;'><strong>{formatted_key}:</strong></td><td style='padding: 8px; border-bottom: 1px solid #eee;'>{value}</td></tr>"
+    
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }}
+            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+            .header {{ background: linear-gradient(135deg, #0d9488, #f97316); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
+            .content {{ background: #fff; padding: 30px; border: 1px solid #eee; }}
+            .booking-id {{ background: #f0f9ff; padding: 15px; border-radius: 8px; text-align: center; margin: 20px 0; }}
+            .details-table {{ width: 100%; border-collapse: collapse; }}
+            .total {{ background: #f0fdf4; padding: 20px; border-radius: 8px; text-align: center; margin-top: 20px; }}
+            .footer {{ background: #f9fafb; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; font-size: 12px; color: #666; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1 style="margin: 0;">✈️ JourneyQuest</h1>
+                <p style="margin: 10px 0 0 0;">Your {booking_type} is Confirmed!</p>
+            </div>
+            <div class="content">
+                <p>Dear <strong>{user_name}</strong>,</p>
+                <p>Thank you for booking with JourneyQuest! Your {booking_type.lower()} has been successfully confirmed.</p>
+                
+                <div class="booking-id">
+                    <p style="margin: 0; font-size: 12px; color: #666;">Booking Reference</p>
+                    <p style="margin: 5px 0 0 0; font-size: 24px; font-weight: bold; color: #0d9488;">{booking_id}</p>
+                </div>
+                
+                <h3>Booking Details</h3>
+                <table class="details-table">
+                    {details_html}
+                </table>
+                
+                <div class="total">
+                    <p style="margin: 0; font-size: 14px; color: #666;">Total Amount</p>
+                    <p style="margin: 5px 0 0 0; font-size: 32px; font-weight: bold; color: #0d9488;">${total:.2f}</p>
+                </div>
+                
+                <p style="margin-top: 30px;">If you have any questions, please don't hesitate to contact our support team.</p>
+                <p>Happy travels! 🌍</p>
+            </div>
+            <div class="footer">
+                <p>© 2025 JourneyQuest. All rights reserved.</p>
+                <p>This is an automated email. Please do not reply directly.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+def get_welcome_email_html(user_name: str) -> str:
+    """Generate welcome email HTML"""
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }}
+            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+            .header {{ background: linear-gradient(135deg, #0d9488, #f97316); color: white; padding: 40px; text-align: center; border-radius: 10px 10px 0 0; }}
+            .content {{ background: #fff; padding: 30px; border: 1px solid #eee; }}
+            .features {{ display: flex; flex-wrap: wrap; gap: 15px; margin: 20px 0; }}
+            .feature {{ flex: 1; min-width: 200px; background: #f9fafb; padding: 15px; border-radius: 8px; text-align: center; }}
+            .cta {{ background: #0d9488; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; display: inline-block; margin: 20px 0; }}
+            .footer {{ background: #f9fafb; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; font-size: 12px; color: #666; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1 style="margin: 0; font-size: 36px;">✈️ Welcome to JourneyQuest!</h1>
+                <p style="margin: 15px 0 0 0; font-size: 18px;">Your journey begins here</p>
+            </div>
+            <div class="content">
+                <p>Hello <strong>{user_name}</strong>! 👋</p>
+                <p>Welcome to JourneyQuest - your all-in-one travel companion! We're thrilled to have you on board.</p>
+                
+                <h3>What you can do with JourneyQuest:</h3>
+                <ul style="padding-left: 20px;">
+                    <li>🛫 <strong>Book Flights</strong> - Find the best deals on flights worldwide</li>
+                    <li>🏨 <strong>Reserve Hotels</strong> - Discover perfect accommodations</li>
+                    <li>🎉 <strong>Explore Events</strong> - Join local tours and experiences</li>
+                    <li>🚗 <strong>Rent Vehicles</strong> - Get around with ease</li>
+                    <li>📝 <strong>Plan Itineraries</strong> - Create your perfect trip with AI assistance</li>
+                    <li>🛍️ <strong>Shop Travel Gear</strong> - Get everything you need</li>
+                </ul>
+                
+                <p style="text-align: center;">
+                    <a href="#" class="cta">Start Exploring</a>
+                </p>
+                
+                <p>Happy travels! 🌍</p>
+                <p>- The JourneyQuest Team</p>
+            </div>
+            <div class="footer">
+                <p>© 2025 JourneyQuest. All rights reserved.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+@api_router.post("/email/send")
+async def send_email_endpoint(request: Request, background_tasks: BackgroundTasks):
+    """Send a custom email (admin only)"""
+    await require_admin(request)
+    body = await request.json()
+    
+    to_email = body.get("to_email")
+    subject = body.get("subject")
+    content = body.get("content")
+    
+    if not all([to_email, subject, content]):
+        raise HTTPException(status_code=400, detail="Missing required fields")
+    
+    background_tasks.add_task(send_email_sync, to_email, subject, content)
+    
+    return {"message": "Email queued for delivery"}
+
+@api_router.post("/email/booking-confirmation")
+async def send_booking_confirmation(request: Request, background_tasks: BackgroundTasks, data: BookingConfirmationEmail):
+    """Send booking confirmation email"""
+    user = await require_auth(request)
+    
+    html_content = get_booking_confirmation_html(
+        {
+            "booking_id": data.booking_id,
+            "booking_type": data.booking_type,
+            "total_amount": data.total_amount,
+            "booking_details": data.booking_details
+        },
+        data.user_name
+    )
+    
+    subject = f"Booking Confirmation - {data.booking_type.title()} #{data.booking_id}"
+    
+    background_tasks.add_task(send_email_sync, data.user_email, subject, html_content)
+    
+    # Log email
+    email_log = {
+        "type": "booking_confirmation",
+        "to_email": data.user_email,
+        "booking_id": data.booking_id,
+        "user_id": user["user_id"],
+        "sent_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.email_logs.insert_one(email_log)
+    
+    return {"message": "Booking confirmation email sent"}
+
+@api_router.post("/email/welcome")
+async def send_welcome_email(request: Request, background_tasks: BackgroundTasks):
+    """Send welcome email to user"""
+    user = await require_auth(request)
+    
+    html_content = get_welcome_email_html(user["name"])
+    subject = "Welcome to JourneyQuest! 🌍"
+    
+    background_tasks.add_task(send_email_sync, user["email"], subject, html_content)
+    
+    return {"message": "Welcome email sent"}
+
+@api_router.get("/email/status")
+async def get_email_status(request: Request):
+    """Check if email service is configured"""
+    await require_admin(request)
+    
+    return {
+        "configured": bool(SENDGRID_API_KEY),
+        "sender_email": SENDER_EMAIL if SENDGRID_API_KEY else None
+    }
+
 # Health check endpoint
 @api_router.get("/health")
 async def health_check():
