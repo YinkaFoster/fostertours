@@ -836,8 +836,87 @@ def generate_mock_hotels(location: str) -> List[dict]:
 
 @api_router.post("/hotels/search")
 async def search_hotels(search: HotelSearch):
+    """Search for hotels using Amadeus API with fallback to mock data"""
+    
+    # Try Amadeus API first
+    if amadeus_client:
+        try:
+            logger.info(f"Searching hotels in: {search.location} for {search.check_in} - {search.check_out}")
+            
+            # First, get city code from location
+            city_search = amadeus_client.reference_data.locations.get(
+                keyword=search.location,
+                subType="CITY"
+            )
+            
+            city_code = None
+            if city_search.data and len(city_search.data) > 0:
+                city_code = city_search.data[0].get("iataCode")
+            
+            if city_code:
+                # Get hotels by city
+                hotels_by_city = amadeus_client.reference_data.locations.hotels.by_city.get(
+                    cityCode=city_code
+                )
+                
+                if hotels_by_city.data:
+                    hotel_ids = [h.get("hotelId") for h in hotels_by_city.data[:10]]
+                    
+                    # Get hotel offers
+                    hotel_offers = amadeus_client.shopping.hotel_offers_search.get(
+                        hotelIds=hotel_ids,
+                        adults=search.guests,
+                        checkInDate=search.check_in,
+                        checkOutDate=search.check_out
+                    )
+                    
+                    if hotel_offers.data:
+                        hotels = []
+                        for offer in hotel_offers.data[:10]:
+                            hotel_info = offer.get("hotel", {})
+                            offers = offer.get("offers", [])
+                            price = offers[0].get("price", {}).get("total", "0") if offers else "0"
+                            
+                            hotels.append({
+                                "hotel_id": f"htl_{hotel_info.get('hotelId', uuid.uuid4().hex[:8])}",
+                                "name": hotel_info.get("name", "Hotel"),
+                                "location": search.location,
+                                "city": search.location,
+                                "rating": float(hotel_info.get("rating", 4.0)),
+                                "reviews_count": 100,
+                                "price_per_night": float(price),
+                                "image_url": "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800",
+                                "images": ["https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800"],
+                                "amenities": hotel_info.get("amenities", ["WiFi", "Restaurant"]),
+                                "description": f"Book your stay at {hotel_info.get('name', 'this hotel')} in {search.location}.",
+                                "room_types": [
+                                    {"type": "Standard", "price": float(price), "beds": "1 Queen"}
+                                ]
+                            })
+                        
+                        # Save search to database
+                        search_record = {
+                            "location": search.location,
+                            "check_in": search.check_in,
+                            "check_out": search.check_out,
+                            "guests": search.guests,
+                            "results_count": len(hotels),
+                            "source": "amadeus",
+                            "timestamp": datetime.now(timezone.utc).isoformat()
+                        }
+                        await db.hotel_searches.insert_one(search_record)
+                        
+                        return {"hotels": hotels, "total": len(hotels), "source": "amadeus"}
+                        
+        except AmadeusResponseError as e:
+            logger.error(f"Amadeus Hotel API error: {e}")
+        except Exception as e:
+            logger.error(f"Hotel search error: {e}")
+    
+    # Fallback to mock data
+    logger.info("Using mock hotel data")
     hotels = generate_mock_hotels(search.location)
-    return {"hotels": hotels, "total": len(hotels)}
+    return {"hotels": hotels, "total": len(hotels), "source": "mock"}
 
 @api_router.get("/hotels/{hotel_id}")
 async def get_hotel(hotel_id: str):
