@@ -70,6 +70,13 @@ const AppRouter = () => {
       <Route path="/store/order-success" element={<OrderSuccessPage />} />
       <Route path="/gallery" element={<GalleryPage />} />
       
+      {/* Information Pages */}
+      <Route path="/about" element={<AboutPage />} />
+      <Route path="/destinations" element={<DestinationsPage />} />
+      <Route path="/packages" element={<PackagesPage />} />
+      <Route path="/careers" element={<CareersPage />} />
+      <Route path="/partner" element={<PartnerPage />} />
+      
       {/* Payment Callbacks */}
       <Route path="/payment/success" element={<PaymentSuccess />} />
       <Route path="/payment/cancel" element={<PaymentCancel />} />
