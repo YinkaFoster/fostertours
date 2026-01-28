@@ -4,7 +4,8 @@ import { Input } from './ui/input';
 import { Separator } from './ui/separator';
 import {
   Plane, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Youtube,
-  ArrowRight, MessageCircle
+  ArrowRight, MessageCircle, Hotel, Calendar, Car, FileText, ShoppingBag,
+  Globe, Sparkles, Clock, Headphones
 } from 'lucide-react';
 import LocaleSelector from './LocaleSelector';
 
@@ -16,11 +17,11 @@ const Footer = () => {
     <footer className="bg-slate-900 text-white" data-testid="footer">
       {/* Main Footer */}
       <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
           {/* Brand */}
-          <div className="space-y-4">
+          <div className="space-y-4 lg:col-span-1">
             <Link to="/" className="inline-block group">
-              <div className="h-28 w-28 flex items-center justify-center transform group-hover:scale-105 transition-transform">
+              <div className="h-24 w-24 flex items-center justify-center transform group-hover:scale-105 transition-transform">
                 <img 
                   src={LOGO_URL} 
                   alt="Foster Tours" 
@@ -39,40 +40,66 @@ const Footer = () => {
                 href="https://wa.me/2349058681268" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center hover:bg-green-500 transition-colors"
+                className="w-9 h-9 rounded-full bg-green-600 flex items-center justify-center hover:bg-green-500 transition-colors"
                 title="Chat on WhatsApp"
               >
-                <MessageCircle className="w-5 h-5" />
+                <MessageCircle className="w-4 h-4" />
               </a>
               <a 
                 href="https://instagram.com/foster_tours" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 to-pink-500 flex items-center justify-center hover:opacity-90 transition-opacity"
+                className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-600 to-pink-500 flex items-center justify-center hover:opacity-90 transition-opacity"
                 title="Follow us on Instagram"
               >
-                <Instagram className="w-5 h-5" />
+                <Instagram className="w-4 h-4" />
               </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-primary transition-colors">
-                <Facebook className="w-5 h-5" />
+              <a href="#" className="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center hover:bg-primary transition-colors">
+                <Facebook className="w-4 h-4" />
               </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-primary transition-colors">
-                <Twitter className="w-5 h-5" />
+              <a href="#" className="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center hover:bg-primary transition-colors">
+                <Twitter className="w-4 h-4" />
               </a>
             </div>
           </div>
 
+          {/* Our Services */}
+          <div>
+            <h4 className="font-semibold text-lg mb-4 text-teal-400">Our Services</h4>
+            <ul className="space-y-3">
+              {[
+                { label: 'Flight Booking', href: '/flights', icon: Plane },
+                { label: 'Hotel Reservations', href: '/hotels', icon: Hotel },
+                { label: 'Tours & Events', href: '/events', icon: Calendar },
+                { label: 'Vehicle Rentals', href: '/vehicles', icon: Car },
+                { label: 'Visa Assistance', href: '/visa', icon: FileText },
+                { label: 'Travel Store', href: '/store', icon: ShoppingBag },
+                { label: 'AI Trip Planner', href: '/itinerary/ai', icon: Sparkles },
+              ].map((link) => (
+                <li key={link.href}>
+                  <Link
+                    to={link.href}
+                    className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm group"
+                  >
+                    <link.icon className="w-4 h-4 text-teal-500 group-hover:text-teal-400" />
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           {/* Quick Links */}
           <div>
-            <h4 className="font-semibold text-lg mb-4">Quick Links</h4>
+            <h4 className="font-semibold text-lg mb-4 text-teal-400">Quick Links</h4>
             <ul className="space-y-3">
               {[
-                { label: 'Flights', href: '/flights' },
-                { label: 'Hotels', href: '/hotels' },
-                { label: 'Events & Tours', href: '/events' },
-                { label: 'Vehicle Rental', href: '/vehicles' },
-                { label: 'Visa Services', href: '/visa' },
+                { label: 'Home', href: '/' },
+                { label: 'About Us', href: '/about' },
                 { label: 'Travel Blog', href: '/blog' },
+                { label: 'Photo Gallery', href: '/gallery' },
+                { label: 'My Dashboard', href: '/dashboard' },
+                { label: 'My Wallet', href: '/wallet' },
               ].map((link) => (
                 <li key={link.href}>
                   <Link
@@ -86,33 +113,72 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Support */}
+          {/* Contact Information */}
           <div>
-            <h4 className="font-semibold text-lg mb-4">Support</h4>
-            <ul className="space-y-3">
-              {[
-                { label: 'Help Center', href: '/help' },
-                { label: 'FAQs', href: '/faqs' },
-                { label: 'Terms of Service', href: '/terms' },
-                { label: 'Privacy Policy', href: '/privacy' },
-                { label: 'Refund Policy', href: '/refunds' },
-                { label: 'Contact Us', href: '/contact' },
-              ].map((link) => (
-                <li key={link.href}>
-                  <Link
-                    to={link.href}
-                    className="text-slate-400 hover:text-white transition-colors text-sm"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <h4 className="font-semibold text-lg mb-4 text-teal-400">Contact Us</h4>
+            <div className="space-y-4">
+              {/* WhatsApp */}
+              <a 
+                href="https://wa.me/2349058681268" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-start gap-3 text-sm text-slate-400 hover:text-green-400 transition-colors group"
+              >
+                <div className="w-8 h-8 rounded-full bg-green-600/20 flex items-center justify-center flex-shrink-0 group-hover:bg-green-600/30">
+                  <MessageCircle className="w-4 h-4 text-green-500" />
+                </div>
+                <div>
+                  <p className="font-medium text-white text-xs mb-0.5">WhatsApp</p>
+                  <p>+234 9058 681 268</p>
+                </div>
+              </a>
+              
+              {/* Instagram */}
+              <a 
+                href="https://instagram.com/foster_tours" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-start gap-3 text-sm text-slate-400 hover:text-pink-400 transition-colors group"
+              >
+                <div className="w-8 h-8 rounded-full bg-pink-600/20 flex items-center justify-center flex-shrink-0 group-hover:bg-pink-600/30">
+                  <Instagram className="w-4 h-4 text-pink-500" />
+                </div>
+                <div>
+                  <p className="font-medium text-white text-xs mb-0.5">Instagram</p>
+                  <p>@foster_tours</p>
+                </div>
+              </a>
+              
+              {/* Email */}
+              <a 
+                href="mailto:support@fostertours.com"
+                className="flex items-start gap-3 text-sm text-slate-400 hover:text-teal-400 transition-colors group"
+              >
+                <div className="w-8 h-8 rounded-full bg-teal-600/20 flex items-center justify-center flex-shrink-0 group-hover:bg-teal-600/30">
+                  <Mail className="w-4 h-4 text-teal-500" />
+                </div>
+                <div>
+                  <p className="font-medium text-white text-xs mb-0.5">Email</p>
+                  <p>support@fostertours.com</p>
+                </div>
+              </a>
+
+              {/* Support Hours */}
+              <div className="flex items-start gap-3 text-sm text-slate-400">
+                <div className="w-8 h-8 rounded-full bg-orange-600/20 flex items-center justify-center flex-shrink-0">
+                  <Clock className="w-4 h-4 text-orange-500" />
+                </div>
+                <div>
+                  <p className="font-medium text-white text-xs mb-0.5">Support Hours</p>
+                  <p>Mon - Sat: 9AM - 6PM</p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Newsletter & Contact */}
+          {/* Newsletter */}
           <div>
-            <h4 className="font-semibold text-lg mb-4">Stay Updated</h4>
+            <h4 className="font-semibold text-lg mb-4 text-teal-400">Stay Updated</h4>
             <p className="text-slate-400 text-sm mb-4">
               Subscribe to our newsletter for exclusive deals and travel tips.
             </p>
@@ -120,34 +186,23 @@ const Footer = () => {
               <Input
                 type="email"
                 placeholder="Enter your email"
-                className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+                className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 text-sm"
               />
-              <Button className="btn-pill bg-primary">
+              <Button className="btn-pill bg-primary hover:bg-primary/90">
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </div>
-            <div className="mt-6 space-y-3">
-              <a 
-                href="https://wa.me/2349058681268" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 text-sm text-slate-400 hover:text-green-400 transition-colors"
-              >
-                <MessageCircle className="w-4 h-4" />
-                +234 9058 681 268 (WhatsApp)
-              </a>
-              <a 
-                href="https://instagram.com/foster_tours" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 text-sm text-slate-400 hover:text-pink-400 transition-colors"
-              >
-                <Instagram className="w-4 h-4" />
-                @foster_tours
-              </a>
-              <div className="flex items-center gap-3 text-sm text-slate-400">
-                <Mail className="w-4 h-4" />
-                support@fostertours.com
+            
+            {/* Customer Support Badge */}
+            <div className="mt-6 p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-teal-500/20 flex items-center justify-center">
+                  <Headphones className="w-5 h-5 text-teal-400" />
+                </div>
+                <div>
+                  <p className="font-medium text-white text-sm">24/7 AI Support</p>
+                  <p className="text-slate-400 text-xs">Chat with our AI assistant anytime</p>
+                </div>
               </div>
             </div>
           </div>
