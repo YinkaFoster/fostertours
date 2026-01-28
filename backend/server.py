@@ -3558,6 +3558,524 @@ async def clear_chatbot_session(session_id: str):
         del chatbot_sessions[session_id]
     return {"message": "Session cleared"}
 
+# =============== REWARDS PROGRAM ROUTES ===============
+
+REWARD_TIERS = [
+    {"name": "Bronze", "min_points": 0, "benefits": ["5% off next booking", "Priority support"], "multiplier": 1.0},
+    {"name": "Silver", "min_points": 5000, "benefits": ["10% off next booking", "Priority support", "Free airport lounge access"], "multiplier": 1.25},
+    {"name": "Gold", "min_points": 15000, "benefits": ["15% off next booking", "Priority support", "Free airport lounge access", "Room upgrades"], "multiplier": 1.5},
+    {"name": "Platinum", "min_points": 30000, "benefits": ["20% off next booking", "24/7 concierge", "Free airport lounge access", "Room upgrades", "Free cancellation"], "multiplier": 2.0},
+]
+
+def get_user_tier(points: int) -> dict:
+    """Get user's reward tier based on points"""
+    tier = REWARD_TIERS[0]
+    for t in REWARD_TIERS:
+        if points >= t["min_points"]:
+            tier = t
+    return tier
+
+def generate_referral_code(user_id: str) -> str:
+    """Generate a unique referral code for user"""
+    return f"FT{user_id[:8].upper()}"
+
+@api_router.get("/rewards/profile")
+async def get_rewards_profile(request: Request):
+    """Get user's rewards profile including points and tier"""
+    user = await require_auth(request)
+    
+    # Get user's reward points from database
+    user_data = await db.users.find_one({"user_id": user["user_id"]})
+    reward_points = user_data.get("reward_points", 0) if user_data else 0
+    
+    # Calculate tier
+    tier = get_user_tier(reward_points)
+    next_tier_idx = REWARD_TIERS.index(tier) + 1
+    next_tier = REWARD_TIERS[next_tier_idx] if next_tier_idx < len(REWARD_TIERS) else None
+    
+    # Get recent transactions
+    transactions = await db.rewards_transactions.find(
+        {"user_id": user["user_id"]}
+    ).sort("created_at", -1).limit(10).to_list(10)
+    
+    # Remove MongoDB _id
+    for t in transactions:
+        t.pop("_id", None)
+    
+    return {
+        "points": reward_points,
+        "tier": tier,
+        "next_tier": next_tier,
+        "points_to_next_tier": next_tier["min_points"] - reward_points if next_tier else 0,
+        "recent_transactions": transactions
+    }
+
+@api_router.post("/rewards/earn")
+async def earn_reward_points(request: Request, points: int = Query(...), description: str = Query(...), reference_id: str = Query(None)):
+    """Award reward points to user"""
+    user = await require_auth(request)
+    
+    # Get current tier for multiplier
+    user_data = await db.users.find_one({"user_id": user["user_id"]})
+    current_points = user_data.get("reward_points", 0) if user_data else 0
+    tier = get_user_tier(current_points)
+    
+    # Apply tier multiplier
+    earned_points = int(points * tier["multiplier"])
+    
+    # Create transaction
+    transaction = {
+        "transaction_id": f"rwt_{uuid.uuid4().hex[:12]}",
+        "user_id": user["user_id"],
+        "points": earned_points,
+        "transaction_type": "earn",
+        "description": description,
+        "reference_id": reference_id,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.rewards_transactions.insert_one(transaction)
+    
+    # Update user's points
+    await db.users.update_one(
+        {"user_id": user["user_id"]},
+        {"$inc": {"reward_points": earned_points}}
+    )
+    
+    transaction.pop("_id", None)
+    return {
+        "message": f"Earned {earned_points} points!",
+        "transaction": transaction,
+        "new_total": current_points + earned_points
+    }
+
+@api_router.post("/rewards/redeem")
+async def redeem_reward_points(request: Request, points: int = Query(...)):
+    """Redeem reward points"""
+    user = await require_auth(request)
+    
+    # Check user has enough points
+    user_data = await db.users.find_one({"user_id": user["user_id"]})
+    current_points = user_data.get("reward_points", 0) if user_data else 0
+    
+    if current_points < points:
+        raise HTTPException(status_code=400, detail="Insufficient reward points")
+    
+    # Create redemption transaction
+    transaction = {
+        "transaction_id": f"rwt_{uuid.uuid4().hex[:12]}",
+        "user_id": user["user_id"],
+        "points": -points,
+        "transaction_type": "redeem",
+        "description": f"Redeemed {points} points",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.rewards_transactions.insert_one(transaction)
+    
+    # Deduct points
+    await db.users.update_one(
+        {"user_id": user["user_id"]},
+        {"$inc": {"reward_points": -points}}
+    )
+    
+    # Calculate discount (100 points = $1)
+    discount_amount = points / 100
+    
+    transaction.pop("_id", None)
+    return {
+        "message": f"Redeemed {points} points for ${discount_amount:.2f} discount",
+        "discount_amount": discount_amount,
+        "remaining_points": current_points - points
+    }
+
+@api_router.get("/rewards/tiers")
+async def get_reward_tiers():
+    """Get all reward tiers information"""
+    return {"tiers": REWARD_TIERS}
+
+# =============== REFERRAL PROGRAM ROUTES ===============
+
+REFERRAL_REWARD_POINTS = 500  # Points for successful referral
+
+@api_router.get("/referral/code")
+async def get_referral_code(request: Request):
+    """Get user's referral code and stats"""
+    user = await require_auth(request)
+    
+    # Get or generate referral code
+    user_data = await db.users.find_one({"user_id": user["user_id"]})
+    referral_code = user_data.get("referral_code") if user_data else None
+    
+    if not referral_code:
+        referral_code = generate_referral_code(user["user_id"])
+        await db.users.update_one(
+            {"user_id": user["user_id"]},
+            {"$set": {"referral_code": referral_code}}
+        )
+    
+    # Get referral stats
+    referrals = await db.referrals.find({"referrer_id": user["user_id"]}).to_list(100)
+    
+    total_referrals = len(referrals)
+    completed_referrals = len([r for r in referrals if r.get("status") == "rewarded"])
+    pending_referrals = len([r for r in referrals if r.get("status") == "pending"])
+    total_earned = completed_referrals * REFERRAL_REWARD_POINTS
+    
+    return {
+        "referral_code": referral_code,
+        "referral_link": f"https://fostertours.com/signup?ref={referral_code}",
+        "stats": {
+            "total_referrals": total_referrals,
+            "completed_referrals": completed_referrals,
+            "pending_referrals": pending_referrals,
+            "total_points_earned": total_earned
+        },
+        "reward_per_referral": REFERRAL_REWARD_POINTS
+    }
+
+@api_router.post("/referral/apply")
+async def apply_referral_code(referral_code: str = Query(...)):
+    """Apply a referral code during signup (called after user creation)"""
+    # Find referrer by code
+    referrer = await db.users.find_one({"referral_code": referral_code.upper()})
+    
+    if not referrer:
+        raise HTTPException(status_code=404, detail="Invalid referral code")
+    
+    return {
+        "valid": True,
+        "referrer_id": referrer["user_id"],
+        "message": f"Referral code valid! You'll both earn {REFERRAL_REWARD_POINTS} points after your first booking."
+    }
+
+@api_router.post("/referral/complete")
+async def complete_referral(request: Request, referrer_id: str = Query(...)):
+    """Complete a referral after user makes first booking"""
+    user = await require_auth(request)
+    
+    # Check if referral already exists
+    existing = await db.referrals.find_one({
+        "referrer_id": referrer_id,
+        "referred_user_id": user["user_id"]
+    })
+    
+    if existing and existing.get("status") == "rewarded":
+        return {"message": "Referral already rewarded"}
+    
+    # Update or create referral
+    referral_id = existing.get("referral_id") if existing else f"ref_{uuid.uuid4().hex[:12]}"
+    
+    await db.referrals.update_one(
+        {"referral_id": referral_id},
+        {
+            "$set": {
+                "referral_id": referral_id,
+                "referrer_id": referrer_id,
+                "referred_user_id": user["user_id"],
+                "status": "rewarded",
+                "reward_points": REFERRAL_REWARD_POINTS,
+                "completed_at": datetime.now(timezone.utc).isoformat()
+            },
+            "$setOnInsert": {
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+        },
+        upsert=True
+    )
+    
+    # Award points to both users
+    for uid in [referrer_id, user["user_id"]]:
+        await db.rewards_transactions.insert_one({
+            "transaction_id": f"rwt_{uuid.uuid4().hex[:12]}",
+            "user_id": uid,
+            "points": REFERRAL_REWARD_POINTS,
+            "transaction_type": "earn",
+            "description": "Referral bonus",
+            "reference_id": referral_id,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        })
+        await db.users.update_one(
+            {"user_id": uid},
+            {"$inc": {"reward_points": REFERRAL_REWARD_POINTS}}
+        )
+    
+    return {
+        "message": f"Referral completed! Both users earned {REFERRAL_REWARD_POINTS} points.",
+        "points_earned": REFERRAL_REWARD_POINTS
+    }
+
+@api_router.get("/referral/history")
+async def get_referral_history(request: Request):
+    """Get user's referral history"""
+    user = await require_auth(request)
+    
+    referrals = await db.referrals.find(
+        {"referrer_id": user["user_id"]}
+    ).sort("created_at", -1).to_list(50)
+    
+    for r in referrals:
+        r.pop("_id", None)
+        # Get referred user info
+        if r.get("referred_user_id"):
+            referred_user = await db.users.find_one({"user_id": r["referred_user_id"]})
+            if referred_user:
+                r["referred_name"] = referred_user.get("name", "User")
+    
+    return {"referrals": referrals}
+
+# =============== MESSAGING ROUTES ===============
+
+@api_router.get("/messages/conversations")
+async def get_conversations(request: Request):
+    """Get user's conversations list"""
+    user = await require_auth(request)
+    
+    # Find all conversations where user is a participant
+    conversations = await db.conversations.find(
+        {"participants": user["user_id"]}
+    ).sort("last_message_at", -1).to_list(50)
+    
+    result = []
+    for conv in conversations:
+        conv.pop("_id", None)
+        
+        # Get other participant info
+        other_id = [p for p in conv["participants"] if p != user["user_id"]][0] if len(conv["participants"]) > 1 else None
+        if other_id:
+            other_user = await db.users.find_one({"user_id": other_id})
+            conv["other_user"] = {
+                "user_id": other_id,
+                "name": other_user.get("name", "User") if other_user else "User",
+                "avatar": other_user.get("avatar") if other_user else None
+            }
+        
+        # Get unread count
+        unread_count = await db.messages.count_documents({
+            "conversation_id": conv["conversation_id"],
+            "receiver_id": user["user_id"],
+            "read": False
+        })
+        conv["unread_count"] = unread_count
+        
+        result.append(conv)
+    
+    return {"conversations": result}
+
+@api_router.get("/messages/conversation/{conversation_id}")
+async def get_conversation_messages(request: Request, conversation_id: str, limit: int = Query(50)):
+    """Get messages in a conversation"""
+    user = await require_auth(request)
+    
+    # Verify user is participant
+    conv = await db.conversations.find_one({
+        "conversation_id": conversation_id,
+        "participants": user["user_id"]
+    })
+    
+    if not conv:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    
+    messages = await db.messages.find(
+        {"conversation_id": conversation_id}
+    ).sort("created_at", -1).limit(limit).to_list(limit)
+    
+    # Mark messages as read
+    await db.messages.update_many(
+        {
+            "conversation_id": conversation_id,
+            "receiver_id": user["user_id"],
+            "read": False
+        },
+        {"$set": {"read": True}}
+    )
+    
+    for m in messages:
+        m.pop("_id", None)
+    
+    messages.reverse()  # Show oldest first
+    
+    return {"messages": messages, "conversation": conv}
+
+@api_router.post("/messages/send")
+async def send_message(request: Request, receiver_id: str = Query(...), content: str = Query(...)):
+    """Send a message to another user"""
+    user = await require_auth(request)
+    
+    if user["user_id"] == receiver_id:
+        raise HTTPException(status_code=400, detail="Cannot message yourself")
+    
+    # Check receiver exists
+    receiver = await db.users.find_one({"user_id": receiver_id})
+    if not receiver:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Find or create conversation
+    participants = sorted([user["user_id"], receiver_id])
+    conv = await db.conversations.find_one({"participants": participants})
+    
+    if not conv:
+        conv = {
+            "conversation_id": f"conv_{uuid.uuid4().hex[:12]}",
+            "participants": participants,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.conversations.insert_one(conv)
+    
+    # Create message
+    message = {
+        "message_id": f"msg_{uuid.uuid4().hex[:12]}",
+        "conversation_id": conv["conversation_id"],
+        "sender_id": user["user_id"],
+        "receiver_id": receiver_id,
+        "content": content,
+        "read": False,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.messages.insert_one(message)
+    
+    # Update conversation
+    await db.conversations.update_one(
+        {"conversation_id": conv["conversation_id"]},
+        {
+            "$set": {
+                "last_message": content[:100],
+                "last_message_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    message.pop("_id", None)
+    return {"message": message}
+
+@api_router.get("/messages/unread-count")
+async def get_unread_count(request: Request):
+    """Get total unread message count"""
+    user = await require_auth(request)
+    
+    count = await db.messages.count_documents({
+        "receiver_id": user["user_id"],
+        "read": False
+    })
+    
+    return {"unread_count": count}
+
+@api_router.post("/messages/mark-read/{conversation_id}")
+async def mark_messages_read(request: Request, conversation_id: str):
+    """Mark all messages in conversation as read"""
+    user = await require_auth(request)
+    
+    result = await db.messages.update_many(
+        {
+            "conversation_id": conversation_id,
+            "receiver_id": user["user_id"],
+            "read": False
+        },
+        {"$set": {"read": True}}
+    )
+    
+    return {"marked_read": result.modified_count}
+
+# =============== GLOBAL SEARCH ROUTES ===============
+
+@api_router.get("/search")
+async def global_search(q: str = Query(..., min_length=2)):
+    """Global search across destinations, blog posts, products, events"""
+    query = q.lower()
+    results = {
+        "destinations": [],
+        "blog_posts": [],
+        "products": [],
+        "events": [],
+        "users": []
+    }
+    
+    # Search destinations (from our static list)
+    destinations_list = [
+        {"name": "Dubai, UAE", "type": "city", "image": "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=400"},
+        {"name": "Maldives", "type": "beach", "image": "https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=400"},
+        {"name": "Paris, France", "type": "city", "image": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400"},
+        {"name": "Bali, Indonesia", "type": "tropical", "image": "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400"},
+        {"name": "Cape Town, South Africa", "type": "adventure", "image": "https://images.unsplash.com/photo-1580060839134-75a5edca2e99?w=400"},
+        {"name": "Tokyo, Japan", "type": "city", "image": "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400"},
+        {"name": "Santorini, Greece", "type": "beach", "image": "https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?w=400"},
+        {"name": "London, UK", "type": "city", "image": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=400"},
+        {"name": "New York, USA", "type": "city", "image": "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=400"},
+        {"name": "Zanzibar, Tanzania", "type": "beach", "image": "https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?w=400"},
+    ]
+    
+    for dest in destinations_list:
+        if query in dest["name"].lower():
+            results["destinations"].append(dest)
+    
+    # Search blog posts
+    blog_posts = await db.blog_posts.find({
+        "$or": [
+            {"title": {"$regex": query, "$options": "i"}},
+            {"excerpt": {"$regex": query, "$options": "i"}},
+            {"category": {"$regex": query, "$options": "i"}}
+        ]
+    }).limit(5).to_list(5)
+    
+    for post in blog_posts:
+        post.pop("_id", None)
+        results["blog_posts"].append({
+            "post_id": post.get("post_id"),
+            "title": post.get("title"),
+            "slug": post.get("slug"),
+            "image_url": post.get("image_url"),
+            "category": post.get("category")
+        })
+    
+    # Search products
+    products = await db.products.find({
+        "$or": [
+            {"name": {"$regex": query, "$options": "i"}},
+            {"category": {"$regex": query, "$options": "i"}}
+        ]
+    }).limit(5).to_list(5)
+    
+    for prod in products:
+        prod.pop("_id", None)
+        results["products"].append({
+            "product_id": prod.get("product_id"),
+            "name": prod.get("name"),
+            "price": prod.get("price"),
+            "image_url": prod.get("image_url"),
+            "category": prod.get("category")
+        })
+    
+    # Search events
+    events = await db.events.find({
+        "$or": [
+            {"title": {"$regex": query, "$options": "i"}},
+            {"location": {"$regex": query, "$options": "i"}},
+            {"category": {"$regex": query, "$options": "i"}}
+        ]
+    }).limit(5).to_list(5)
+    
+    for event in events:
+        event.pop("_id", None)
+        results["events"].append({
+            "event_id": event.get("event_id"),
+            "title": event.get("title"),
+            "location": event.get("location"),
+            "date": event.get("date"),
+            "image_url": event.get("image_url")
+        })
+    
+    # Search users (public profiles)
+    users = await db.users.find({
+        "name": {"$regex": query, "$options": "i"}
+    }).limit(5).to_list(5)
+    
+    for u in users:
+        results["users"].append({
+            "user_id": u.get("user_id"),
+            "name": u.get("name"),
+            "avatar": u.get("avatar")
+        })
+    
+    return results
+
 # Health check endpoint
 @api_router.get("/health")
 async def health_check():
