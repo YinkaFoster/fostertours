@@ -645,6 +645,9 @@ class TravelToursAPITester:
         # Payment tests
         self.test_stripe_checkout()
         
+        # Admin Panel Tests
+        self.run_admin_tests()
+        
         # Print summary
         print("\n" + "=" * 50)
         print("📊 TEST SUMMARY")
