@@ -180,6 +180,33 @@ const AppRouter = () => {
         }
       />
 
+      {/* Booking Flow */}
+      <Route path="/booking/:bookingType/:itemId" element={<BookingDetailPage />} />
+      <Route
+        path="/booking/checkout"
+        element={
+          <ProtectedRoute>
+            <BookingCheckoutPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/booking/paystack-mock"
+        element={
+          <ProtectedRoute>
+            <PaystackMockPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/booking/success"
+        element={
+          <ProtectedRoute>
+            <BookingSuccessPage />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Catch all - redirect to home */}
       <Route path="*" element={<LandingPage />} />
     </Routes>
