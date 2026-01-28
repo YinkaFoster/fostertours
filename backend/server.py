@@ -14,6 +14,11 @@ import bcrypt
 import jwt
 import httpx
 
+# Amadeus and SendGrid
+from amadeus import Client as AmadeusClient, ResponseError as AmadeusResponseError
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail, Email, To, Content
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
@@ -26,6 +31,25 @@ db = client[os.environ['DB_NAME']]
 JWT_SECRET = os.environ.get('JWT_SECRET', 'travel_tours_secret_key_2024')
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24 * 7  # 7 days
+
+# Amadeus Client
+amadeus_client = None
+AMADEUS_API_KEY = os.environ.get('AMADEUS_API_KEY')
+AMADEUS_API_SECRET = os.environ.get('AMADEUS_API_SECRET')
+
+if AMADEUS_API_KEY and AMADEUS_API_SECRET:
+    try:
+        amadeus_client = AmadeusClient(
+            client_id=AMADEUS_API_KEY,
+            client_secret=AMADEUS_API_SECRET
+        )
+        logging.info("Amadeus client initialized successfully")
+    except Exception as e:
+        logging.error(f"Failed to initialize Amadeus client: {e}")
+
+# SendGrid Client
+SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY')
+SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'noreply@journeyquest.app')
 
 # Create the main app
 app = FastAPI(title="Travel & Tours API", version="1.0.0")
