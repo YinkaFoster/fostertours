@@ -1649,7 +1649,7 @@ from emergentintegrations.llm.chat import LlmChat, UserMessage
 ai_chat_sessions = {}
 
 def get_travel_system_prompt():
-    return """You are an expert AI travel planner for JourneyQuest. Your role is to help users plan amazing trips by creating detailed, personalized itineraries.
+    return """You are an expert AI travel planner for Foster Tours. Your role is to help users plan amazing trips by creating detailed, personalized itineraries.
 
 When creating itineraries, include:
 - Day-by-day breakdown with times
