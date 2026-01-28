@@ -53,7 +53,7 @@ const Navbar = () => {
             <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center">
               <Plane className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-serif font-semibold hidden sm:block">JourneyQuest</span>
+            <span className="text-xl font-serif font-semibold hidden sm:block">Foster Tours</span>
           </Link>
 
           {/* Desktop Navigation */}
