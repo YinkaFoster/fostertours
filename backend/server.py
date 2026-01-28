@@ -312,6 +312,49 @@ class PaymentTransaction(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+# Rewards Program Models
+class RewardsTier(BaseModel):
+    name: str  # Bronze, Silver, Gold, Platinum
+    min_points: int
+    benefits: List[str]
+    multiplier: float  # Points earning multiplier
+
+class RewardsTransaction(BaseModel):
+    transaction_id: str
+    user_id: str
+    points: int
+    transaction_type: str  # earn, redeem
+    description: str
+    reference_id: Optional[str] = None
+    created_at: datetime
+
+# Referral Program Models
+class Referral(BaseModel):
+    referral_id: str
+    referrer_id: str
+    referred_email: str
+    referred_user_id: Optional[str] = None
+    status: str  # pending, completed, rewarded
+    reward_points: int
+    created_at: datetime
+    completed_at: Optional[datetime] = None
+
+# Messaging Models
+class Message(BaseModel):
+    message_id: str
+    sender_id: str
+    receiver_id: str
+    content: str
+    read: bool = False
+    created_at: datetime
+
+class Conversation(BaseModel):
+    conversation_id: str
+    participants: List[str]
+    last_message: Optional[str] = None
+    last_message_at: Optional[datetime] = None
+    created_at: datetime
+
 # =============== HELPER FUNCTIONS ===============
 
 def hash_password(password: str) -> str:
