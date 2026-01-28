@@ -20,8 +20,8 @@ import {
 } from 'lucide-react';
 import LocaleSelector from './LocaleSelector';
 
-// Foster Tours Logo
-const LOGO_URL = "https://customer-assets.emergentagent.com/job_journeyquest-9/artifacts/mdvh6cnk_Untitled%20design%20-%202.PNG";
+// Foster Tours Logo - New attractive versions
+const LOGO_URL = "https://customer-assets.emergentagent.com/job_journeyquest-9/artifacts/s0ctic6y_Foster%20Tours%20-preview.png";
 
 const Navbar = () => {
   const { theme, toggleTheme } = useTheme();
