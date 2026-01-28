@@ -17,6 +17,7 @@ import EventsPage from "./pages/EventsPage";
 import VehiclesPage from "./pages/VehiclesPage";
 import VisaPage from "./pages/VisaPage";
 import BlogPage from "./pages/BlogPage";
+import BlogPostPage from "./pages/BlogPostPage";
 import StorePage from "./pages/StorePage";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import CartPage from "./pages/CartPage";
@@ -24,6 +25,8 @@ import CheckoutPage from "./pages/CheckoutPage";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
 import WalletPage from "./pages/WalletPage";
 import GalleryPage from "./pages/GalleryPage";
+import EditProfilePage from "./pages/EditProfilePage";
+import UserProfilePage from "./pages/UserProfilePage";
 import { PaymentSuccess, PaymentCancel } from "./pages/PaymentPages";
 
 // Router wrapper to handle auth callback
@@ -49,6 +52,7 @@ const AppRouter = () => {
       <Route path="/vehicles" element={<VehiclesPage />} />
       <Route path="/visa" element={<VisaPage />} />
       <Route path="/blog" element={<BlogPage />} />
+      <Route path="/blog/:slug" element={<BlogPostPage />} />
       <Route path="/store" element={<StorePage />} />
       <Route path="/store/product/:productId" element={<ProductDetailPage />} />
       <Route path="/store/cart" element={<CartPage />} />
@@ -77,6 +81,15 @@ const AppRouter = () => {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <EditProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/profile/:userId" element={<UserProfilePage />} />
 
       {/* Catch all - redirect to home */}
       <Route path="*" element={<LandingPage />} />
