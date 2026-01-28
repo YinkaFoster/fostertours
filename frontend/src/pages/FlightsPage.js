@@ -391,8 +391,8 @@ const FlightsPage = () => {
                         <p className="text-sm text-muted-foreground">to {route.to}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm text-muted-foreground">from</p>
-                        <p className="text-xl font-bold text-primary">${route.price}</p>
+                        <p className="text-sm text-muted-foreground">{t('from')}</p>
+                        <p className="text-xl font-bold text-primary">{formatPrice(route.price)}</p>
                       </div>
                     </div>
                   </CardContent>
