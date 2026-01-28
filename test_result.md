@@ -195,7 +195,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Admin Panel API endpoints"
+    - "AI Itinerary Planner routing"
+    - "Admin Panel page"
+    - "Itinerary Builder with drag-and-drop"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
