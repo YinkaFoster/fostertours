@@ -2963,7 +2963,7 @@ def send_email_sync(to_email: str, subject: str, html_content: str) -> bool:
     
     try:
         message = Mail(
-            from_email=Email(SENDER_EMAIL, "JourneyQuest"),
+            from_email=Email(SENDER_EMAIL, "Foster Tours"),
             to_emails=To(to_email),
             subject=subject,
             html_content=Content("text/html", html_content)
