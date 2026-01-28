@@ -52,7 +52,7 @@ SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY')
 SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'noreply@journeyquest.app')
 
 # Create the main app
-app = FastAPI(title="Travel & Tours API", version="1.0.0")
+app = FastAPI(title="Foster Tours API", version="1.0.0")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
