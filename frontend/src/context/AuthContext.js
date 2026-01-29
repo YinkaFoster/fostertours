@@ -43,8 +43,10 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
+      console.log('Login attempt - API URL:', API);
       const response = await axios.post(`${API}/auth/login`, { email, password }, {
-        withCredentials: true
+        withCredentials: true,
+        timeout: 10000
       });
       const { access_token, user: userData } = response.data;
       console.log('Login successful, setting token and user', userData);
@@ -53,15 +55,32 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       return userData;
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Login error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        apiUrl: API
+      });
+      
+      // Provide more specific error messages
+      if (error.code === 'ECONNABORTED') {
+        throw new Error('Connection timeout - please check your internet connection');
+      } else if (error.code === 'ERR_NETWORK') {
+        throw new Error('Network error - unable to reach server. Please check your connection.');
+      } else if (!error.response) {
+        throw new Error('Network error - server is unreachable');
+      }
+      
       throw error;
     }
   };
 
   const register = async (email, password, name, phone) => {
     try {
+      console.log('Register attempt - API URL:', API);
       const response = await axios.post(`${API}/auth/register`, { email, password, name, phone }, {
-        withCredentials: true
+        withCredentials: true,
+        timeout: 10000
       });
       const { access_token, user: userData } = response.data;
       console.log('Registration successful, setting token and user', userData);
@@ -70,7 +89,22 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       return userData;
     } catch (error) {
-      console.error('Register error:', error);
+      console.error('Register error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        apiUrl: API
+      });
+      
+      // Provide more specific error messages
+      if (error.code === 'ECONNABORTED') {
+        throw new Error('Connection timeout - please check your internet connection');
+      } else if (error.code === 'ERR_NETWORK') {
+        throw new Error('Network error - unable to reach server. Please check your connection.');
+      } else if (!error.response) {
+        throw new Error('Network error - server is unreachable');
+      }
+      
       throw error;
     }
   };
