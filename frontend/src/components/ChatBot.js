@@ -121,7 +121,7 @@ const ChatBot = () => {
   return (
     <Card className="fixed bottom-24 sm:bottom-6 right-4 sm:right-6 z-40 w-[calc(100vw-2rem)] sm:w-[380px] h-[70vh] sm:h-[520px] max-h-[520px] flex flex-col shadow-2xl border-0 overflow-hidden rounded-2xl">
       {/* Header */}
-      <div className="bg-gradient-to-r from-teal-500 to-teal-600 text-white p-4 flex items-center justify-between">
+      <div className="bg-gradient-to-r from-emerald-600 to-green-600 text-white p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
             <Bot className="w-5 h-5" />
