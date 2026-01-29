@@ -2116,9 +2116,45 @@ class TravelToursAPITester:
         return self.tests_passed == self.tests_run
 
 def main():
+    """Main function to run authentication tests"""
+    print("🚀 Foster Tours Authentication System Testing")
+    print("=" * 60)
+    
     tester = TravelToursAPITester()
-    success = tester.run_all_tests()
-    return 0 if success else 1
+    
+    # Run comprehensive authentication tests
+    auth_results = tester.run_authentication_tests()
+    
+    # Print final summary
+    print("\n" + "=" * 60)
+    print("📊 AUTHENTICATION TEST SUMMARY")
+    print("=" * 60)
+    print(f"Total Tests: {tester.tests_run}")
+    print(f"Passed: {tester.tests_passed}")
+    print(f"Failed: {len(tester.failed_tests)}")
+    print(f"Success Rate: {(tester.tests_passed/tester.tests_run*100):.1f}%")
+    
+    # Detailed results
+    print(f"\n🔍 Detailed Results:")
+    for test_name, result in auth_results.items():
+        status = "✅ PASSED" if result else "❌ FAILED"
+        print(f"   {test_name.replace('_', ' ').title()}: {status}")
+    
+    if tester.failed_tests:
+        print("\n❌ FAILED TESTS:")
+        for test in tester.failed_tests:
+            print(f"  - {test['test']}: {test['error']}")
+    
+    # Return success if all critical auth tests pass
+    critical_tests = ['registration', 'admin_login', 'user_login', 'get_current_user', 'cors']
+    critical_passed = all(auth_results.get(test, False) for test in critical_tests)
+    
+    if critical_passed:
+        print(f"\n✅ All critical authentication tests PASSED!")
+        return 0
+    else:
+        print(f"\n❌ Some critical authentication tests FAILED!")
+        return 1
 
 if __name__ == "__main__":
     sys.exit(main())
