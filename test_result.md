@@ -408,12 +408,13 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Seat Selection Frontend Integration"
     - "Live Domain Testing - Foster Tours Production"
     - "Travel Stories API endpoints"
     - "Messaging with Media attachments"
-    - "Seat Selection API endpoints"
   stuck_tasks: 
     - "Live Domain Testing - Foster Tours Production"
+    - "Seat Selection Frontend Integration"
   test_all: false
   test_priority: "high_first"
 
