@@ -53,8 +53,8 @@ const LandingPage = () => {
     <div className="min-h-screen bg-background" data-testid="landing-page">
       <Navbar />
 
-      {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center overflow-hidden" data-testid="hero-section">
+      {/* Hero Section - Mobile Optimized */}
+      <section className="relative min-h-[85vh] sm:min-h-[90vh] flex items-center overflow-hidden" data-testid="hero-section">
         {/* Background Image */}
         <div className="absolute inset-0">
           <img
@@ -66,64 +66,64 @@ const LandingPage = () => {
           <div className="absolute inset-0 brand-glow" />
         </div>
 
-        {/* Content */}
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 md:px-12 lg:px-20 py-20">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+        {/* Content - Mobile Optimized */}
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 md:px-12 lg:px-20 py-16 sm:py-20">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8 items-center">
             <div className="md:col-span-8 text-white animate-fade-in">
-              <Badge className="mb-6 bg-white/20 text-white border-white/30 backdrop-blur-sm">
+              <Badge className="mb-4 sm:mb-6 bg-white/20 text-white border-white/30 backdrop-blur-sm text-xs sm:text-sm">
                 Discover 200+ Destinations
               </Badge>
-              <h1 className="font-serif text-5xl md:text-7xl font-semibold tracking-tight leading-none mb-6">
+              <h1 className="font-serif text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-tight sm:leading-none mb-4 sm:mb-6">
                 Your Journey<br />
                 <span className="text-primary">Begins Here</span>
               </h1>
-              <p className="text-xl md:text-2xl text-white/80 max-w-xl mb-8 leading-relaxed">
+              <p className="text-base sm:text-xl md:text-2xl text-white/80 max-w-xl mb-6 sm:mb-8 leading-relaxed">
                 Explore the world's most breathtaking destinations with exclusive deals on flights, hotels, and unforgettable experiences.
               </p>
 
-              {/* Search Box */}
-              <div className="glass rounded-2xl p-6 max-w-2xl" data-testid="hero-search-box">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-white/80">Destination</label>
+              {/* Search Box - Mobile Optimized */}
+              <div className="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 max-w-2xl" data-testid="hero-search-box">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <label className="text-xs sm:text-sm font-medium text-white/80">Destination</label>
                     <div className="relative">
                       <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
                       <Input
                         placeholder="Where to?"
-                        className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                        className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50 h-10 sm:h-11"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         data-testid="destination-input"
                       />
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-white/80">Date</label>
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <label className="text-xs sm:text-sm font-medium text-white/80">Date</label>
                     <div className="relative">
                       <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
                       <Input
                         type="date"
-                        className="pl-10 bg-white/10 border-white/20 text-white"
+                        className="pl-10 bg-white/10 border-white/20 text-white h-10 sm:h-11"
                         data-testid="date-input"
                       />
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-white/80">Travelers</label>
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <label className="text-xs sm:text-sm font-medium text-white/80">Travelers</label>
                     <div className="relative">
                       <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
                       <Input
                         type="number"
                         placeholder="2"
                         min="1"
-                        className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                        className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50 h-10 sm:h-11"
                         data-testid="travelers-input"
                       />
                     </div>
                   </div>
                 </div>
                 <Button
-                  className="w-full mt-4 btn-pill bg-secondary hover:bg-secondary/90 text-white"
+                  className="w-full mt-3 sm:mt-4 btn-pill bg-secondary hover:bg-secondary/90 text-white h-11 sm:h-12"
                   data-testid="search-btn"
                 >
                   <Search className="w-4 h-4 mr-2" />
@@ -132,7 +132,7 @@ const LandingPage = () => {
               </div>
             </div>
 
-            {/* Stats Card */}
+            {/* Stats Card - Hidden on Mobile */}
             <div className="md:col-span-4 hidden md:block">
               <div className="glass rounded-2xl p-6 animate-fade-in stagger-2">
                 <div className="space-y-6">
