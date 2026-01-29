@@ -295,7 +295,10 @@ function App() {
         <BrowserRouter>
           <AuthProvider>
             <CartProvider>
-              <AppRouter />
+              <div className="pb-bottom-nav">
+                <AppRouter />
+              </div>
+              <MobileBottomNav />
               <ChatBot />
               <Toaster position="top-right" richColors />
             </CartProvider>
