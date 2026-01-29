@@ -158,9 +158,9 @@ const Navbar = () => {
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link to="/dashboard" className="flex items-center gap-2" data-testid="nav-dashboard">
+                    <Link to="/home" className="flex items-center gap-2" data-testid="nav-dashboard">
                       <LayoutDashboard className="w-4 h-4" />
-                      {t('dashboard')}
+                      {t('home')}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
