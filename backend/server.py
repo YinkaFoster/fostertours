@@ -56,8 +56,20 @@ if AMADEUS_API_KEY and AMADEUS_API_SECRET:
 SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY')
 SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'noreply@fostertours.com')
 
+# Uploads Configuration
+UPLOADS_DIR = ROOT_DIR / 'uploads'
+UPLOADS_DIR.mkdir(exist_ok=True)
+MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10MB
+MAX_VIDEO_SIZE = 50 * 1024 * 1024  # 50MB
+ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo']
+STORY_EXPIRATION_HOURS = 24
+
 # Create the main app
 app = FastAPI(title="Foster Tours API", version="1.0.0")
+
+# Mount uploads directory for serving files
+app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
@@ -68,6 +80,38 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# WebSocket Connection Managers
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: Dict[str, WebSocket] = {}
+        self.user_locations: Dict[str, Dict[str, Any]] = {}
+    
+    async def connect(self, websocket: WebSocket, user_id: str):
+        await websocket.accept()
+        self.active_connections[user_id] = websocket
+    
+    def disconnect(self, user_id: str):
+        if user_id in self.active_connections:
+            del self.active_connections[user_id]
+        if user_id in self.user_locations:
+            del self.user_locations[user_id]
+    
+    async def send_personal_message(self, message: dict, user_id: str):
+        if user_id in self.active_connections:
+            await self.active_connections[user_id].send_json(message)
+    
+    async def broadcast(self, message: dict, exclude: str = None):
+        for user_id, connection in self.active_connections.items():
+            if user_id != exclude:
+                try:
+                    await connection.send_json(message)
+                except:
+                    pass
+
+# Initialize connection managers
+call_manager = ConnectionManager()
+location_manager = ConnectionManager()
 
 # =============== MODELS ===============
 
