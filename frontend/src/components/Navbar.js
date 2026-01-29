@@ -66,7 +66,7 @@ const Navbar = () => {
                 alt="Foster Tours" 
                 className="h-8 sm:h-12 w-auto object-contain drop-shadow-lg hover:scale-105 transition-transform"
                 onError={(e) => {
-                  e.target.parentElement.innerHTML = '<div class="flex items-center gap-2"><div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-teal-500 flex items-center justify-center"><svg class="w-4 h-4 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg></div><span class="text-lg sm:text-xl font-serif font-bold text-primary">Foster Tours</span></div>';
+                  e.target.parentElement.innerHTML = '<div class="flex items-center gap-2"><div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-500 flex items-center justify-center"><svg class="w-4 h-4 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg></div><span class="text-lg sm:text-xl font-serif font-bold text-primary">Foster Tours</span></div>';
                 }}
               />
             </div>
