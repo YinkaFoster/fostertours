@@ -3952,6 +3952,551 @@ async def revoke_user_admin(request: Request, user_id: str):
     
     return {"message": "Admin privileges revoked"}
 
+# =============== ADMIN REPORTS & SETTINGS ===============
+
+# Available user roles
+USER_ROLES = ["user", "moderator", "support", "manager", "admin", "super_admin"]
+
+@api_router.get("/admin/reports/generate")
+async def generate_admin_report(
+    request: Request,
+    report_type: str = Query(default="users", description="Type: users, bookings, orders, revenue"),
+    format: str = Query(default="json", description="Format: json, csv"),
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None
+):
+    """Generate reports for admin - users, bookings, orders, revenue"""
+    await require_admin(request)
+    
+    date_query = {}
+    if start_date:
+        date_query["$gte"] = start_date
+    if end_date:
+        date_query["$lte"] = end_date
+    
+    query = {}
+    if date_query:
+        query["created_at"] = date_query
+    
+    if report_type == "users":
+        data = await db.users.find(query, {"_id": 0, "password": 0, "hashed_password": 0}).to_list(10000)
+        headers = ["user_id", "email", "name", "role", "is_admin", "wallet_balance", "reward_points", "created_at"]
+    elif report_type == "bookings":
+        data = await db.bookings.find(query, {"_id": 0}).to_list(10000)
+        headers = ["booking_id", "user_id", "booking_type", "status", "payment_status", "total_amount", "created_at"]
+    elif report_type == "orders":
+        data = await db.store_orders.find(query, {"_id": 0}).to_list(10000)
+        headers = ["order_id", "user_id", "status", "payment_status", "total", "created_at"]
+    elif report_type == "revenue":
+        # Aggregate revenue data
+        bookings = await db.bookings.find({"payment_status": "paid", **query}, {"_id": 0}).to_list(10000)
+        orders = await db.store_orders.find({"payment_status": "paid", **query}, {"_id": 0}).to_list(10000)
+        
+        total_bookings_revenue = sum(b.get("total_amount", 0) for b in bookings)
+        total_orders_revenue = sum(o.get("total", 0) for o in orders)
+        
+        data = [{
+            "report_date": datetime.now(timezone.utc).isoformat(),
+            "total_bookings": len(bookings),
+            "total_orders": len(orders),
+            "bookings_revenue": total_bookings_revenue,
+            "orders_revenue": total_orders_revenue,
+            "total_revenue": total_bookings_revenue + total_orders_revenue,
+            "period_start": start_date or "all_time",
+            "period_end": end_date or "present"
+        }]
+        headers = ["report_date", "total_bookings", "total_orders", "bookings_revenue", "orders_revenue", "total_revenue"]
+    else:
+        raise HTTPException(status_code=400, detail="Invalid report type")
+    
+    if format == "csv":
+        # Generate CSV content
+        import io
+        import csv
+        
+        output = io.StringIO()
+        writer = csv.DictWriter(output, fieldnames=headers, extrasaction='ignore')
+        writer.writeheader()
+        for row in data:
+            writer.writerow(row)
+        
+        csv_content = output.getvalue()
+        
+        return JSONResponse(content={
+            "format": "csv",
+            "filename": f"{report_type}_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+            "content": csv_content,
+            "rows": len(data)
+        })
+    
+    return {
+        "format": "json",
+        "report_type": report_type,
+        "data": data,
+        "total_rows": len(data),
+        "generated_at": datetime.now(timezone.utc).isoformat()
+    }
+
+@api_router.post("/admin/reports/upload")
+async def upload_admin_report(
+    request: Request,
+    file: UploadFile = File(...)
+):
+    """Upload and process CSV/Excel reports"""
+    await require_admin(request)
+    
+    if not file.filename.endswith(('.csv', '.xlsx', '.xls')):
+        raise HTTPException(status_code=400, detail="Only CSV and Excel files are supported")
+    
+    # Save uploaded file
+    upload_id = str(uuid.uuid4())
+    upload_path = UPLOADS_DIR / f"reports/{upload_id}_{file.filename}"
+    upload_path.parent.mkdir(exist_ok=True)
+    
+    content = await file.read()
+    async with aiofiles.open(upload_path, 'wb') as f:
+        await f.write(content)
+    
+    # Store upload record
+    upload_record = {
+        "upload_id": upload_id,
+        "filename": file.filename,
+        "file_path": str(upload_path),
+        "file_size": len(content),
+        "uploaded_at": datetime.now(timezone.utc).isoformat(),
+        "status": "uploaded"
+    }
+    await db.admin_uploads.insert_one(upload_record)
+    
+    return {
+        "message": "File uploaded successfully",
+        "upload_id": upload_id,
+        "filename": file.filename,
+        "size": len(content)
+    }
+
+@api_router.put("/admin/users/{user_id}/role")
+async def update_user_role(request: Request, user_id: str):
+    """Update user role (admin only)"""
+    await require_admin(request)
+    body = await request.json()
+    
+    new_role = body.get("role")
+    if not new_role or new_role not in USER_ROLES:
+        raise HTTPException(status_code=400, detail=f"Invalid role. Must be one of: {', '.join(USER_ROLES)}")
+    
+    # Determine is_admin based on role
+    is_admin = new_role in ["admin", "super_admin"]
+    
+    result = await db.users.update_one(
+        {"user_id": user_id},
+        {"$set": {
+            "role": new_role,
+            "is_admin": is_admin,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {"message": f"User role updated to {new_role}", "is_admin": is_admin}
+
+@api_router.get("/admin/roles")
+async def get_available_roles(request: Request):
+    """Get list of available user roles"""
+    await require_admin(request)
+    return {"roles": USER_ROLES}
+
+# App Settings Management
+@api_router.get("/admin/settings")
+async def get_app_settings(request: Request):
+    """Get all app settings"""
+    await require_admin(request)
+    
+    settings = await db.app_settings.find_one({"setting_id": "main"})
+    
+    if not settings:
+        # Create default settings
+        default_settings = {
+            "setting_id": "main",
+            "site_name": "Foster Tours",
+            "site_description": "Your trusted partner for unforgettable travel experiences",
+            "contact_email": "fostercitytours@gmail.com",
+            "contact_phone": "+234 9058 681 268",
+            "contact_whatsapp": "+2349058681268",
+            "social_media": {
+                "facebook": "https://facebook.com/fostertours",
+                "instagram": "https://instagram.com/foster_tours",
+                "twitter": "https://twitter.com/fostertours",
+                "youtube": "https://youtube.com/@fostertours",
+                "linkedin": "https://linkedin.com/company/fostertours",
+                "tiktok": "https://tiktok.com/@fostertours"
+            },
+            "business_hours": "Mon-Fri: 9AM-6PM, Sat: 10AM-4PM",
+            "currency": "USD",
+            "timezone": "Africa/Lagos",
+            "booking_settings": {
+                "allow_instant_booking": True,
+                "require_payment_upfront": True,
+                "cancellation_hours": 24,
+                "max_passengers_per_booking": 9
+            },
+            "notification_settings": {
+                "email_notifications": True,
+                "sms_notifications": False,
+                "push_notifications": True
+            },
+            "maintenance_mode": False,
+            "maintenance_message": "We are currently performing maintenance. Please check back soon.",
+            "featured_destinations": [],
+            "promo_banner": {
+                "enabled": False,
+                "text": "",
+                "link": ""
+            },
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.app_settings.insert_one(default_settings)
+        settings = default_settings
+    
+    settings.pop("_id", None)
+    return settings
+
+@api_router.put("/admin/settings")
+async def update_app_settings(request: Request):
+    """Update app settings"""
+    await require_admin(request)
+    body = await request.json()
+    
+    body["updated_at"] = datetime.now(timezone.utc).isoformat()
+    body.pop("_id", None)
+    body.pop("setting_id", None)
+    
+    await db.app_settings.update_one(
+        {"setting_id": "main"},
+        {"$set": body},
+        upsert=True
+    )
+    
+    return {"message": "Settings updated successfully"}
+
+# Public endpoint to get site settings (limited info)
+@api_router.get("/settings/public")
+async def get_public_settings():
+    """Get public site settings"""
+    settings = await db.app_settings.find_one({"setting_id": "main"})
+    
+    if not settings:
+        return {
+            "site_name": "Foster Tours",
+            "social_media": {},
+            "contact_whatsapp": "+2349058681268",
+            "maintenance_mode": False
+        }
+    
+    return {
+        "site_name": settings.get("site_name", "Foster Tours"),
+        "site_description": settings.get("site_description", ""),
+        "social_media": settings.get("social_media", {}),
+        "contact_phone": settings.get("contact_phone", ""),
+        "contact_whatsapp": settings.get("contact_whatsapp", ""),
+        "contact_email": settings.get("contact_email", ""),
+        "business_hours": settings.get("business_hours", ""),
+        "maintenance_mode": settings.get("maintenance_mode", False),
+        "maintenance_message": settings.get("maintenance_message", ""),
+        "promo_banner": settings.get("promo_banner", {})
+    }
+
+# =============== ADVERTISEMENTS ===============
+
+@api_router.get("/ads")
+async def get_advertisements():
+    """Get active advertisements"""
+    ads = await db.advertisements.find(
+        {"is_active": True, "end_date": {"$gte": datetime.now(timezone.utc).isoformat()}},
+        {"_id": 0}
+    ).sort("priority", -1).to_list(20)
+    
+    return {"ads": ads}
+
+@api_router.get("/admin/ads")
+async def get_all_advertisements(request: Request):
+    """Get all advertisements (admin)"""
+    await require_admin(request)
+    
+    ads = await db.advertisements.find({}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return {"ads": ads}
+
+@api_router.post("/admin/ads")
+async def create_advertisement(request: Request):
+    """Create a new advertisement"""
+    await require_admin(request)
+    body = await request.json()
+    
+    ad = {
+        "ad_id": str(uuid.uuid4()),
+        "title": body.get("title", ""),
+        "description": body.get("description", ""),
+        "image_url": body.get("image_url", ""),
+        "link_url": body.get("link_url", ""),
+        "position": body.get("position", "banner"),  # banner, sidebar, popup, inline
+        "priority": body.get("priority", 0),
+        "is_active": body.get("is_active", True),
+        "start_date": body.get("start_date", datetime.now(timezone.utc).isoformat()),
+        "end_date": body.get("end_date", (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()),
+        "target_pages": body.get("target_pages", ["home"]),  # home, flights, hotels, etc.
+        "click_count": 0,
+        "impression_count": 0,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.advertisements.insert_one(ad)
+    return {"message": "Advertisement created", "ad_id": ad["ad_id"]}
+
+@api_router.put("/admin/ads/{ad_id}")
+async def update_advertisement(request: Request, ad_id: str):
+    """Update an advertisement"""
+    await require_admin(request)
+    body = await request.json()
+    
+    body["updated_at"] = datetime.now(timezone.utc).isoformat()
+    body.pop("_id", None)
+    body.pop("ad_id", None)
+    
+    result = await db.advertisements.update_one(
+        {"ad_id": ad_id},
+        {"$set": body}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Advertisement not found")
+    
+    return {"message": "Advertisement updated"}
+
+@api_router.delete("/admin/ads/{ad_id}")
+async def delete_advertisement(request: Request, ad_id: str):
+    """Delete an advertisement"""
+    await require_admin(request)
+    
+    result = await db.advertisements.delete_one({"ad_id": ad_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Advertisement not found")
+    
+    return {"message": "Advertisement deleted"}
+
+@api_router.post("/ads/{ad_id}/click")
+async def track_ad_click(ad_id: str):
+    """Track advertisement click"""
+    await db.advertisements.update_one(
+        {"ad_id": ad_id},
+        {"$inc": {"click_count": 1}}
+    )
+    return {"message": "Click tracked"}
+
+@api_router.post("/ads/{ad_id}/impression")
+async def track_ad_impression(ad_id: str):
+    """Track advertisement impression"""
+    await db.advertisements.update_one(
+        {"ad_id": ad_id},
+        {"$inc": {"impression_count": 1}}
+    )
+    return {"message": "Impression tracked"}
+
+# =============== SEAT SELECTION ===============
+
+# Aircraft seat configurations
+AIRCRAFT_CONFIGS = {
+    "narrow_body": {
+        "rows": 30,
+        "layout": "ABC_DEF",  # 3-3 configuration
+        "business_rows": [1, 2, 3],
+        "exit_rows": [10, 25],
+        "extra_legroom_rows": [1, 10, 11, 25, 26]
+    },
+    "wide_body": {
+        "rows": 45,
+        "layout": "ABC_DEFG_HJK",  # 3-4-3 configuration
+        "business_rows": [1, 2, 3, 4, 5],
+        "exit_rows": [15, 35],
+        "extra_legroom_rows": [1, 15, 16, 35, 36]
+    }
+}
+
+@api_router.get("/flights/{flight_id}/seats")
+async def get_flight_seats(flight_id: str):
+    """Get available seats for a flight"""
+    # Check if seat map exists for this flight
+    seat_map = await db.flight_seats.find_one({"flight_id": flight_id})
+    
+    if not seat_map:
+        # Generate seat map based on aircraft type
+        config = AIRCRAFT_CONFIGS["narrow_body"]
+        seats = []
+        layout = config["layout"].replace("_", "")
+        
+        for row in range(1, config["rows"] + 1):
+            for seat_letter in layout:
+                seat_number = f"{row}{seat_letter}"
+                
+                # Determine seat type and price
+                is_window = seat_letter in ['A', 'F', 'K']
+                is_aisle = seat_letter in ['C', 'D', 'G', 'H']
+                is_middle = seat_letter in ['B', 'E', 'J']
+                is_business = row in config["business_rows"]
+                is_exit = row in config["exit_rows"]
+                is_extra_legroom = row in config["extra_legroom_rows"]
+                
+                # Calculate price premium
+                base_price = 0
+                if is_business:
+                    base_price = 150
+                elif is_extra_legroom:
+                    base_price = 50
+                elif is_exit:
+                    base_price = 40
+                elif is_window:
+                    base_price = 15
+                elif is_aisle:
+                    base_price = 10
+                
+                seat = {
+                    "seat_number": seat_number,
+                    "row": row,
+                    "column": seat_letter,
+                    "is_available": True,
+                    "is_window": is_window,
+                    "is_aisle": is_aisle,
+                    "is_middle": is_middle,
+                    "is_business": is_business,
+                    "is_exit_row": is_exit,
+                    "is_extra_legroom": is_extra_legroom,
+                    "price": base_price,
+                    "status": "available"
+                }
+                seats.append(seat)
+        
+        seat_map = {
+            "flight_id": flight_id,
+            "aircraft_type": "narrow_body",
+            "layout": config["layout"],
+            "total_rows": config["rows"],
+            "seats": seats,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        await db.flight_seats.insert_one(seat_map)
+    
+    seat_map.pop("_id", None)
+    return seat_map
+
+@api_router.post("/flights/{flight_id}/seats/select")
+async def select_flight_seats(request: Request, flight_id: str):
+    """Select seats for a flight booking"""
+    user = await get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
+    body = await request.json()
+    selected_seats = body.get("seats", [])  # List of seat numbers
+    passenger_count = body.get("passenger_count", 1)
+    
+    if len(selected_seats) != passenger_count:
+        raise HTTPException(status_code=400, detail=f"Please select exactly {passenger_count} seats")
+    
+    # Get seat map
+    seat_map = await db.flight_seats.find_one({"flight_id": flight_id})
+    if not seat_map:
+        raise HTTPException(status_code=404, detail="Flight seat map not found")
+    
+    # Verify seats are available
+    total_seat_price = 0
+    seat_details = []
+    
+    for seat_num in selected_seats:
+        seat = next((s for s in seat_map["seats"] if s["seat_number"] == seat_num), None)
+        if not seat:
+            raise HTTPException(status_code=400, detail=f"Seat {seat_num} not found")
+        if not seat["is_available"]:
+            raise HTTPException(status_code=400, detail=f"Seat {seat_num} is not available")
+        
+        total_seat_price += seat["price"]
+        seat_details.append(seat)
+    
+    # Create seat selection record
+    selection_id = str(uuid.uuid4())
+    selection = {
+        "selection_id": selection_id,
+        "flight_id": flight_id,
+        "user_id": user["user_id"],
+        "seats": selected_seats,
+        "seat_details": seat_details,
+        "total_seat_price": total_seat_price,
+        "status": "pending",
+        "expires_at": (datetime.now(timezone.utc) + timedelta(minutes=15)).isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.seat_selections.insert_one(selection)
+    
+    # Temporarily mark seats as held
+    for seat_num in selected_seats:
+        await db.flight_seats.update_one(
+            {"flight_id": flight_id, "seats.seat_number": seat_num},
+            {"$set": {"seats.$.status": "held", "seats.$.held_by": user["user_id"]}}
+        )
+    
+    return {
+        "selection_id": selection_id,
+        "seats": seat_details,
+        "total_seat_price": total_seat_price,
+        "expires_at": selection["expires_at"]
+    }
+
+@api_router.post("/flights/{flight_id}/seats/confirm")
+async def confirm_seat_selection(request: Request, flight_id: str):
+    """Confirm seat selection after payment"""
+    user = await get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
+    body = await request.json()
+    selection_id = body.get("selection_id")
+    booking_id = body.get("booking_id")
+    
+    # Get selection
+    selection = await db.seat_selections.find_one({
+        "selection_id": selection_id,
+        "user_id": user["user_id"],
+        "flight_id": flight_id
+    })
+    
+    if not selection:
+        raise HTTPException(status_code=404, detail="Seat selection not found")
+    
+    # Mark seats as booked
+    for seat_num in selection["seats"]:
+        await db.flight_seats.update_one(
+            {"flight_id": flight_id, "seats.seat_number": seat_num},
+            {"$set": {
+                "seats.$.status": "booked",
+                "seats.$.is_available": False,
+                "seats.$.booked_by": user["user_id"],
+                "seats.$.booking_id": booking_id
+            }}
+        )
+    
+    # Update selection status
+    await db.seat_selections.update_one(
+        {"selection_id": selection_id},
+        {"$set": {"status": "confirmed", "booking_id": booking_id}}
+    )
+    
+    return {"message": "Seats confirmed successfully", "seats": selection["seats"]}
+
 # =============== EMAIL NOTIFICATION ROUTES ===============
 
 class EmailRequest(BaseModel):
