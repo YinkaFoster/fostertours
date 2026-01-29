@@ -43,6 +43,7 @@ const Navbar = () => {
     { href: '/visa', label: t('visa'), icon: FileText },
     { href: '/store', label: t('store'), icon: ShoppingBag },
     { href: '/blog', label: t('blog'), icon: BookOpen },
+    { href: '/stories', label: 'Stories', icon: Camera },
     { href: '/itinerary/ai', label: t('aiPlanner'), icon: Sparkles },
   ];
 
