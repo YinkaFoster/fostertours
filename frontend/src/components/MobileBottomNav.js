@@ -20,7 +20,7 @@ const MobileBottomNav = () => {
     { href: '/', icon: Home, label: 'Home' },
     { href: '/flights', icon: Plane, label: 'Flights' },
     { href: '/hotels', icon: Hotel, label: 'Hotels' },
-    { href: isAuthenticated ? '/dashboard' : '/login', icon: User, label: isAuthenticated ? 'Account' : 'Login' },
+    { href: isAuthenticated ? '/home' : '/login', icon: User, label: isAuthenticated ? 'Account' : 'Login' },
   ];
 
   const moreItems = [
