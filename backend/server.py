@@ -1,5 +1,6 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, BackgroundTasks, Query
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, BackgroundTasks, Query, UploadFile, File, Form, WebSocket, WebSocketDisconnect
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -13,6 +14,10 @@ from datetime import datetime, timezone, timedelta
 import bcrypt
 import jwt
 import httpx
+import aiofiles
+import asyncio
+import json
+import base64
 
 # Amadeus and SendGrid
 from amadeus import Client as AmadeusClient, ResponseError as AmadeusResponseError
