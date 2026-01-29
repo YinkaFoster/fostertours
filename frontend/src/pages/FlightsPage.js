@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import BackToHome from '../components/BackToHome';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
@@ -11,8 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Slider } from '../components/ui/slider';
 import { Checkbox } from '../components/ui/checkbox';
 import {
-  Plane, Search, ArrowRight, Clock, Loader2, Filter, SlidersHorizontal
+  Plane, Search, ArrowRight, Clock, Loader2, Filter, SlidersHorizontal,
+  Users, Baby, User, Minus, Plus
 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { useLocale } from '../context/LocaleContext';
 import axios from 'axios';
 
@@ -29,8 +32,13 @@ const FlightsPage = () => {
   const [destination, setDestination] = useState('');
   const [departureDate, setDepartureDate] = useState('');
   const [returnDate, setReturnDate] = useState('');
-  const [passengers, setPassengers] = useState(1);
   const [cabinClass, setCabinClass] = useState('economy');
+
+  // Passenger types
+  const [adults, setAdults] = useState(1);
+  const [children, setChildren] = useState(0);
+  const [infants, setInfants] = useState(0);
+  const totalPassengers = adults + children + infants;
 
   // Filters
   const [maxPrice, setMaxPrice] = useState([2000]);
@@ -50,7 +58,10 @@ const FlightsPage = () => {
         destination: destination.toUpperCase(),
         departure_date: departureDate,
         return_date: returnDate || null,
-        passengers,
+        passengers: totalPassengers,
+        adults,
+        children,
+        infants,
         cabin_class: cabinClass
       });
       setFlights(response.data.flights || []);
@@ -70,8 +81,47 @@ const FlightsPage = () => {
   });
 
   const handleBookFlight = (flight) => {
-    navigate(`/flights/${flight.flight_id}`, { state: { flight, departureDate, passengers } });
+    navigate(`/flights/${flight.flight_id}`, { 
+      state: { 
+        flight, 
+        departureDate, 
+        passengers: { adults, children, infants, total: totalPassengers }
+      } 
+    });
   };
+
+  // Passenger counter component
+  const PassengerCounter = ({ label, sublabel, value, onChange, min = 0, max = 9 }) => (
+    <div className="flex items-center justify-between py-2">
+      <div>
+        <p className="font-medium text-sm">{label}</p>
+        <p className="text-xs text-muted-foreground">{sublabel}</p>
+      </div>
+      <div className="flex items-center gap-3">
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="h-8 w-8 rounded-full"
+          onClick={() => onChange(Math.max(min, value - 1))}
+          disabled={value <= min}
+        >
+          <Minus className="h-4 w-4" />
+        </Button>
+        <span className="w-6 text-center font-medium">{value}</span>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="h-8 w-8 rounded-full"
+          onClick={() => onChange(Math.min(max, value + 1))}
+          disabled={value >= max}
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background" data-testid="flights-page">
