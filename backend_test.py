@@ -135,6 +135,61 @@ class TravelToursAPITester:
         
         return success, response
 
+    def test_admin_login(self):
+        """Test admin login with predefined admin credentials"""
+        admin_credentials = {
+            "email": "admin@fostertours.com",
+            "password": "Admin@Foster2024!"
+        }
+        
+        print(f"\n🔐 Testing Admin Login...")
+        print(f"   Email: {admin_credentials['email']}")
+        
+        success, response = self.run_test("Admin Login", "POST", "auth/login", 200, admin_credentials)
+        
+        if success and response:
+            # Verify admin user properties
+            user = response.get('user', {})
+            is_admin = user.get('is_admin', False)
+            
+            print(f"   Admin status: {is_admin}")
+            
+            if is_admin:
+                self.log_result("Admin Login - Admin Status", True)
+                # Store admin token for admin tests
+                self.admin_token = response.get('access_token')
+                self.admin_user_id = user.get('user_id')
+            else:
+                self.log_result("Admin Login - Admin Status", False, None, "User is not admin")
+        
+        return success, response
+
+    def test_login_wrong_password(self):
+        """Test login with wrong password (should fail)"""
+        # First register a user
+        test_email = f"wrong_pass_{uuid.uuid4().hex[:8]}@example.com"
+        register_data = {
+            "email": test_email,
+            "password": "CorrectPass123!",
+            "name": "Wrong Pass Test User"
+        }
+        
+        # Register first
+        reg_success, _ = self.run_test("Pre-Wrong-Pass Registration", "POST", "auth/register", 200, register_data)
+        
+        if not reg_success:
+            return False, {}
+        
+        # Try login with wrong password
+        wrong_login_data = {
+            "email": test_email,
+            "password": "WrongPassword123!"
+        }
+        
+        success, response = self.run_test("Login Wrong Password", "POST", "auth/login", 401, wrong_login_data)
+        
+        return success, response
+
     def test_get_current_user(self):
         """Test getting current user info"""
         if not self.token:
