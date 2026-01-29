@@ -91,30 +91,28 @@ const FlightDetailPage = () => {
       return;
     }
 
-    // Navigate to checkout
-    const checkoutParams = new URLSearchParams({
-      type: 'flight',
-      itemId: flightData.flightId,
-      price: grandTotal.toString(),
-      title: `${flightData.departureCity} to ${flightData.arrivalCity}`,
-      description: `${flightData.airline} ${flightData.flightNumber} - ${flightData.class}`,
-      image: flightData.airlineLogo,
-      date: flightData.departureDate,
-      location: `${flightData.departure} → ${flightData.arrival}`,
-      guests: passengerCount.toString(),
-      // Additional flight details
-      airline: flightData.airline,
-      flightNumber: flightData.flightNumber,
-      departure: flightData.departure,
-      arrival: flightData.arrival,
-      departureTime: flightData.departureTime,
-      arrivalTime: flightData.arrivalTime,
-      duration: flightData.duration,
-      class: flightData.class,
-      passengers: JSON.stringify(passengers),
+    // Navigate to booking checkout with all flight details
+    navigate(`/booking/checkout`, {
+      state: {
+        type: 'flight',
+        itemId: flightData.flightId,
+        price: grandTotal,
+        title: `${flightData.departureCity} to ${flightData.arrivalCity}`,
+        description: `${flightData.airline} ${flightData.flightNumber} - ${flightData.class}`,
+        image: flightData.airlineLogo,
+        date: flightData.departureDate,
+        location: `${flightData.departure} → ${flightData.arrival}`,
+        guests: passengerCount,
+        flight: flightData,
+        passengers: passengers,
+        payment: {
+          base_fare: totalPrice,
+          taxes: taxes,
+          service_fee: 25,
+          total: grandTotal
+        }
+      }
     });
-
-    navigate(`/booking/checkout?${checkoutParams.toString()}`);
   };
 
   const amenities = [
