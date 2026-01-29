@@ -572,19 +572,24 @@ async def register(user_data: UserCreate):
 @api_router.post("/auth/login", response_model=TokenResponse)
 async def login(credentials: UserLogin):
     user = await db.users.find_one({"email": credentials.email}, {"_id": 0})
-    if not user or not verify_password(credentials.password, user["password"]):
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    # Check both password fields (for compatibility)
+    stored_password = user.get("password") or user.get("hashed_password")
+    if not stored_password or not verify_password(credentials.password, stored_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     token = create_token(user["user_id"], user["email"], user.get("is_admin", False))
     
     created_at = user.get("created_at")
     if isinstance(created_at, str):
-        created_at = datetime.fromisoformat(created_at)
+        created_at = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
     
     user_response = UserResponse(
         user_id=user["user_id"],
         email=user["email"],
-        name=user["name"],
+        name=user.get("name"),
         phone=user.get("phone"),
         picture=user.get("picture"),
         wallet_balance=user.get("wallet_balance", 0.0),
