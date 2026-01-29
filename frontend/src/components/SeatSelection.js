@@ -15,15 +15,19 @@ const SeatSelection = ({ flightId, passengerCount = 1, onSeatSelect, onBack }) =
   const [selectingLoading, setSelectingLoading] = useState(false);
 
   useEffect(() => {
+    console.log('SeatSelection mounted for flight:', flightId);
     fetchSeatMap();
   }, [flightId]);
 
   const fetchSeatMap = async () => {
     try {
+      console.log('Fetching seat map from:', `${API}/flights/${flightId}/seats`);
       const response = await axios.get(`${API}/flights/${flightId}/seats`);
+      console.log('Seat map loaded:', response.data);
       setSeatMap(response.data);
     } catch (error) {
-      toast.error('Failed to load seat map');
+      console.error('Seat map fetch error:', error);
+      toast.error('Failed to load seat map. Please try again.');
     } finally {
       setLoading(false);
     }
