@@ -120,29 +120,29 @@ const Dashboard = () => {
       <Navbar />
       
       <main className="pt-20 pb-12">
-        <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20">
-          {/* Welcome Section */}
-          <div className="mb-8">
-            <h1 className="font-serif text-3xl md:text-4xl mb-2">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 lg:px-20">
+          {/* Welcome Section - Mobile Optimized */}
+          <div className="mb-6 sm:mb-8">
+            <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl mb-1 sm:mb-2">
               Welcome back, {user?.name?.split(' ')[0] || 'Traveler'}
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-sm sm:text-base text-muted-foreground">
               Manage your bookings, itineraries, and travel plans
             </p>
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {/* Stats Cards - Mobile Optimized */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
             <Link to="/wallet">
-              <Card className="border-0 shadow-soft card-hover" data-testid="wallet-card">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-teal-500/10 flex items-center justify-center">
-                      <Wallet className="w-6 h-6 text-teal-500" />
+              <Card className="border-0 shadow-soft card-hover ios-press" data-testid="wallet-card">
+                <CardContent className="p-3 sm:p-6">
+                  <div className="flex flex-col sm:flex-row items-center sm:gap-4 text-center sm:text-left">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-teal-500/10 flex items-center justify-center mb-2 sm:mb-0">
+                      <Wallet className="w-5 h-5 sm:w-6 sm:h-6 text-teal-500" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Wallet Balance</p>
-                      <p className="text-2xl font-bold">${user?.wallet_balance?.toFixed(2) || '0.00'}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">Wallet</p>
+                      <p className="text-lg sm:text-2xl font-bold">${user?.wallet_balance?.toFixed(2) || '0.00'}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -150,14 +150,14 @@ const Dashboard = () => {
             </Link>
 
             <Card className="border-0 shadow-soft" data-testid="bookings-card">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center">
-                    <Calendar className="w-6 h-6 text-blue-500" />
+              <CardContent className="p-3 sm:p-6">
+                <div className="flex flex-col sm:flex-row items-center sm:gap-4 text-center sm:text-left">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-500/10 flex items-center justify-center mb-2 sm:mb-0">
+                    <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Active Bookings</p>
-                    <p className="text-2xl font-bold">
+                    <p className="text-xs sm:text-sm text-muted-foreground">Bookings</p>
+                    <p className="text-lg sm:text-2xl font-bold">
                       {bookings.filter(b => b.status !== 'cancelled').length}
                     </p>
                   </div>
@@ -166,15 +166,15 @@ const Dashboard = () => {
             </Card>
 
             <Link to="/rewards">
-              <Card className="border-0 shadow-soft card-hover" data-testid="rewards-card">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center">
-                      <Gift className="w-6 h-6 text-amber-500" />
+              <Card className="border-0 shadow-soft card-hover ios-press" data-testid="rewards-card">
+                <CardContent className="p-3 sm:p-6">
+                  <div className="flex flex-col sm:flex-row items-center sm:gap-4 text-center sm:text-left">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-amber-500/10 flex items-center justify-center mb-2 sm:mb-0">
+                      <Gift className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Reward Points</p>
-                      <p className="text-2xl font-bold">{rewardsPoints.toLocaleString()}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">Points</p>
+                      <p className="text-lg sm:text-2xl font-bold">{rewardsPoints.toLocaleString()}</p>
                     </div>
                   </div>
                 </CardContent>
