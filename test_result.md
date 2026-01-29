@@ -303,6 +303,18 @@ backend:
         agent: "testing"
         comment: "✅ Seat Selection API tested successfully with 90% success rate (18/20 tests passed). WORKING ENDPOINTS: 1) GET /api/flights/{flight_id}/seats - Generates seat map dynamically for new flights with 30 rows, ABC_DEF layout, proper business/economy pricing tiers. Returns seat map with flight_id, aircraft_type, layout, total_rows, seats array. Each seat has seat_number, is_window, is_aisle, price, status fields. 2) POST /api/flights/{flight_id}/seats/select - Creates seat selection with authentication, validates passenger count matches selected seats, marks seats as 'held', returns selection_id, seat_details, total_seat_price, expires_at (15 minutes). Proper error handling for wrong passenger count (400), authentication required (401). 3) POST /api/flights/{flight_id}/seats/confirm - Confirms seat reservation with valid selection_id, marks seats as 'booked', updates is_available to false. Proper error handling for invalid selection_id (404), authentication required (401). PRICING VERIFIED: Business class seats (rows 1-3) correctly priced higher than economy seats. Exit row premium pricing implemented. MINOR ISSUES: Test expected 'rows' field but backend returns 'total_rows' (cosmetic), seat availability logic uses is_available field rather than status field (by design). All core seat selection functionality working correctly including seat map generation, selection, confirmation, and proper database persistence."
 
+  - task: "Seat Selection Frontend Integration"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/pages/FlightDetailPage.js"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "❌ SEAT SELECTION FRONTEND INTEGRATION ISSUES FOUND: Comprehensive end-to-end testing of Foster Tours seat selection flow reveals critical frontend integration problems. WORKING COMPONENTS: ✅ Flight detail page loads correctly with all sections (Flight Details, Passenger Details, Seat Selection), ✅ Price summary displays properly on right side ($650 base fare, $78 taxes, $728 total), ✅ Seat Selection card is present and expandable, ✅ 'Select Seats Now' and 'Skip Seat Selection' buttons are visible, ✅ Backend API working perfectly (GET /api/flights/FL123/seats returns 180 seats with proper pricing: Business $150, Exit Row $50, Window $15, Aisle $10, Middle $0). CRITICAL ISSUES: ❌ SeatSelection component fails to load when 'Select Seats Now' is clicked - no seat map appears, no 'Select Your Seat' title, no seat buttons visible, ❌ Passenger validation may be preventing seat selection (requires firstName and lastName to be filled), ❌ After clicking 'Skip Seat Selection', the 'Select Seats Now' button disappears, making seat selection impossible, ❌ No error messages or loading indicators shown when seat map fails to load. IMPACT: Users cannot select seats during flight booking process, seat charges cannot be added to booking total, complete seat selection flow is broken. Backend seat selection API is fully functional but frontend integration is not working."
+
 frontend:
   - task: "Live Domain Testing - Foster Tours Production"
     implemented: true
