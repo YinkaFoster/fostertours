@@ -108,7 +108,7 @@ const EventsPage = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {events.map((event, index) => (
-                <Link key={event.event_id} to={`/events/${event.event_id}`} data-testid={`event-card-${index}`}>
+                <div key={event.event_id} onClick={() => handleSelectEvent(event)} className="cursor-pointer" data-testid={`event-card-${index}`}>
                   <Card className="h-full border-0 shadow-soft card-hover overflow-hidden">
                     <div className="h-56 relative">
                       <img
