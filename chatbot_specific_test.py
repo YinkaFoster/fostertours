@@ -5,7 +5,7 @@ import json
 import sys
 
 class ChatbotSpecificTester:
-    def __init__(self, base_url="https://trip-planner-pro-6.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://journey-planner-370.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.session = requests.Session()
         self.session_id = None
