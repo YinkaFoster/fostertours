@@ -126,9 +126,41 @@ const PaystackMockPage = () => {
         setStep('success');
         toast.success('Payment successful!');
         
-        // Redirect to success page after delay
+        // Clear stored booking data
+        sessionStorage.removeItem('pendingBooking');
+        
+        // Redirect to appropriate receipt page based on booking type
         setTimeout(() => {
-          navigate(`/booking/success?booking_id=${bookingId}&reference=${reference}`);
+          if (bookingData.type === 'flight') {
+            navigate('/flights/receipt', {
+              state: {
+                booking: {
+                  booking_id: bookingId,
+                  receipt_no: `FR-${new Date().getFullYear()}-${bookingId?.slice(-6) || '000000'}`,
+                  payment_status: 'paid',
+                  created_at: new Date().toISOString(),
+                  passenger_name: `${guestInfo.firstName || ''} ${guestInfo.lastName || ''}`.trim() || cardDetails.cardName,
+                  passenger_email: email,
+                  passenger_phone: guestInfo.phone || '',
+                  price: amount,
+                  total_amount: amount,
+                  guest_info: guestInfo,
+                },
+                flight: bookingData.flight,
+                payment: bookingData.payment || {
+                  base_fare: amount * 0.85,
+                  taxes: amount * 0.12,
+                  service_fee: amount * 0.03,
+                  total: amount,
+                  method: `Visa •••• ${cardDetails.cardNumber.slice(-4)}`,
+                  transaction_id: `PAY-${reference}`,
+                  gateway: 'Paystack'
+                }
+              }
+            });
+          } else {
+            navigate(`/booking/success?booking_id=${bookingId}&reference=${reference}`);
+          }
         }, 2000);
       } else {
         throw new Error('Payment failed');
