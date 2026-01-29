@@ -209,7 +209,7 @@ class TravelToursAPITester:
         # Restore token
         self.token = original_token
         
-        return success
+        return success, response
 
     def test_logout(self):
         """Test user logout"""
