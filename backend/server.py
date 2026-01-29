@@ -5432,7 +5432,7 @@ async def upload_file(
         await f.write(content)
     
     # Generate URL
-    backend_url = os.environ.get('BACKEND_URL', 'http://localhost:8001')
+    backend_url = os.environ.get('BACKEND_URL', os.environ.get('REACT_APP_BACKEND_URL', 'http://localhost:8001'))
     file_url = f"{backend_url}/uploads/{filename}"
     
     return {
@@ -5570,7 +5570,7 @@ async def complete_chunked_upload(request: Request, upload_id: str):
     )
     
     # Generate URL
-    backend_url = os.environ.get('BACKEND_URL', 'http://localhost:8001')
+    backend_url = os.environ.get('BACKEND_URL', os.environ.get('REACT_APP_BACKEND_URL', 'http://localhost:8001'))
     file_url = f"{backend_url}/uploads/{final_filename}"
     
     return {
@@ -5629,7 +5629,7 @@ async def send_message_with_media(
             async with aiofiles.open(file_path, 'wb') as f:
                 await f.write(file_content)
             
-            backend_url = os.environ.get('BACKEND_URL', 'http://localhost:8001')
+            backend_url = os.environ.get('BACKEND_URL', os.environ.get('REACT_APP_BACKEND_URL', 'http://localhost:8001'))
             file_url = f"{backend_url}/uploads/{filename}"
             
             attachments.append({
@@ -5831,7 +5831,7 @@ async def create_story(
         async with aiofiles.open(file_path, 'wb') as f:
             await f.write(file_content)
         
-        backend_url = os.environ.get('BACKEND_URL', 'http://localhost:8001')
+        backend_url = os.environ.get('BACKEND_URL', os.environ.get('REACT_APP_BACKEND_URL', 'http://localhost:8001'))
         file_url = f"{backend_url}/uploads/{filename}"
         
         media.append({
