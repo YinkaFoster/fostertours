@@ -49,12 +49,16 @@ const Login = () => {
 
     setLoading(true);
     try {
-      await login(loginEmail, loginPassword);
+      const user = await login(loginEmail, loginPassword);
+      console.log('Login success, navigating to:', from);
       toast.success('Welcome back!');
-      navigate(from, { replace: true });
+      // Force navigation after a short delay to ensure state is updated
+      setTimeout(() => {
+        navigate(from, { replace: true });
+      }, 100);
     } catch (error) {
+      console.error('Login failed:', error);
       toast.error(error.response?.data?.detail || 'Login failed');
-    } finally {
       setLoading(false);
     }
   };
@@ -80,10 +84,12 @@ const Login = () => {
     try {
       await register(registerEmail, registerPassword, registerName, registerPhone);
       toast.success('Account created successfully!');
-      navigate(from, { replace: true });
+      setTimeout(() => {
+        navigate(from, { replace: true });
+      }, 100);
     } catch (error) {
+      console.error('Registration failed:', error);
       toast.error(error.response?.data?.detail || 'Registration failed');
-    } finally {
       setLoading(false);
     }
   };
@@ -93,10 +99,12 @@ const Login = () => {
     try {
       await googleLogin(credentialResponse.credential);
       toast.success('Welcome!');
-      navigate(from, { replace: true });
+      setTimeout(() => {
+        navigate(from, { replace: true });
+      }, 100);
     } catch (error) {
+      console.error('Google login failed:', error);
       toast.error(error.response?.data?.detail || 'Google login failed');
-    } finally {
       setLoading(false);
     }
   };
