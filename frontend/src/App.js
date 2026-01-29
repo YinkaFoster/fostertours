@@ -239,6 +239,14 @@ const AppRouter = () => {
       
       {/* Itinerary Builder */}
       <Route
+        path="/itinerary"
+        element={
+          <ProtectedRoute>
+            <ItineraryBuilderPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/itinerary/builder"
         element={
           <ProtectedRoute>
