@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Button } from '../components/ui/button';
@@ -14,6 +14,7 @@ import axios from 'axios';
 const API = process.env.REACT_APP_BACKEND_URL + '/api';
 
 const EventsPage = () => {
+  const navigate = useNavigate();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState('all');
@@ -32,6 +33,10 @@ const EventsPage = () => {
     };
     fetchEvents();
   }, [category]);
+
+  const handleSelectEvent = (event) => {
+    navigate(`/events/${event.event_id}`, { state: { event } });
+  };
 
   const categories = ['All', 'Safari', 'Food & Culture', 'Nature', 'Adventure', 'City Tours'];
 
