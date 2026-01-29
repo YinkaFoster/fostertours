@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -17,32 +17,38 @@ import {
 import { toast } from 'sonner';
 
 const VehicleDetailPage = () => {
-  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const { vehicleId } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [driverInfo, setDriverInfo] = useState({ name: '', email: '', phone: '', license: '' });
   const [addOns, setAddOns] = useState({ insurance: false, gps: false, childSeat: false });
 
+  // Get vehicle data from navigation state or use defaults
+  const stateData = location.state || {};
+  const vehicle = stateData.vehicle || {};
+
   const vehicleData = {
-    vehicleId: searchParams.get('vehicleId') || 'VH' + Date.now(),
-    name: searchParams.get('name') || 'Toyota Land Cruiser 2024',
-    image: searchParams.get('image') || 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800',
-    type: searchParams.get('type') || 'SUV',
-    brand: searchParams.get('brand') || 'Toyota',
-    model: searchParams.get('model') || 'Land Cruiser',
-    year: searchParams.get('year') || '2024',
-    price: parseFloat(searchParams.get('price') || '120'),
-    location: searchParams.get('location') || 'Dubai International Airport',
-    pickupDate: searchParams.get('pickupDate') || '2025-02-15',
-    pickupTime: searchParams.get('pickupTime') || '10:00 AM',
-    returnDate: searchParams.get('returnDate') || '2025-02-18',
-    returnTime: searchParams.get('returnTime') || '10:00 AM',
-    seats: parseInt(searchParams.get('seats') || '7'),
-    transmission: searchParams.get('transmission') || 'Automatic',
-    fuel: searchParams.get('fuel') || 'Petrol',
-    mileage: searchParams.get('mileage') || 'Unlimited',
-    rating: parseFloat(searchParams.get('rating') || '4.8'),
-    reviewCount: parseInt(searchParams.get('reviews') || '342'),
+    vehicleId: vehicle.vehicle_id || vehicleId || 'VH' + Date.now(),
+    name: vehicle.name || 'Toyota Land Cruiser 2024',
+    image: vehicle.image_url || vehicle.image || 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800',
+    type: vehicle.type || 'SUV',
+    brand: vehicle.brand || 'Toyota',
+    model: vehicle.model || 'Land Cruiser',
+    year: vehicle.year || '2024',
+    price: vehicle.price_per_day || vehicle.price || 120,
+    location: stateData.pickupLocation || vehicle.location || 'City Center',
+    pickupDate: stateData.pickupDate || new Date().toISOString().split('T')[0],
+    pickupTime: stateData.pickupTime || '10:00 AM',
+    returnDate: stateData.returnDate || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    returnTime: stateData.returnTime || '10:00 AM',
+    seats: vehicle.seats || 5,
+    transmission: vehicle.transmission || 'Automatic',
+    fuel: vehicle.fuel_type || vehicle.fuel || 'Petrol',
+    mileage: vehicle.mileage || 'Unlimited',
+    rating: vehicle.rating || 4.5,
+    reviewCount: vehicle.reviews_count || 200,
+    features: vehicle.features || ['Air Conditioning', 'Bluetooth', 'USB Port'],
   };
 
   const features = [
@@ -60,7 +66,7 @@ const VehicleDetailPage = () => {
     { key: 'childSeat', label: 'Child Seat', price: 15, description: 'Age-appropriate seat' },
   ];
 
-  const days = Math.ceil((new Date(vehicleData.returnDate) - new Date(vehicleData.pickupDate)) / (1000 * 60 * 60 * 24));
+  const days = Math.max(1, Math.ceil((new Date(vehicleData.returnDate) - new Date(vehicleData.pickupDate)) / (1000 * 60 * 60 * 24)));
   const basePrice = vehicleData.price * days;
   const addOnTotal = addOnOptions.reduce((sum, opt) => sum + (addOns[opt.key] ? opt.price * days : 0), 0);
   const subtotal = basePrice + addOnTotal;
