@@ -4181,6 +4181,1341 @@ async def global_search(q: str = Query(..., min_length=2)):
     
     return results
 
+# =============== FILE UPLOAD ROUTES ===============
+
+@api_router.post("/upload/file")
+async def upload_file(
+    request: Request,
+    file: UploadFile = File(...),
+    file_type: str = Form(...)  # image or video
+):
+    """Upload a single file (image or video)"""
+    user = await require_auth(request)
+    
+    # Validate file type
+    content_type = file.content_type
+    
+    if file_type == "image":
+        if content_type not in ALLOWED_IMAGE_TYPES:
+            raise HTTPException(status_code=400, detail="Invalid image type. Allowed: JPEG, PNG, GIF, WebP")
+        max_size = MAX_IMAGE_SIZE
+    elif file_type == "video":
+        if content_type not in ALLOWED_VIDEO_TYPES:
+            raise HTTPException(status_code=400, detail="Invalid video type. Allowed: MP4, WebM, MOV, AVI")
+        max_size = MAX_VIDEO_SIZE
+    else:
+        raise HTTPException(status_code=400, detail="file_type must be 'image' or 'video'")
+    
+    # Read file content
+    content = await file.read()
+    
+    if len(content) > max_size:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"File too large. Max size: {max_size // (1024*1024)}MB"
+        )
+    
+    # Generate unique filename
+    ext = file.filename.split('.')[-1] if '.' in file.filename else 'bin'
+    file_id = f"{uuid.uuid4().hex}"
+    filename = f"{file_id}.{ext}"
+    file_path = UPLOADS_DIR / filename
+    
+    # Save file
+    async with aiofiles.open(file_path, 'wb') as f:
+        await f.write(content)
+    
+    # Generate URL
+    backend_url = os.environ.get('BACKEND_URL', 'http://localhost:8001')
+    file_url = f"{backend_url}/uploads/{filename}"
+    
+    return {
+        "file_id": file_id,
+        "filename": filename,
+        "url": file_url,
+        "type": file_type,
+        "size": len(content)
+    }
+
+@api_router.post("/upload/chunk/init")
+async def init_chunked_upload(request: Request):
+    """Initialize a chunked upload session"""
+    user = await require_auth(request)
+    body = await request.json()
+    
+    filename = body.get("filename", "")
+    file_type = body.get("file_type", "image")  # image or video
+    total_size = body.get("total_size", 0)
+    total_chunks = body.get("total_chunks", 1)
+    
+    # Validate size
+    max_size = MAX_IMAGE_SIZE if file_type == "image" else MAX_VIDEO_SIZE
+    if total_size > max_size:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File too large. Max size: {max_size // (1024*1024)}MB"
+        )
+    
+    upload_id = f"upload_{uuid.uuid4().hex[:12]}"
+    
+    # Store upload session
+    upload_session = {
+        "upload_id": upload_id,
+        "user_id": user["user_id"],
+        "filename": filename,
+        "file_type": file_type,
+        "total_size": total_size,
+        "total_chunks": total_chunks,
+        "received_chunks": [],
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.upload_sessions.insert_one(upload_session)
+    
+    return {"upload_id": upload_id, "status": "initialized"}
+
+@api_router.post("/upload/chunk/{upload_id}")
+async def upload_chunk(
+    request: Request,
+    upload_id: str,
+    chunk_index: int = Form(...),
+    chunk: UploadFile = File(...)
+):
+    """Upload a file chunk"""
+    user = await require_auth(request)
+    
+    # Get upload session
+    session = await db.upload_sessions.find_one({
+        "upload_id": upload_id,
+        "user_id": user["user_id"]
+    })
+    
+    if not session:
+        raise HTTPException(status_code=404, detail="Upload session not found")
+    
+    if session["status"] == "completed":
+        raise HTTPException(status_code=400, detail="Upload already completed")
+    
+    # Read chunk content
+    content = await chunk.read()
+    
+    # Save chunk to temp file
+    chunk_path = UPLOADS_DIR / f"{upload_id}_chunk_{chunk_index}"
+    async with aiofiles.open(chunk_path, 'wb') as f:
+        await f.write(content)
+    
+    # Update session
+    await db.upload_sessions.update_one(
+        {"upload_id": upload_id},
+        {"$push": {"received_chunks": chunk_index}}
+    )
+    
+    return {"chunk_index": chunk_index, "received": True}
+
+@api_router.post("/upload/chunk/{upload_id}/complete")
+async def complete_chunked_upload(request: Request, upload_id: str):
+    """Complete a chunked upload by merging all chunks"""
+    user = await require_auth(request)
+    
+    # Get upload session
+    session = await db.upload_sessions.find_one({
+        "upload_id": upload_id,
+        "user_id": user["user_id"]
+    })
+    
+    if not session:
+        raise HTTPException(status_code=404, detail="Upload session not found")
+    
+    # Check all chunks received
+    received = set(session.get("received_chunks", []))
+    expected = set(range(session["total_chunks"]))
+    
+    if received != expected:
+        missing = expected - received
+        raise HTTPException(
+            status_code=400,
+            detail=f"Missing chunks: {list(missing)}"
+        )
+    
+    # Generate final filename
+    ext = session["filename"].split('.')[-1] if '.' in session["filename"] else 'bin'
+    file_id = f"{uuid.uuid4().hex}"
+    final_filename = f"{file_id}.{ext}"
+    final_path = UPLOADS_DIR / final_filename
+    
+    # Merge chunks
+    async with aiofiles.open(final_path, 'wb') as outfile:
+        for i in range(session["total_chunks"]):
+            chunk_path = UPLOADS_DIR / f"{upload_id}_chunk_{i}"
+            async with aiofiles.open(chunk_path, 'rb') as infile:
+                content = await infile.read()
+                await outfile.write(content)
+            # Delete chunk file
+            try:
+                os.remove(chunk_path)
+            except:
+                pass
+    
+    # Update session
+    await db.upload_sessions.update_one(
+        {"upload_id": upload_id},
+        {"$set": {"status": "completed", "final_filename": final_filename}}
+    )
+    
+    # Generate URL
+    backend_url = os.environ.get('BACKEND_URL', 'http://localhost:8001')
+    file_url = f"{backend_url}/uploads/{final_filename}"
+    
+    return {
+        "file_id": file_id,
+        "filename": final_filename,
+        "url": file_url,
+        "type": session["file_type"]
+    }
+
+# =============== MESSAGING WITH MEDIA ROUTES ===============
+
+@api_router.post("/messages/send-with-media")
+async def send_message_with_media(
+    request: Request,
+    receiver_id: str = Form(...),
+    content: str = Form(""),
+    files: List[UploadFile] = File(default=[])
+):
+    """Send a message with optional media attachments"""
+    user = await require_auth(request)
+    
+    if user["user_id"] == receiver_id:
+        raise HTTPException(status_code=400, detail="Cannot message yourself")
+    
+    # Check receiver exists
+    receiver = await db.users.find_one({"user_id": receiver_id})
+    if not receiver:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Process attachments
+    attachments = []
+    for file in files:
+        if file.filename:
+            content_type = file.content_type
+            
+            # Determine file type
+            if content_type in ALLOWED_IMAGE_TYPES:
+                file_type = "image"
+                max_size = MAX_IMAGE_SIZE
+            elif content_type in ALLOWED_VIDEO_TYPES:
+                file_type = "video"
+                max_size = MAX_VIDEO_SIZE
+            else:
+                continue  # Skip unsupported files
+            
+            file_content = await file.read()
+            if len(file_content) > max_size:
+                continue  # Skip oversized files
+            
+            # Save file
+            ext = file.filename.split('.')[-1] if '.' in file.filename else 'bin'
+            file_id = f"{uuid.uuid4().hex}"
+            filename = f"{file_id}.{ext}"
+            file_path = UPLOADS_DIR / filename
+            
+            async with aiofiles.open(file_path, 'wb') as f:
+                await f.write(file_content)
+            
+            backend_url = os.environ.get('BACKEND_URL', 'http://localhost:8001')
+            file_url = f"{backend_url}/uploads/{filename}"
+            
+            attachments.append({
+                "type": file_type,
+                "url": file_url,
+                "filename": filename,
+                "size": len(file_content)
+            })
+    
+    if not content.strip() and not attachments:
+        raise HTTPException(status_code=400, detail="Message must have content or attachments")
+    
+    # Find or create conversation
+    participants = sorted([user["user_id"], receiver_id])
+    conv = await db.conversations.find_one({"participants": participants})
+    
+    if not conv:
+        conv = {
+            "conversation_id": f"conv_{uuid.uuid4().hex[:12]}",
+            "participants": participants,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.conversations.insert_one(conv)
+    
+    # Create message
+    message = {
+        "message_id": f"msg_{uuid.uuid4().hex[:12]}",
+        "conversation_id": conv["conversation_id"],
+        "sender_id": user["user_id"],
+        "receiver_id": receiver_id,
+        "content": content,
+        "attachments": attachments if attachments else None,
+        "read": False,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.messages.insert_one(message)
+    
+    # Update conversation
+    last_msg = content[:100] if content else f"[{attachments[0]['type']}]" if attachments else ""
+    await db.conversations.update_one(
+        {"conversation_id": conv["conversation_id"]},
+        {
+            "$set": {
+                "last_message": last_msg,
+                "last_message_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    message.pop("_id", None)
+    return {"message": message}
+
+# =============== TRAVEL STORIES ROUTES ===============
+
+@api_router.get("/stories")
+async def get_stories(request: Request, user_id: Optional[str] = None):
+    """Get active stories (not expired)"""
+    current_user = await get_current_user(request)
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    query = {"expires_at": {"$gt": now}}
+    if user_id:
+        query["user_id"] = user_id
+    
+    stories = await db.stories.find(query).sort("created_at", -1).to_list(100)
+    
+    # Group stories by user
+    stories_by_user = {}
+    for story in stories:
+        story.pop("_id", None)
+        uid = story["user_id"]
+        if uid not in stories_by_user:
+            # Get user info
+            story_user = await db.users.find_one({"user_id": uid})
+            stories_by_user[uid] = {
+                "user_id": uid,
+                "user_name": story_user.get("name", "User") if story_user else "User",
+                "user_avatar": story_user.get("picture") or story_user.get("avatar") if story_user else None,
+                "stories": []
+            }
+        
+        # Check if current user liked/viewed
+        if current_user:
+            story["is_liked"] = await db.story_likes.find_one({
+                "story_id": story["story_id"],
+                "user_id": current_user["user_id"]
+            }) is not None
+            story["is_viewed"] = await db.story_views.find_one({
+                "story_id": story["story_id"],
+                "user_id": current_user["user_id"]
+            }) is not None
+        
+        stories_by_user[uid]["stories"].append(story)
+    
+    return {"stories": list(stories_by_user.values())}
+
+@api_router.get("/stories/feed")
+async def get_stories_feed(request: Request):
+    """Get stories from followed users and self"""
+    user = await require_auth(request)
+    
+    # Get followed users
+    following_docs = await db.follows.find({"follower_id": user["user_id"]}).to_list(1000)
+    following_ids = [f["following_id"] for f in following_docs]
+    following_ids.append(user["user_id"])  # Include own stories
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    stories = await db.stories.find({
+        "user_id": {"$in": following_ids},
+        "expires_at": {"$gt": now}
+    }).sort("created_at", -1).to_list(100)
+    
+    # Group stories by user
+    stories_by_user = {}
+    for story in stories:
+        story.pop("_id", None)
+        uid = story["user_id"]
+        if uid not in stories_by_user:
+            story_user = await db.users.find_one({"user_id": uid})
+            stories_by_user[uid] = {
+                "user_id": uid,
+                "user_name": story_user.get("name", "User") if story_user else "User",
+                "user_avatar": story_user.get("picture") or story_user.get("avatar") if story_user else None,
+                "stories": [],
+                "has_unseen": False
+            }
+        
+        # Check if viewed
+        is_viewed = await db.story_views.find_one({
+            "story_id": story["story_id"],
+            "user_id": user["user_id"]
+        }) is not None
+        
+        story["is_viewed"] = is_viewed
+        story["is_liked"] = await db.story_likes.find_one({
+            "story_id": story["story_id"],
+            "user_id": user["user_id"]
+        }) is not None
+        
+        if not is_viewed:
+            stories_by_user[uid]["has_unseen"] = True
+        
+        stories_by_user[uid]["stories"].append(story)
+    
+    # Sort: unseen stories first, then by latest story time
+    result = sorted(
+        stories_by_user.values(),
+        key=lambda x: (not x["has_unseen"], x["stories"][0]["created_at"] if x["stories"] else ""),
+        reverse=True
+    )
+    
+    return {"stories": result}
+
+@api_router.post("/stories")
+async def create_story(
+    request: Request,
+    caption: str = Form(""),
+    location: str = Form(""),
+    files: List[UploadFile] = File(...)
+):
+    """Create a new story with media"""
+    user = await require_auth(request)
+    
+    if not files:
+        raise HTTPException(status_code=400, detail="At least one media file is required")
+    
+    media = []
+    for file in files:
+        if not file.filename:
+            continue
+            
+        content_type = file.content_type
+        
+        # Determine file type
+        if content_type in ALLOWED_IMAGE_TYPES:
+            file_type = "image"
+            max_size = MAX_IMAGE_SIZE
+        elif content_type in ALLOWED_VIDEO_TYPES:
+            file_type = "video"
+            max_size = MAX_VIDEO_SIZE
+        else:
+            continue
+        
+        file_content = await file.read()
+        if len(file_content) > max_size:
+            raise HTTPException(
+                status_code=400,
+                detail=f"File too large. Max: {max_size // (1024*1024)}MB"
+            )
+        
+        # Save file
+        ext = file.filename.split('.')[-1] if '.' in file.filename else 'bin'
+        file_id = f"{uuid.uuid4().hex}"
+        filename = f"{file_id}.{ext}"
+        file_path = UPLOADS_DIR / filename
+        
+        async with aiofiles.open(file_path, 'wb') as f:
+            await f.write(file_content)
+        
+        backend_url = os.environ.get('BACKEND_URL', 'http://localhost:8001')
+        file_url = f"{backend_url}/uploads/{filename}"
+        
+        media.append({
+            "media_id": file_id,
+            "type": file_type,
+            "url": file_url
+        })
+    
+    if not media:
+        raise HTTPException(status_code=400, detail="No valid media files uploaded")
+    
+    story_id = f"story_{uuid.uuid4().hex[:12]}"
+    now = datetime.now(timezone.utc)
+    
+    story = {
+        "story_id": story_id,
+        "user_id": user["user_id"],
+        "media": media,
+        "caption": caption,
+        "location": location,
+        "views_count": 0,
+        "likes_count": 0,
+        "created_at": now.isoformat(),
+        "expires_at": (now + timedelta(hours=STORY_EXPIRATION_HOURS)).isoformat()
+    }
+    
+    await db.stories.insert_one(story)
+    story.pop("_id", None)
+    
+    return {"story": story, "message": "Story created successfully"}
+
+@api_router.get("/stories/{story_id}")
+async def get_story(request: Request, story_id: str):
+    """Get a single story and record view"""
+    user = await get_current_user(request)
+    
+    story = await db.stories.find_one({"story_id": story_id})
+    if not story:
+        raise HTTPException(status_code=404, detail="Story not found")
+    
+    story.pop("_id", None)
+    
+    # Check if expired
+    expires_at = story.get("expires_at")
+    if isinstance(expires_at, str):
+        expires_at = datetime.fromisoformat(expires_at)
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    
+    if expires_at < datetime.now(timezone.utc):
+        raise HTTPException(status_code=404, detail="Story has expired")
+    
+    # Record view if authenticated and not own story
+    if user and user["user_id"] != story["user_id"]:
+        existing_view = await db.story_views.find_one({
+            "story_id": story_id,
+            "user_id": user["user_id"]
+        })
+        
+        if not existing_view:
+            await db.story_views.insert_one({
+                "story_id": story_id,
+                "user_id": user["user_id"],
+                "created_at": datetime.now(timezone.utc).isoformat()
+            })
+            await db.stories.update_one(
+                {"story_id": story_id},
+                {"$inc": {"views_count": 1}}
+            )
+            story["views_count"] = story.get("views_count", 0) + 1
+    
+    # Get story owner info
+    story_user = await db.users.find_one({"user_id": story["user_id"]})
+    story["user_name"] = story_user.get("name", "User") if story_user else "User"
+    story["user_avatar"] = story_user.get("picture") or story_user.get("avatar") if story_user else None
+    
+    if user:
+        story["is_liked"] = await db.story_likes.find_one({
+            "story_id": story_id,
+            "user_id": user["user_id"]
+        }) is not None
+    
+    return {"story": story}
+
+@api_router.put("/stories/{story_id}")
+async def update_story(request: Request, story_id: str):
+    """Update story caption or location"""
+    user = await require_auth(request)
+    body = await request.json()
+    
+    story = await db.stories.find_one({
+        "story_id": story_id,
+        "user_id": user["user_id"]
+    })
+    
+    if not story:
+        raise HTTPException(status_code=404, detail="Story not found")
+    
+    updates = {}
+    if "caption" in body:
+        updates["caption"] = body["caption"]
+    if "location" in body:
+        updates["location"] = body["location"]
+    
+    if updates:
+        await db.stories.update_one(
+            {"story_id": story_id},
+            {"$set": updates}
+        )
+    
+    return {"message": "Story updated", "story_id": story_id}
+
+@api_router.delete("/stories/{story_id}")
+async def delete_story(request: Request, story_id: str):
+    """Delete a story"""
+    user = await require_auth(request)
+    
+    story = await db.stories.find_one({
+        "story_id": story_id,
+        "user_id": user["user_id"]
+    })
+    
+    if not story:
+        raise HTTPException(status_code=404, detail="Story not found")
+    
+    # Delete story media files
+    for media in story.get("media", []):
+        try:
+            filename = media.get("url", "").split("/")[-1]
+            file_path = UPLOADS_DIR / filename
+            if file_path.exists():
+                os.remove(file_path)
+        except:
+            pass
+    
+    # Delete story and related data
+    await db.stories.delete_one({"story_id": story_id})
+    await db.story_likes.delete_many({"story_id": story_id})
+    await db.story_views.delete_many({"story_id": story_id})
+    await db.story_comments.delete_many({"story_id": story_id})
+    
+    return {"message": "Story deleted"}
+
+@api_router.post("/stories/{story_id}/like")
+async def like_story(request: Request, story_id: str):
+    """Like a story"""
+    user = await require_auth(request)
+    
+    story = await db.stories.find_one({"story_id": story_id})
+    if not story:
+        raise HTTPException(status_code=404, detail="Story not found")
+    
+    existing = await db.story_likes.find_one({
+        "story_id": story_id,
+        "user_id": user["user_id"]
+    })
+    
+    if existing:
+        # Unlike
+        await db.story_likes.delete_one({
+            "story_id": story_id,
+            "user_id": user["user_id"]
+        })
+        await db.stories.update_one(
+            {"story_id": story_id},
+            {"$inc": {"likes_count": -1}}
+        )
+        return {"liked": False, "message": "Story unliked"}
+    else:
+        # Like
+        await db.story_likes.insert_one({
+            "story_id": story_id,
+            "user_id": user["user_id"],
+            "created_at": datetime.now(timezone.utc).isoformat()
+        })
+        await db.stories.update_one(
+            {"story_id": story_id},
+            {"$inc": {"likes_count": 1}}
+        )
+        return {"liked": True, "message": "Story liked"}
+
+@api_router.get("/stories/{story_id}/comments")
+async def get_story_comments(request: Request, story_id: str):
+    """Get comments for a story"""
+    story = await db.stories.find_one({"story_id": story_id})
+    if not story:
+        raise HTTPException(status_code=404, detail="Story not found")
+    
+    comments = await db.story_comments.find(
+        {"story_id": story_id}
+    ).sort("created_at", -1).to_list(100)
+    
+    result = []
+    for comment in comments:
+        comment.pop("_id", None)
+        # Get commenter info
+        commenter = await db.users.find_one({"user_id": comment["user_id"]})
+        comment["user_name"] = commenter.get("name", "User") if commenter else "User"
+        comment["user_avatar"] = commenter.get("picture") or commenter.get("avatar") if commenter else None
+        result.append(comment)
+    
+    return {"comments": result}
+
+@api_router.post("/stories/{story_id}/comments")
+async def add_story_comment(request: Request, story_id: str):
+    """Add a comment to a story"""
+    user = await require_auth(request)
+    body = await request.json()
+    
+    content = body.get("content", "").strip()
+    if not content:
+        raise HTTPException(status_code=400, detail="Comment content required")
+    
+    story = await db.stories.find_one({"story_id": story_id})
+    if not story:
+        raise HTTPException(status_code=404, detail="Story not found")
+    
+    comment = {
+        "comment_id": f"sc_{uuid.uuid4().hex[:12]}",
+        "story_id": story_id,
+        "user_id": user["user_id"],
+        "content": content,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.story_comments.insert_one(comment)
+    comment.pop("_id", None)
+    
+    comment["user_name"] = user.get("name", "User")
+    comment["user_avatar"] = user.get("picture") or user.get("avatar")
+    
+    return {"comment": comment, "message": "Comment added"}
+
+@api_router.delete("/stories/{story_id}/comments/{comment_id}")
+async def delete_story_comment(request: Request, story_id: str, comment_id: str):
+    """Delete a story comment"""
+    user = await require_auth(request)
+    
+    comment = await db.story_comments.find_one({
+        "comment_id": comment_id,
+        "story_id": story_id
+    })
+    
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    
+    # Check if user owns comment or story
+    story = await db.stories.find_one({"story_id": story_id})
+    if comment["user_id"] != user["user_id"] and story.get("user_id") != user["user_id"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    await db.story_comments.delete_one({"comment_id": comment_id})
+    
+    return {"message": "Comment deleted"}
+
+# =============== FAVORITES ROUTES ===============
+
+@api_router.get("/favorites")
+async def get_favorites(request: Request, item_type: Optional[str] = None):
+    """Get user's favorites, optionally filtered by type"""
+    user = await require_auth(request)
+    
+    query = {"user_id": user["user_id"]}
+    if item_type:
+        query["item_type"] = item_type
+    
+    favorites = await db.favorites.find(query).sort("created_at", -1).to_list(100)
+    
+    result = []
+    for fav in favorites:
+        fav.pop("_id", None)
+        
+        # Get item details based on type
+        item_data = None
+        if fav["item_type"] == "story":
+            item_data = await db.stories.find_one({"story_id": fav["item_id"]})
+            if item_data:
+                item_data.pop("_id", None)
+                story_user = await db.users.find_one({"user_id": item_data.get("user_id")})
+                item_data["user_name"] = story_user.get("name") if story_user else "User"
+        elif fav["item_type"] == "destination":
+            # Destinations are static, return the item_id as reference
+            item_data = {"destination_id": fav["item_id"]}
+        elif fav["item_type"] == "product":
+            item_data = await db.products.find_one({"product_id": fav["item_id"]})
+            if item_data:
+                item_data.pop("_id", None)
+        elif fav["item_type"] == "blog_post":
+            item_data = await db.blog_posts.find_one({"post_id": fav["item_id"]})
+            if item_data:
+                item_data.pop("_id", None)
+        
+        fav["item_data"] = item_data
+        result.append(fav)
+    
+    return {"favorites": result}
+
+@api_router.post("/favorites")
+async def add_favorite(request: Request):
+    """Add an item to favorites"""
+    user = await require_auth(request)
+    body = await request.json()
+    
+    item_type = body.get("item_type")
+    item_id = body.get("item_id")
+    
+    if not item_type or not item_id:
+        raise HTTPException(status_code=400, detail="item_type and item_id required")
+    
+    if item_type not in ["story", "destination", "product", "blog_post"]:
+        raise HTTPException(status_code=400, detail="Invalid item_type")
+    
+    # Check if already favorited
+    existing = await db.favorites.find_one({
+        "user_id": user["user_id"],
+        "item_type": item_type,
+        "item_id": item_id
+    })
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="Already in favorites")
+    
+    favorite = {
+        "favorite_id": f"fav_{uuid.uuid4().hex[:12]}",
+        "user_id": user["user_id"],
+        "item_type": item_type,
+        "item_id": item_id,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.favorites.insert_one(favorite)
+    favorite.pop("_id", None)
+    
+    return {"favorite": favorite, "message": "Added to favorites"}
+
+@api_router.delete("/favorites/{item_type}/{item_id}")
+async def remove_favorite(request: Request, item_type: str, item_id: str):
+    """Remove an item from favorites"""
+    user = await require_auth(request)
+    
+    result = await db.favorites.delete_one({
+        "user_id": user["user_id"],
+        "item_type": item_type,
+        "item_id": item_id
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Favorite not found")
+    
+    return {"message": "Removed from favorites"}
+
+@api_router.get("/favorites/check/{item_type}/{item_id}")
+async def check_favorite(request: Request, item_type: str, item_id: str):
+    """Check if an item is favorited"""
+    user = await require_auth(request)
+    
+    existing = await db.favorites.find_one({
+        "user_id": user["user_id"],
+        "item_type": item_type,
+        "item_id": item_id
+    })
+    
+    return {"is_favorited": existing is not None}
+
+# =============== WEBRTC CALLING ROUTES ===============
+
+@api_router.post("/calls/initiate")
+async def initiate_call(request: Request):
+    """Initiate a call to another user"""
+    user = await require_auth(request)
+    body = await request.json()
+    
+    receiver_id = body.get("receiver_id")
+    call_type = body.get("call_type", "voice")  # voice or video
+    
+    if not receiver_id:
+        raise HTTPException(status_code=400, detail="receiver_id required")
+    
+    if user["user_id"] == receiver_id:
+        raise HTTPException(status_code=400, detail="Cannot call yourself")
+    
+    # Check receiver exists
+    receiver = await db.users.find_one({"user_id": receiver_id})
+    if not receiver:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    call_id = f"call_{uuid.uuid4().hex[:12]}"
+    
+    call = {
+        "call_id": call_id,
+        "caller_id": user["user_id"],
+        "receiver_id": receiver_id,
+        "call_type": call_type,
+        "status": "ringing",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.calls.insert_one(call)
+    call.pop("_id", None)
+    
+    # Add caller info
+    call["caller_name"] = user.get("name", "User")
+    call["caller_avatar"] = user.get("picture") or user.get("avatar")
+    
+    return {"call": call}
+
+@api_router.post("/calls/{call_id}/answer")
+async def answer_call(request: Request, call_id: str):
+    """Answer an incoming call"""
+    user = await require_auth(request)
+    
+    call = await db.calls.find_one({
+        "call_id": call_id,
+        "receiver_id": user["user_id"],
+        "status": "ringing"
+    })
+    
+    if not call:
+        raise HTTPException(status_code=404, detail="Call not found or already answered")
+    
+    await db.calls.update_one(
+        {"call_id": call_id},
+        {"$set": {
+            "status": "active",
+            "started_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"message": "Call answered", "call_id": call_id}
+
+@api_router.post("/calls/{call_id}/reject")
+async def reject_call(request: Request, call_id: str):
+    """Reject an incoming call"""
+    user = await require_auth(request)
+    
+    call = await db.calls.find_one({
+        "call_id": call_id,
+        "receiver_id": user["user_id"],
+        "status": "ringing"
+    })
+    
+    if not call:
+        raise HTTPException(status_code=404, detail="Call not found")
+    
+    await db.calls.update_one(
+        {"call_id": call_id},
+        {"$set": {
+            "status": "rejected",
+            "ended_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"message": "Call rejected", "call_id": call_id}
+
+@api_router.post("/calls/{call_id}/end")
+async def end_call(request: Request, call_id: str):
+    """End an active call"""
+    user = await require_auth(request)
+    
+    call = await db.calls.find_one({
+        "call_id": call_id,
+        "$or": [
+            {"caller_id": user["user_id"]},
+            {"receiver_id": user["user_id"]}
+        ],
+        "status": {"$in": ["ringing", "active"]}
+    })
+    
+    if not call:
+        raise HTTPException(status_code=404, detail="Call not found")
+    
+    ended_at = datetime.now(timezone.utc)
+    started_at = call.get("started_at")
+    
+    duration = None
+    if started_at:
+        if isinstance(started_at, str):
+            started_at = datetime.fromisoformat(started_at)
+        if started_at.tzinfo is None:
+            started_at = started_at.replace(tzinfo=timezone.utc)
+        duration = int((ended_at - started_at).total_seconds())
+    
+    status = "ended" if call["status"] == "active" else "missed"
+    
+    await db.calls.update_one(
+        {"call_id": call_id},
+        {"$set": {
+            "status": status,
+            "ended_at": ended_at.isoformat(),
+            "duration": duration
+        }}
+    )
+    
+    return {"message": "Call ended", "call_id": call_id, "duration": duration}
+
+@api_router.get("/calls/history")
+async def get_call_history(request: Request, limit: int = Query(50)):
+    """Get user's call history"""
+    user = await require_auth(request)
+    
+    calls = await db.calls.find({
+        "$or": [
+            {"caller_id": user["user_id"]},
+            {"receiver_id": user["user_id"]}
+        ]
+    }).sort("created_at", -1).limit(limit).to_list(limit)
+    
+    result = []
+    for call in calls:
+        call.pop("_id", None)
+        
+        # Get other user info
+        other_id = call["receiver_id"] if call["caller_id"] == user["user_id"] else call["caller_id"]
+        other_user = await db.users.find_one({"user_id": other_id})
+        
+        call["other_user"] = {
+            "user_id": other_id,
+            "name": other_user.get("name", "User") if other_user else "User",
+            "avatar": other_user.get("picture") or other_user.get("avatar") if other_user else None
+        }
+        call["is_outgoing"] = call["caller_id"] == user["user_id"]
+        
+        result.append(call)
+    
+    return {"calls": result}
+
+@api_router.get("/calls/{call_id}")
+async def get_call(request: Request, call_id: str):
+    """Get call details"""
+    user = await require_auth(request)
+    
+    call = await db.calls.find_one({
+        "call_id": call_id,
+        "$or": [
+            {"caller_id": user["user_id"]},
+            {"receiver_id": user["user_id"]}
+        ]
+    })
+    
+    if not call:
+        raise HTTPException(status_code=404, detail="Call not found")
+    
+    call.pop("_id", None)
+    
+    # Get other user info
+    other_id = call["receiver_id"] if call["caller_id"] == user["user_id"] else call["caller_id"]
+    other_user = await db.users.find_one({"user_id": other_id})
+    
+    call["other_user"] = {
+        "user_id": other_id,
+        "name": other_user.get("name", "User") if other_user else "User",
+        "avatar": other_user.get("picture") or other_user.get("avatar") if other_user else None
+    }
+    
+    return {"call": call}
+
+# =============== LOCATION SHARING ROUTES ===============
+
+@api_router.post("/location/update")
+async def update_location(request: Request):
+    """Update user's location"""
+    user = await require_auth(request)
+    body = await request.json()
+    
+    latitude = body.get("latitude")
+    longitude = body.get("longitude")
+    accuracy = body.get("accuracy")
+    
+    if latitude is None or longitude is None:
+        raise HTTPException(status_code=400, detail="latitude and longitude required")
+    
+    location = {
+        "user_id": user["user_id"],
+        "latitude": latitude,
+        "longitude": longitude,
+        "accuracy": accuracy,
+        "sharing_enabled": True,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.user_locations.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": location},
+        upsert=True
+    )
+    
+    return {"message": "Location updated"}
+
+@api_router.post("/location/toggle")
+async def toggle_location_sharing(request: Request):
+    """Toggle location sharing on/off"""
+    user = await require_auth(request)
+    body = await request.json()
+    
+    enabled = body.get("enabled", True)
+    
+    await db.user_locations.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {"sharing_enabled": enabled}},
+        upsert=True
+    )
+    
+    return {"message": f"Location sharing {'enabled' if enabled else 'disabled'}"}
+
+@api_router.post("/location/share-with")
+async def share_location_with_user(request: Request):
+    """Share location with specific user"""
+    user = await require_auth(request)
+    body = await request.json()
+    
+    target_user_id = body.get("user_id")
+    
+    if not target_user_id:
+        raise HTTPException(status_code=400, detail="user_id required")
+    
+    # Check target user exists
+    target = await db.users.find_one({"user_id": target_user_id})
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    await db.user_locations.update_one(
+        {"user_id": user["user_id"]},
+        {"$addToSet": {"visible_to": target_user_id}},
+        upsert=True
+    )
+    
+    return {"message": f"Location shared with {target.get('name', 'user')}"}
+
+@api_router.post("/location/stop-sharing-with")
+async def stop_sharing_location(request: Request):
+    """Stop sharing location with specific user"""
+    user = await require_auth(request)
+    body = await request.json()
+    
+    target_user_id = body.get("user_id")
+    
+    if not target_user_id:
+        raise HTTPException(status_code=400, detail="user_id required")
+    
+    await db.user_locations.update_one(
+        {"user_id": user["user_id"]},
+        {"$pull": {"visible_to": target_user_id}}
+    )
+    
+    return {"message": "Location sharing stopped"}
+
+@api_router.get("/location/friends")
+async def get_friends_locations(request: Request):
+    """Get locations of friends who are sharing with you"""
+    user = await require_auth(request)
+    
+    # Find locations where user is in visible_to list
+    locations = await db.user_locations.find({
+        "visible_to": user["user_id"],
+        "sharing_enabled": True
+    }).to_list(100)
+    
+    result = []
+    for loc in locations:
+        loc.pop("_id", None)
+        
+        # Get user info
+        loc_user = await db.users.find_one({"user_id": loc["user_id"]})
+        loc["user_name"] = loc_user.get("name", "User") if loc_user else "User"
+        loc["user_avatar"] = loc_user.get("picture") or loc_user.get("avatar") if loc_user else None
+        
+        result.append(loc)
+    
+    return {"locations": result}
+
+@api_router.get("/location/my-sharing")
+async def get_my_location_sharing(request: Request):
+    """Get current user's location sharing settings"""
+    user = await require_auth(request)
+    
+    location = await db.user_locations.find_one({"user_id": user["user_id"]})
+    
+    if not location:
+        return {
+            "sharing_enabled": False,
+            "visible_to": [],
+            "location": None
+        }
+    
+    location.pop("_id", None)
+    
+    # Get names of users we're sharing with
+    shared_with = []
+    for uid in location.get("visible_to", []):
+        shared_user = await db.users.find_one({"user_id": uid})
+        if shared_user:
+            shared_with.append({
+                "user_id": uid,
+                "name": shared_user.get("name", "User"),
+                "avatar": shared_user.get("picture") or shared_user.get("avatar")
+            })
+    
+    return {
+        "sharing_enabled": location.get("sharing_enabled", False),
+        "visible_to": shared_with,
+        "location": {
+            "latitude": location.get("latitude"),
+            "longitude": location.get("longitude"),
+            "accuracy": location.get("accuracy"),
+            "updated_at": location.get("updated_at")
+        } if location.get("latitude") else None
+    }
+
+# =============== WEBSOCKET ENDPOINTS ===============
+
+@app.websocket("/ws/calls/{user_id}")
+async def websocket_calls(websocket: WebSocket, user_id: str):
+    """WebSocket endpoint for WebRTC call signaling"""
+    await call_manager.connect(websocket, user_id)
+    try:
+        while True:
+            data = await websocket.receive_json()
+            
+            action = data.get("action")
+            target_user = data.get("target_user")
+            
+            if action == "offer":
+                # Send WebRTC offer to target user
+                await call_manager.send_personal_message({
+                    "action": "offer",
+                    "from_user": user_id,
+                    "call_id": data.get("call_id"),
+                    "sdp": data.get("sdp"),
+                    "call_type": data.get("call_type", "voice")
+                }, target_user)
+            
+            elif action == "answer":
+                # Send WebRTC answer to caller
+                await call_manager.send_personal_message({
+                    "action": "answer",
+                    "from_user": user_id,
+                    "call_id": data.get("call_id"),
+                    "sdp": data.get("sdp")
+                }, target_user)
+            
+            elif action == "ice-candidate":
+                # Forward ICE candidate
+                await call_manager.send_personal_message({
+                    "action": "ice-candidate",
+                    "from_user": user_id,
+                    "call_id": data.get("call_id"),
+                    "candidate": data.get("candidate")
+                }, target_user)
+            
+            elif action == "call-rejected":
+                await call_manager.send_personal_message({
+                    "action": "call-rejected",
+                    "from_user": user_id,
+                    "call_id": data.get("call_id")
+                }, target_user)
+            
+            elif action == "call-ended":
+                await call_manager.send_personal_message({
+                    "action": "call-ended",
+                    "from_user": user_id,
+                    "call_id": data.get("call_id")
+                }, target_user)
+            
+            elif action == "incoming-call":
+                # Notify target user of incoming call
+                await call_manager.send_personal_message({
+                    "action": "incoming-call",
+                    "from_user": user_id,
+                    "call_id": data.get("call_id"),
+                    "call_type": data.get("call_type", "voice"),
+                    "caller_name": data.get("caller_name"),
+                    "caller_avatar": data.get("caller_avatar")
+                }, target_user)
+    
+    except WebSocketDisconnect:
+        call_manager.disconnect(user_id)
+
+@app.websocket("/ws/location/{user_id}")
+async def websocket_location(websocket: WebSocket, user_id: str):
+    """WebSocket endpoint for real-time location sharing"""
+    await location_manager.connect(websocket, user_id)
+    try:
+        while True:
+            data = await websocket.receive_json()
+            
+            action = data.get("action")
+            
+            if action == "update_location":
+                latitude = data.get("latitude")
+                longitude = data.get("longitude")
+                accuracy = data.get("accuracy")
+                
+                # Update in database
+                await db.user_locations.update_one(
+                    {"user_id": user_id},
+                    {"$set": {
+                        "latitude": latitude,
+                        "longitude": longitude,
+                        "accuracy": accuracy,
+                        "sharing_enabled": True,
+                        "updated_at": datetime.now(timezone.utc).isoformat()
+                    }},
+                    upsert=True
+                )
+                
+                # Get list of users who can see this location
+                loc_doc = await db.user_locations.find_one({"user_id": user_id})
+                visible_to = loc_doc.get("visible_to", []) if loc_doc else []
+                
+                # Get user info
+                loc_user = await db.users.find_one({"user_id": user_id})
+                
+                # Broadcast to users who can see this location
+                for target_id in visible_to:
+                    await location_manager.send_personal_message({
+                        "action": "location_update",
+                        "user_id": user_id,
+                        "user_name": loc_user.get("name", "User") if loc_user else "User",
+                        "user_avatar": loc_user.get("picture") or loc_user.get("avatar") if loc_user else None,
+                        "latitude": latitude,
+                        "longitude": longitude,
+                        "accuracy": accuracy,
+                        "updated_at": datetime.now(timezone.utc).isoformat()
+                    }, target_id)
+            
+            elif action == "request_locations":
+                # Get all locations shared with this user
+                locations = await db.user_locations.find({
+                    "visible_to": user_id,
+                    "sharing_enabled": True
+                }).to_list(100)
+                
+                result = []
+                for loc in locations:
+                    loc_user = await db.users.find_one({"user_id": loc["user_id"]})
+                    result.append({
+                        "user_id": loc["user_id"],
+                        "user_name": loc_user.get("name", "User") if loc_user else "User",
+                        "user_avatar": loc_user.get("picture") or loc_user.get("avatar") if loc_user else None,
+                        "latitude": loc.get("latitude"),
+                        "longitude": loc.get("longitude"),
+                        "accuracy": loc.get("accuracy"),
+                        "updated_at": loc.get("updated_at")
+                    })
+                
+                await websocket.send_json({
+                    "action": "all_locations",
+                    "locations": result
+                })
+    
+    except WebSocketDisconnect:
+        location_manager.disconnect(user_id)
+
+# =============== BACKGROUND TASKS ===============
+
+async def cleanup_expired_stories():
+    """Background task to clean up expired stories"""
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # Find expired stories
+    expired = await db.stories.find({"expires_at": {"$lt": now}}).to_list(1000)
+    
+    for story in expired:
+        # Delete media files
+        for media in story.get("media", []):
+            try:
+                filename = media.get("url", "").split("/")[-1]
+                file_path = UPLOADS_DIR / filename
+                if file_path.exists():
+                    os.remove(file_path)
+            except:
+                pass
+        
+        # Delete story and related data
+        await db.stories.delete_one({"story_id": story["story_id"]})
+        await db.story_likes.delete_many({"story_id": story["story_id"]})
+        await db.story_views.delete_many({"story_id": story["story_id"]})
+        await db.story_comments.delete_many({"story_id": story["story_id"]})
+    
+    return len(expired)
+
+@api_router.post("/admin/cleanup-stories")
+async def admin_cleanup_stories(request: Request):
+    """Admin endpoint to manually trigger story cleanup"""
+    user = await require_admin(request)
+    
+    count = await cleanup_expired_stories()
+    
+    return {"message": f"Cleaned up {count} expired stories"}
+
 # Health check endpoint
 @api_router.get("/health")
 async def health_check():
