@@ -79,9 +79,9 @@ const Footer = () => {
                 <li key={link.href}>
                   <Link
                     to={link.href}
-                    className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm group"
+                    className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-xs sm:text-sm group"
                   >
-                    <link.icon className="w-3.5 h-3.5 text-teal-500 group-hover:text-teal-400" />
+                    <link.icon className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-teal-500 group-hover:text-teal-400" />
                     {link.label}
                   </Link>
                 </li>
@@ -91,23 +91,21 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h4 className="font-semibold text-lg mb-4 text-teal-400">Quick Links</h4>
-            <ul className="space-y-2">
+            <h4 className="font-semibold text-sm sm:text-lg mb-3 sm:mb-4 text-teal-400">Quick Links</h4>
+            <ul className="space-y-1.5 sm:space-y-2">
               {[
                 { label: 'About Us', href: '/about' },
                 { label: 'Destinations', href: '/destinations' },
-                { label: 'Travel Packages', href: '/packages' },
-                { label: 'Travel Blog', href: '/blog' },
+                { label: 'Packages', href: '/packages' },
+                { label: 'Blog', href: '/blog' },
                 { label: 'Careers', href: '/careers' },
-                { label: 'Photo Gallery', href: '/gallery' },
-                { label: 'Partner With Us', href: '/partner' },
-                { label: 'My Dashboard', href: '/dashboard' },
-                { label: 'My Wallet', href: '/wallet' },
+                { label: 'Gallery', href: '/gallery' },
+                { label: 'Partners', href: '/partner' },
               ].map((link) => (
                 <li key={link.href}>
                   <Link
                     to={link.href}
-                    className="text-slate-400 hover:text-white transition-colors text-sm"
+                    className="text-slate-400 hover:text-white transition-colors text-xs sm:text-sm"
                   >
                     {link.label}
                   </Link>
@@ -118,22 +116,21 @@ const Footer = () => {
 
           {/* Support */}
           <div>
-            <h4 className="font-semibold text-lg mb-4 text-teal-400">Support</h4>
-            <ul className="space-y-2">
+            <h4 className="font-semibold text-sm sm:text-lg mb-3 sm:mb-4 text-teal-400">Support</h4>
+            <ul className="space-y-1.5 sm:space-y-2">
               {[
                 { label: 'Help Center', href: '/help' },
                 { label: 'FAQs', href: '/faqs' },
-                { label: 'Cancellation Policy', href: '/cancellation-policy' },
-                { label: 'Safety Resources', href: '/safety' },
+                { label: 'Cancellation', href: '/cancellation-policy' },
+                { label: 'Safety', href: '/safety' },
                 { label: 'Accessibility', href: '/accessibility' },
-                { label: 'COVID-19 Updates', href: '/covid-updates' },
-                { label: 'Partner With Us', href: '/partner' },
-                { label: 'Press Room', href: '/press' },
+                { label: 'COVID-19', href: '/covid-updates' },
+                { label: 'Press', href: '/press' },
               ].map((link) => (
                 <li key={link.href}>
                   <Link
                     to={link.href}
-                    className="text-slate-400 hover:text-white transition-colors text-sm"
+                    className="text-slate-400 hover:text-white transition-colors text-xs sm:text-sm"
                   >
                     {link.label}
                   </Link>
