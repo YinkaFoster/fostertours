@@ -9,6 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Separator } from '../components/ui/separator';
 import { Loader2, Plane, Mail, Lock, User, Phone } from 'lucide-react';
 import { toast } from 'sonner';
+import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
+
+const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
 const Login = () => {
   const { login, register, googleLogin } = useAuth();
@@ -78,8 +81,21 @@ const Login = () => {
     }
   };
 
-  const handleGoogleLogin = () => {
-    googleLogin();
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setLoading(true);
+    try {
+      await googleLogin(credentialResponse.credential);
+      toast.success('Welcome!');
+      navigate(from, { replace: true });
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Google login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    toast.error('Google login failed. Please try again.');
   };
 
   return (
