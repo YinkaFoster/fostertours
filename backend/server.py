@@ -682,6 +682,135 @@ async def create_session(request: Request):
     
     return response
 
+# Google OAuth Callback - Direct integration
+@api_router.post("/auth/google")
+async def google_auth(request: Request):
+    """Handle Google OAuth - exchange credential for user session"""
+    body = await request.json()
+    credential = body.get("credential")
+    
+    if not credential:
+        raise HTTPException(status_code=400, detail="Google credential required")
+    
+    # Verify the Google ID token
+    try:
+        async with httpx.AsyncClient() as client:
+            # Verify token with Google
+            response = await client.get(
+                f"https://oauth2.googleapis.com/tokeninfo?id_token={credential}",
+                timeout=30.0
+            )
+            
+            if response.status_code != 200:
+                raise HTTPException(status_code=401, detail="Invalid Google token")
+            
+            google_data = response.json()
+            
+            # Verify the audience matches our client ID
+            if google_data.get("aud") != GOOGLE_CLIENT_ID:
+                raise HTTPException(status_code=401, detail="Token not intended for this application")
+            
+    except httpx.HTTPError as e:
+        logger.error(f"Google token verification error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to verify Google token")
+    
+    email = google_data.get("email")
+    name = google_data.get("name")
+    picture = google_data.get("picture")
+    google_id = google_data.get("sub")
+    
+    if not email:
+        raise HTTPException(status_code=400, detail="Email not provided by Google")
+    
+    # Find or create user
+    existing_user = await db.users.find_one({"email": email}, {"_id": 0})
+    
+    if existing_user:
+        user_id = existing_user["user_id"]
+        # Update user info
+        await db.users.update_one(
+            {"user_id": user_id},
+            {"$set": {
+                "name": name or existing_user.get("name"),
+                "picture": picture,
+                "google_id": google_id,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+    else:
+        # Create new user
+        user_id = f"user_{uuid.uuid4().hex[:12]}"
+        referral_code = f"FOSTER{uuid.uuid4().hex[:4].upper()}"
+        user_doc = {
+            "user_id": user_id,
+            "email": email,
+            "name": name,
+            "picture": picture,
+            "google_id": google_id,
+            "password": None,  # OAuth user, no password
+            "wallet_balance": 0.0,
+            "reward_points": 0,
+            "reward_tier": "bronze",
+            "referral_code": referral_code,
+            "referred_by": None,
+            "total_spent": 0.0,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "is_admin": False,
+            "is_active": True,
+            "location_sharing_enabled": False
+        }
+        await db.users.insert_one(user_doc)
+    
+    # Create JWT token
+    token_payload = {
+        "user_id": user_id,
+        "email": email,
+        "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS)
+    }
+    access_token = jwt.encode(token_payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    
+    # Create session
+    session_token = str(uuid.uuid4())
+    session_doc = {
+        "user_id": user_id,
+        "session_token": session_token,
+        "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.user_sessions.insert_one(session_doc)
+    
+    # Get user data
+    user = await db.users.find_one({"user_id": user_id}, {"_id": 0, "password": 0})
+    
+    response = JSONResponse(content={
+        "access_token": access_token,
+        "user": {
+            "user_id": user["user_id"],
+            "email": user["email"],
+            "name": user.get("name"),
+            "picture": user.get("picture"),
+            "wallet_balance": user.get("wallet_balance", 0.0),
+            "reward_points": user.get("reward_points", 0),
+            "reward_tier": user.get("reward_tier", "bronze"),
+            "referral_code": user.get("referral_code"),
+            "is_admin": user.get("is_admin", False)
+        }
+    })
+    
+    # Set httpOnly cookie
+    response.set_cookie(
+        key="session_token",
+        value=session_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        path="/",
+        max_age=7 * 24 * 60 * 60  # 7 days
+    )
+    
+    return response
+
 @api_router.get("/auth/me")
 async def get_me(request: Request):
     user = await get_current_user(request)
