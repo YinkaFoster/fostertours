@@ -80,10 +80,15 @@ const AppRouter = () => {
       
       {/* Feature Pages - Public */}
       <Route path="/flights" element={<FlightsPage />} />
+      <Route path="/flights/:flightId" element={<FlightDetailPage />} />
       <Route path="/hotels" element={<HotelsPage />} />
+      <Route path="/hotels/:hotelId" element={<HotelDetailPage />} />
       <Route path="/events" element={<EventsPage />} />
+      <Route path="/events/:eventId" element={<EventDetailPage />} />
       <Route path="/vehicles" element={<VehiclesPage />} />
+      <Route path="/vehicles/:vehicleId" element={<VehicleDetailPage />} />
       <Route path="/visa" element={<VisaPage />} />
+      <Route path="/visa/:visaId" element={<VisaDetailPage />} />
       <Route path="/blog" element={<BlogPage />} />
       <Route path="/blog/:slug" element={<BlogPostPage />} />
       <Route path="/store" element={<StorePage />} />
