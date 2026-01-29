@@ -292,6 +292,18 @@ backend:
         comment: "❌ Location Sharing API partially working. Working endpoints: 1) POST /api/location/update - Updates user location with lat/lng coordinates correctly. 2) POST /api/location/toggle - Enables/disables location sharing correctly. 3) GET /api/location/friends - Returns friends' locations (empty list). 4) GET /api/location/my-sharing - Returns sharing settings correctly. Authentication works on all endpoints (401 without token). FAILING: POST /api/location/share-with returns 404 because it validates target user exists in database before sharing location. Core functionality works but requires valid user IDs for sharing operations."
 
 frontend:
+  - task: "Live Domain Testing - Foster Tours Production"
+    implemented: true
+    working: false
+    file: "/app/frontend/.env"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL ISSUES FOUND ON LIVE DOMAIN https://fostertour.com: 1) ❌ OLD BACKEND URLs - All 4 API calls still using old backend 'https://trip-planner-pro-6.emergent.host' instead of correct backend for fostertour.com domain. 2) ❌ CORS ERRORS - 'Access to XMLHttpRequest blocked by CORS policy: The value of the Access-Control-Allow-Origin header in the response must not be the wildcard '*' when the request's credentials mode is 'include'' 3) ❌ Google OAuth Button Missing - 'Continue with Google' button not found on login page. 4) ❌ Authentication Not Working - Signup/login forms submit but remain on login page with no error messages, suggesting backend connectivity issues. WORKING ASPECTS: ✅ Landing page loads correctly, ✅ Navigation links functional (Flights, Hotels, Events), ✅ Mobile responsive design, ✅ Login page accessible. URGENT ACTION REQUIRED: Update live domain to use correct backend URL and fix CORS configuration for production deployment."
+
   - task: "AI Itinerary Planner routing"
     implemented: true
     working: true
