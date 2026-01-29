@@ -17,7 +17,7 @@ import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import {
   Plane, Hotel, Calendar, Car, FileText, ShoppingBag, Map, Menu, X,
   Sun, Moon, User, LogOut, Settings, Wallet, BookOpen, Image, LayoutDashboard, Sparkles,
-  Search, Gift, MessageCircle, Users
+  Search, Gift, MessageCircle, Users, Camera, Bookmark, Phone, MapPin
 } from 'lucide-react';
 import LocaleSelector from './LocaleSelector';
 import GlobalSearch from './GlobalSearch';
