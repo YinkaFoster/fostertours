@@ -82,6 +82,7 @@ const AppRouter = () => {
       {/* Feature Pages - Public */}
       <Route path="/flights" element={<FlightsPage />} />
       <Route path="/flights/:flightId" element={<FlightDetailPage />} />
+      <Route path="/flights/receipt" element={<FlightReceiptPage />} />
       <Route path="/hotels" element={<HotelsPage />} />
       <Route path="/hotels/:hotelId" element={<HotelDetailPage />} />
       <Route path="/events" element={<EventsPage />} />
