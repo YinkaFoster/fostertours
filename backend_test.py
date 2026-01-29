@@ -2033,6 +2033,409 @@ class TravelToursAPITester:
         
         print(f"\n📊 Social Features Tests Summary: {self.tests_passed}/{self.tests_run} passed")
 
+    # =============== SEAT SELECTION TESTS ===============
+    
+    def test_get_flight_seats_first_time(self):
+        """Test getting seat map for a flight (first time generation)"""
+        flight_id = "FL123456"
+        
+        print(f"\n✈️ Testing Seat Map Generation...")
+        print(f"   Flight ID: {flight_id}")
+        
+        success, response = self.run_test("Get Flight Seats (First Time)", "GET", f"flights/{flight_id}/seats", 200)
+        
+        if success and response:
+            # Verify seat map structure
+            required_fields = ['flight_id', 'aircraft_type', 'layout', 'rows', 'seats']
+            missing_fields = [field for field in required_fields if field not in response]
+            
+            if missing_fields:
+                self.log_result("Seat Map Structure", False, None, f"Missing fields: {missing_fields}")
+                return False, response
+            else:
+                self.log_result("Seat Map Structure", True)
+            
+            # Verify seats array
+            seats = response.get('seats', [])
+            if seats:
+                first_seat = seats[0]
+                seat_fields = ['seat_number', 'is_window', 'is_aisle', 'price', 'status']
+                missing_seat_fields = [field for field in seat_fields if field not in first_seat]
+                
+                if missing_seat_fields:
+                    self.log_result("Seat Structure", False, None, f"Missing seat fields: {missing_seat_fields}")
+                else:
+                    self.log_result("Seat Structure", True)
+                
+                print(f"   Total seats: {len(seats)}")
+                print(f"   Layout: {response.get('layout', 'N/A')}")
+                print(f"   Rows: {response.get('rows', 'N/A')}")
+                print(f"   Sample seat: {first_seat.get('seat_number')} - ${first_seat.get('price')}")
+                
+                # Check different seat types and prices
+                business_seats = [s for s in seats if s.get('row', 0) <= 3]
+                economy_seats = [s for s in seats if s.get('row', 0) > 3]
+                
+                if business_seats and economy_seats:
+                    avg_business_price = sum(s['price'] for s in business_seats) / len(business_seats)
+                    avg_economy_price = sum(s['price'] for s in economy_seats) / len(economy_seats)
+                    
+                    print(f"   Business class avg price: ${avg_business_price:.2f}")
+                    print(f"   Economy class avg price: ${avg_economy_price:.2f}")
+                    
+                    if avg_business_price > avg_economy_price:
+                        self.log_result("Seat Pricing Logic", True)
+                    else:
+                        self.log_result("Seat Pricing Logic", False, None, "Business seats should be more expensive")
+        
+        return success, response
+    
+    def test_get_flight_seats_existing(self):
+        """Test getting seat map for flight with existing seat map"""
+        flight_id = "FL123456"  # Same flight as previous test
+        
+        success, response = self.run_test("Get Flight Seats (Existing)", "GET", f"flights/{flight_id}/seats", 200)
+        
+        if success and response:
+            print(f"   Seat map retrieved from database")
+            seats = response.get('seats', [])
+            print(f"   Total seats: {len(seats)}")
+        
+        return success, response
+    
+    def test_select_seats_unauthorized(self):
+        """Test selecting seats without authentication (should fail)"""
+        flight_id = "FL123456"
+        
+        # Save current token
+        original_token = self.token
+        self.token = None
+        
+        seat_data = {
+            "seats": ["12A", "12B"],
+            "passenger_count": 2
+        }
+        
+        success, response = self.run_test("Select Seats (No Auth)", "POST", f"flights/{flight_id}/seats/select", 401, seat_data)
+        
+        # Restore token
+        self.token = original_token
+        
+        return success
+    
+    def test_select_seats_valid(self):
+        """Test selecting valid seats with authentication"""
+        if not self.token:
+            self.log_result("Select Seats (Valid)", False, None, "No token available")
+            return False, {}
+        
+        flight_id = "FL123456"
+        
+        # First get seat map to find available seats
+        success, seat_map = self.run_test("Get Seats for Selection", "GET", f"flights/{flight_id}/seats", 200)
+        
+        if not success or not seat_map:
+            self.log_result("Select Seats (Valid)", False, None, "Failed to get seat map")
+            return False, {}
+        
+        # Find two available seats
+        available_seats = [s for s in seat_map.get('seats', []) if s.get('status') == 'available']
+        
+        if len(available_seats) < 2:
+            self.log_result("Select Seats (Valid)", False, None, "Not enough available seats")
+            return False, {}
+        
+        selected_seats = [available_seats[0]['seat_number'], available_seats[1]['seat_number']]
+        
+        seat_data = {
+            "seats": selected_seats,
+            "passenger_count": 2
+        }
+        
+        print(f"\n🎫 Testing Seat Selection...")
+        print(f"   Flight ID: {flight_id}")
+        print(f"   Selected seats: {selected_seats}")
+        print(f"   Passenger count: {seat_data['passenger_count']}")
+        
+        success, response = self.run_test("Select Seats (Valid)", "POST", f"flights/{flight_id}/seats/select", 200, seat_data)
+        
+        if success and response:
+            # Verify response structure
+            required_fields = ['selection_id', 'seats', 'total_seat_price', 'expires_at']
+            missing_fields = [field for field in required_fields if field not in response]
+            
+            if missing_fields:
+                self.log_result("Seat Selection Response", False, None, f"Missing fields: {missing_fields}")
+            else:
+                self.log_result("Seat Selection Response", True)
+                
+                # Store selection_id for confirmation test
+                self.seat_selection_id = response.get('selection_id')
+                print(f"   Selection ID: {self.seat_selection_id}")
+                print(f"   Total seat price: ${response.get('total_seat_price')}")
+                print(f"   Expires at: {response.get('expires_at')}")
+                
+                # Verify seat details
+                seat_details = response.get('seats', [])
+                if len(seat_details) == 2:
+                    self.log_result("Seat Selection Count", True)
+                else:
+                    self.log_result("Seat Selection Count", False, None, f"Expected 2 seats, got {len(seat_details)}")
+        
+        return success, response
+    
+    def test_select_seats_wrong_passenger_count(self):
+        """Test selecting seats with wrong passenger count (should fail)"""
+        if not self.token:
+            self.log_result("Select Seats (Wrong Count)", False, None, "No token available")
+            return False, {}
+        
+        flight_id = "FL123456"
+        
+        # Try to select 3 seats but specify 2 passengers
+        seat_data = {
+            "seats": ["10A", "10B", "10C"],
+            "passenger_count": 2
+        }
+        
+        print(f"\n❌ Testing Invalid Seat Selection...")
+        print(f"   Seats: {seat_data['seats']} (3 seats)")
+        print(f"   Passengers: {seat_data['passenger_count']} (2 passengers)")
+        
+        success, response = self.run_test("Select Seats (Wrong Count)", "POST", f"flights/{flight_id}/seats/select", 400, seat_data)
+        
+        if success and response:
+            print(f"   Error response: {response}")
+        
+        return success
+    
+    def test_select_unavailable_seats(self):
+        """Test selecting seats that are already taken (should fail)"""
+        if not self.token:
+            self.log_result("Select Unavailable Seats", False, None, "No token available")
+            return False, {}
+        
+        flight_id = "FL123456"
+        
+        # Try to select the same seats that were selected in previous test
+        if hasattr(self, 'seat_selection_id'):
+            # Get the seat map to see current status
+            success, seat_map = self.run_test("Get Seats Status", "GET", f"flights/{flight_id}/seats", 200)
+            
+            if success and seat_map:
+                # Find seats that are held or booked
+                held_seats = [s for s in seat_map.get('seats', []) if s.get('status') in ['held', 'booked']]
+                
+                if held_seats:
+                    unavailable_seat = held_seats[0]['seat_number']
+                    
+                    seat_data = {
+                        "seats": [unavailable_seat],
+                        "passenger_count": 1
+                    }
+                    
+                    print(f"\n🚫 Testing Unavailable Seat Selection...")
+                    print(f"   Trying to select held/booked seat: {unavailable_seat}")
+                    
+                    success, response = self.run_test("Select Unavailable Seats", "POST", f"flights/{flight_id}/seats/select", 400, seat_data)
+                    
+                    if success and response:
+                        print(f"   Error response: {response}")
+                    
+                    return success
+        
+        # Fallback: try to select same seats twice
+        seat_data = {
+            "seats": ["1A", "1B"],
+            "passenger_count": 2
+        }
+        
+        # First selection (might succeed)
+        self.run_test("First Selection", "POST", f"flights/{flight_id}/seats/select", 200, seat_data)
+        
+        # Second selection of same seats (should fail)
+        success, response = self.run_test("Select Same Seats Again", "POST", f"flights/{flight_id}/seats/select", 400, seat_data)
+        
+        return success
+    
+    def test_confirm_seat_selection_unauthorized(self):
+        """Test confirming seat selection without authentication (should fail)"""
+        flight_id = "FL123456"
+        
+        # Save current token
+        original_token = self.token
+        self.token = None
+        
+        confirm_data = {
+            "selection_id": "fake_selection_id",
+            "payment_confirmed": True
+        }
+        
+        success, response = self.run_test("Confirm Seats (No Auth)", "POST", f"flights/{flight_id}/seats/confirm", 401, confirm_data)
+        
+        # Restore token
+        self.token = original_token
+        
+        return success
+    
+    def test_confirm_seat_selection_valid(self):
+        """Test confirming seat selection with valid selection_id"""
+        if not self.token:
+            self.log_result("Confirm Seat Selection", False, None, "No token available")
+            return False, {}
+        
+        if not hasattr(self, 'seat_selection_id') or not self.seat_selection_id:
+            self.log_result("Confirm Seat Selection", False, None, "No selection_id available from previous test")
+            return False, {}
+        
+        flight_id = "FL123456"
+        
+        confirm_data = {
+            "selection_id": self.seat_selection_id,
+            "payment_confirmed": True
+        }
+        
+        print(f"\n✅ Testing Seat Confirmation...")
+        print(f"   Selection ID: {self.seat_selection_id}")
+        print(f"   Payment confirmed: {confirm_data['payment_confirmed']}")
+        
+        success, response = self.run_test("Confirm Seat Selection", "POST", f"flights/{flight_id}/seats/confirm", 200, confirm_data)
+        
+        if success and response:
+            print(f"   Confirmation response: {response}")
+            
+            # Verify response structure
+            if isinstance(response, dict):
+                message = response.get('message', '')
+                confirmed_seats = response.get('seats', [])
+                
+                if 'confirmed' in message.lower() and confirmed_seats:
+                    self.log_result("Seat Confirmation Success", True)
+                    print(f"   Confirmed seats: {confirmed_seats}")
+                else:
+                    self.log_result("Seat Confirmation Success", False, None, "Unexpected confirmation response")
+        
+        return success, response
+    
+    def test_confirm_invalid_selection_id(self):
+        """Test confirming with invalid selection_id (should fail)"""
+        if not self.token:
+            self.log_result("Confirm Invalid Selection", False, None, "No token available")
+            return False, {}
+        
+        flight_id = "FL123456"
+        
+        confirm_data = {
+            "selection_id": "invalid_selection_id_12345",
+            "payment_confirmed": True
+        }
+        
+        print(f"\n❌ Testing Invalid Selection Confirmation...")
+        print(f"   Invalid selection ID: {confirm_data['selection_id']}")
+        
+        success, response = self.run_test("Confirm Invalid Selection", "POST", f"flights/{flight_id}/seats/confirm", 404, confirm_data)
+        
+        return success
+    
+    def test_seat_selection_new_flight(self):
+        """Test complete seat selection flow with a new flight"""
+        if not self.token:
+            self.log_result("New Flight Seat Selection", False, None, "No token available")
+            return False, {}
+        
+        new_flight_id = "NEWFLIGHT123"
+        
+        print(f"\n🆕 Testing New Flight Seat Selection...")
+        print(f"   New Flight ID: {new_flight_id}")
+        
+        # Step 1: Get seat map (should generate new one)
+        success1, seat_map = self.run_test("New Flight - Get Seats", "GET", f"flights/{new_flight_id}/seats", 200)
+        
+        if not success1 or not seat_map:
+            return False, {}
+        
+        # Verify it's a new seat map with 30 rows and ABC_DEF layout
+        rows = seat_map.get('rows', 0)
+        layout = seat_map.get('layout', '')
+        seats = seat_map.get('seats', [])
+        
+        print(f"   Generated {rows} rows with {layout} layout")
+        print(f"   Total seats: {len(seats)}")
+        
+        # Verify business class pricing (rows 1-3)
+        business_seats = [s for s in seats if s.get('row', 0) <= 3]
+        economy_seats = [s for s in seats if s.get('row', 0) > 3 and s.get('row', 0) <= 10]
+        
+        if business_seats and economy_seats:
+            avg_business = sum(s['price'] for s in business_seats) / len(business_seats)
+            avg_economy = sum(s['price'] for s in economy_seats) / len(economy_seats)
+            
+            print(f"   Business class avg: ${avg_business:.2f}")
+            print(f"   Economy class avg: ${avg_economy:.2f}")
+            
+            if avg_business > avg_economy:
+                self.log_result("New Flight - Business Pricing", True)
+            else:
+                self.log_result("New Flight - Business Pricing", False, None, "Business should be more expensive")
+        
+        # Step 2: Select seats
+        available_seats = [s for s in seats if s.get('status') == 'available'][:2]
+        selected_seat_numbers = [s['seat_number'] for s in available_seats]
+        
+        seat_data = {
+            "seats": selected_seat_numbers,
+            "passenger_count": 2
+        }
+        
+        success2, selection_response = self.run_test("New Flight - Select Seats", "POST", f"flights/{new_flight_id}/seats/select", 200, seat_data)
+        
+        if not success2 or not selection_response:
+            return False, {}
+        
+        selection_id = selection_response.get('selection_id')
+        total_price = selection_response.get('total_seat_price')
+        
+        print(f"   Selection ID: {selection_id}")
+        print(f"   Total price: ${total_price}")
+        
+        # Step 3: Confirm selection
+        confirm_data = {
+            "selection_id": selection_id,
+            "payment_confirmed": True
+        }
+        
+        success3, confirm_response = self.run_test("New Flight - Confirm Seats", "POST", f"flights/{new_flight_id}/seats/confirm", 200, confirm_data)
+        
+        if success3 and confirm_response:
+            print(f"   Confirmation: {confirm_response.get('message', 'N/A')}")
+        
+        return success1 and success2 and success3
+    
+    def run_seat_selection_tests(self):
+        """Run all seat selection tests"""
+        print("\n✈️ Starting Seat Selection API Tests")
+        print("=" * 50)
+        
+        # Test seat map generation and retrieval
+        self.test_get_flight_seats_first_time()
+        self.test_get_flight_seats_existing()
+        
+        # Test seat selection with various scenarios
+        self.test_select_seats_unauthorized()
+        self.test_select_seats_valid()
+        self.test_select_seats_wrong_passenger_count()
+        self.test_select_unavailable_seats()
+        
+        # Test seat confirmation
+        self.test_confirm_seat_selection_unauthorized()
+        self.test_confirm_seat_selection_valid()
+        self.test_confirm_invalid_selection_id()
+        
+        # Test complete flow with new flight
+        self.test_seat_selection_new_flight()
+        
+        print(f"\n📊 Seat Selection Tests Summary: {self.tests_passed}/{self.tests_run} passed")
+
     def run_all_tests(self):
         """Run all API tests"""
         print("🚀 Starting Travel & Tours API Tests")
