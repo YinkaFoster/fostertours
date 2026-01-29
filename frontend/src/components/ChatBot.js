@@ -93,7 +93,7 @@ const ChatBot = () => {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group hover:scale-110"
+        className="fixed bottom-24 sm:bottom-6 right-4 sm:right-6 z-40 w-14 h-14 rounded-full bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group hover:scale-110"
         aria-label="Open chat"
       >
         <MessageCircle className="w-6 h-6 group-hover:scale-110 transition-transform" />
@@ -107,7 +107,7 @@ const ChatBot = () => {
     return (
       <button
         onClick={() => setIsMinimized(false)}
-        className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-full bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
+        className="fixed bottom-24 sm:bottom-6 right-4 sm:right-6 z-40 px-4 py-3 rounded-full bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
       >
         <Bot className="w-5 h-5" />
         <span className="font-medium">Chat with us</span>
@@ -119,7 +119,7 @@ const ChatBot = () => {
   }
 
   return (
-    <Card className="fixed bottom-6 right-6 z-50 w-[380px] h-[520px] flex flex-col shadow-2xl border-0 overflow-hidden rounded-2xl">
+    <Card className="fixed bottom-24 sm:bottom-6 right-4 sm:right-6 z-40 w-[calc(100vw-2rem)] sm:w-[380px] h-[70vh] sm:h-[520px] max-h-[520px] flex flex-col shadow-2xl border-0 overflow-hidden rounded-2xl">
       {/* Header */}
       <div className="bg-gradient-to-r from-teal-500 to-teal-600 text-white p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
