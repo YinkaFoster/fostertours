@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import SeatSelection from '../components/SeatSelection';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -23,6 +24,8 @@ const FlightDetailPage = () => {
   const { isAuthenticated } = useAuth();
   const [passengers, setPassengers] = useState([{ firstName: '', lastName: '', email: '', phone: '' }]);
   const [expandedSection, setExpandedSection] = useState('flight');
+  const [showSeatSelection, setShowSeatSelection] = useState(false);
+  const [selectedSeats, setSelectedSeats] = useState(null);
 
   // Get flight data from navigation state or use defaults
   const stateData = location.state || {};
@@ -60,8 +63,9 @@ const FlightDetailPage = () => {
 
   const passengerCount = stateData.passengers || 1;
   const totalPrice = flightData.price * passengerCount;
-  const taxes = totalPrice * 0.12;
-  const grandTotal = totalPrice + taxes;
+  const seatPrice = selectedSeats?.total_seat_price || 0;
+  const taxes = (totalPrice + seatPrice) * 0.12;
+  const grandTotal = totalPrice + seatPrice + taxes;
 
   useEffect(() => {
     // Initialize passengers array based on count
@@ -75,6 +79,30 @@ const FlightDetailPage = () => {
     const updated = [...passengers];
     updated[index] = { ...updated[index], [field]: value };
     setPassengers(updated);
+  };
+
+  const handleContinueToSeats = () => {
+    if (!isAuthenticated) {
+      toast.error('Please login to continue with booking');
+      navigate('/login');
+      return;
+    }
+
+    // Validate passenger info
+    const isValid = passengers.every(p => p.firstName && p.lastName);
+    if (!isValid) {
+      toast.error('Please fill in all passenger details');
+      return;
+    }
+
+    setShowSeatSelection(true);
+    setExpandedSection('seats');
+  };
+
+  const handleSeatSelect = (seatData) => {
+    setSelectedSeats(seatData);
+    setShowSeatSelection(false);
+    toast.success('Seats selected successfully!');
   };
 
   const handleBookNow = () => {
@@ -105,8 +133,10 @@ const FlightDetailPage = () => {
         guests: passengerCount,
         flight: flightData,
         passengers: passengers,
+        selectedSeats: selectedSeats,
         payment: {
           base_fare: totalPrice,
+          seat_charges: seatPrice,
           taxes: taxes,
           service_fee: 25,
           total: grandTotal
