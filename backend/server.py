@@ -1422,8 +1422,14 @@ async def search_hotels(search: HotelSearch):
     
     # Fallback to mock data
     logger.info("Using mock hotel data")
-    hotels = generate_mock_hotels(search.location)
-    return {"hotels": hotels, "total": len(hotels), "source": "mock"}
+    hotels = generate_mock_hotels(
+        search.location,
+        search.check_in,
+        search.check_out,
+        search.guests,
+        search.rooms
+    )
+    return {"hotels": hotels, "total": len(hotels), "source": "local"}
 
 @api_router.get("/hotels/{hotel_id}")
 async def get_hotel(hotel_id: str):
