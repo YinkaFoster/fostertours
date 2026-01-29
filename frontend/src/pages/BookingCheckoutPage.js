@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -21,6 +21,7 @@ const API = process.env.REACT_APP_BACKEND_URL + '/api';
 
 const BookingCheckoutPage = () => {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   
@@ -38,20 +39,29 @@ const BookingCheckoutPage = () => {
     specialRequests: ''
   });
 
-  // Get booking data from URL params
+  // Get booking data from navigation state first, then URL params
+  const stateData = location.state || {};
   const bookingData = {
-    type: searchParams.get('type') || 'booking',
-    itemId: searchParams.get('itemId') || '',
-    price: parseFloat(searchParams.get('price') || '0'),
-    title: searchParams.get('title') || '',
-    description: searchParams.get('description') || '',
-    image: searchParams.get('image') || '',
-    date: searchParams.get('date') || '',
-    location: searchParams.get('location') || '',
-    guests: parseInt(searchParams.get('guests') || '1'),
+    type: stateData.type || searchParams.get('type') || 'booking',
+    itemId: stateData.itemId || searchParams.get('itemId') || '',
+    price: stateData.price || parseFloat(searchParams.get('price') || '0'),
+    title: stateData.title || searchParams.get('title') || '',
+    description: stateData.description || searchParams.get('description') || '',
+    image: stateData.image || searchParams.get('image') || '',
+    date: stateData.date || searchParams.get('date') || '',
+    location: stateData.location || searchParams.get('location') || '',
+    guests: stateData.guests || parseInt(searchParams.get('guests') || '1'),
+    // Additional data from state
+    flight: stateData.flight || null,
+    hotel: stateData.hotel || null,
+    event: stateData.event || null,
+    vehicle: stateData.vehicle || null,
+    visa: stateData.visa || null,
+    passengers: stateData.passengers || null,
+    payment: stateData.payment || null,
   };
 
-  const totalAmount = bookingData.price * bookingData.guests;
+  const totalAmount = bookingData.price;
   const walletDeduction = useWallet ? Math.min(user?.wallet_balance || 0, totalAmount) : 0;
   const finalAmount = totalAmount - walletDeduction;
 
