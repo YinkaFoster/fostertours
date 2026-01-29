@@ -58,7 +58,8 @@ const Login = () => {
       }, 100);
     } catch (error) {
       console.error('Login failed:', error);
-      toast.error(error.response?.data?.detail || 'Login failed');
+      const errorMessage = error.message || error.response?.data?.detail || 'Login failed - please try again';
+      toast.error(errorMessage);
       setLoading(false);
     }
   };
@@ -89,7 +90,8 @@ const Login = () => {
       }, 100);
     } catch (error) {
       console.error('Registration failed:', error);
-      toast.error(error.response?.data?.detail || 'Registration failed');
+      const errorMessage = error.message || error.response?.data?.detail || 'Registration failed - please try again';
+      toast.error(errorMessage);
       setLoading(false);
     }
   };
