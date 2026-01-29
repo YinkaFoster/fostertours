@@ -336,6 +336,85 @@ const FlightDetailPage = () => {
                 )}
               </Card>
 
+              {/* Seat Selection Section */}
+              {!showSeatSelection && (
+                <Card className="border-0 shadow-lg">
+                  <CardHeader
+                    className="cursor-pointer hover:bg-slate-50 transition-colors"
+                    onClick={() => setExpandedSection(expandedSection === 'seats' ? '' : 'seats')}
+                  >
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2">
+                        <Users className="w-5 h-5 text-blue-600" />
+                        Seat Selection {selectedSeats && <Badge className="ml-2 bg-green-500">Selected</Badge>}
+                      </CardTitle>
+                      {expandedSection === 'seats' ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                    </div>
+                  </CardHeader>
+                  {expandedSection === 'seats' && (
+                    <CardContent className="p-6">
+                      {selectedSeats ? (
+                        <div className="space-y-4">
+                          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                            <p className="font-medium text-green-900 mb-2">✓ Seats Reserved</p>
+                            <div className="space-y-1 text-sm">
+                              {selectedSeats.seats.map((seat, idx) => (
+                                <div key={idx} className="flex justify-between">
+                                  <span>Passenger {idx + 1}: Seat {seat.seat_number}</span>
+                                  <span className="font-medium">${seat.price.toFixed(2)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => {
+                              setSelectedSeats(null);
+                              setShowSeatSelection(true);
+                            }}
+                          >
+                            Change Seats
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          <p className="text-sm text-slate-600">
+                            Select your preferred seats for all {passengerCount} passenger{passengerCount > 1 ? 's' : ''}. 
+                            Seat selection is optional but recommended.
+                          </p>
+                          <Button
+                            className="w-full"
+                            onClick={handleContinueToSeats}
+                          >
+                            Select Seats Now
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            className="w-full"
+                            onClick={() => setExpandedSection('')}
+                          >
+                            Skip Seat Selection
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  )}
+                </Card>
+              )}
+
+              {/* Seat Selection Component */}
+              {showSeatSelection && (
+                <div className="mt-6">
+                  <SeatSelection
+                    flightId={flightData.flightId}
+                    passengerCount={passengerCount}
+                    onSeatSelect={handleSeatSelect}
+                    onBack={() => setShowSeatSelection(false)}
+                  />
+                </div>
+              )}
+
               {/* Policies */}
               <Card className="border-0 shadow-lg">
                 <CardContent className="p-6">
@@ -384,6 +463,12 @@ const FlightDetailPage = () => {
                       <span className="text-slate-600">Subtotal</span>
                       <span className="font-medium">${totalPrice.toFixed(2)}</span>
                     </div>
+                    {selectedSeats && (
+                      <div className="flex justify-between text-green-600">
+                        <span>Seat Charges ({selectedSeats.seats.length} seat{selectedSeats.seats.length > 1 ? 's' : ''})</span>
+                        <span className="font-medium">+${seatPrice.toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <span className="text-slate-600">Taxes & Fees</span>
                       <span className="font-medium">${taxes.toFixed(2)}</span>
