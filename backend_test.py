@@ -2067,6 +2067,11 @@ class TravelToursAPITester:
         self.test_user_login()
         self.test_get_current_user()
         
+        # NEW: Seat Selection API Tests
+        print("\n✈️ Testing Seat Selection APIs")
+        print("=" * 40)
+        self.run_seat_selection_tests()
+        
         # NEW: SendGrid Email Integration Tests
         print("\n📧 Testing SendGrid Email Integration")
         print("=" * 40)
