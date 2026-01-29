@@ -28,3 +28,6 @@ emergentintegrations==0.1.0
 amadeus
 sendgrid
 aiohttp
+aiofiles
+websockets
+python-magic
