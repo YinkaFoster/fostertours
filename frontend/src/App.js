@@ -176,6 +176,14 @@ const AppRouter = () => {
 
       {/* Protected Routes */}
       <Route
+        path="/home"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/dashboard"
         element={
           <ProtectedRoute>

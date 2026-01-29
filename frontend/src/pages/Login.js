@@ -17,7 +17,7 @@ const Login = () => {
   const { login, register, googleLogin, isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from?.pathname || '/dashboard';
+  const from = location.state?.from?.pathname || '/home';
 
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('login');
