@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Button } from '../components/ui/button';
@@ -16,17 +16,20 @@ import axios from 'axios';
 const API = process.env.REACT_APP_BACKEND_URL + '/api';
 
 const VehiclesPage = () => {
+  const navigate = useNavigate();
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [location, setLocation] = useState('');
+  const [pickupLocation, setPickupLocation] = useState('');
   const [vehicleType, setVehicleType] = useState('all');
+  const [pickupDate, setPickupDate] = useState('');
+  const [returnDate, setReturnDate] = useState('');
 
   useEffect(() => {
     const fetchVehicles = async () => {
       try {
         let params = [];
         if (vehicleType !== 'all') params.push(`vehicle_type=${vehicleType}`);
-        if (location) params.push(`location=${location}`);
+        if (pickupLocation) params.push(`location=${pickupLocation}`);
         const query = params.length > 0 ? `?${params.join('&')}` : '';
         const response = await axios.get(`${API}/vehicles${query}`);
         setVehicles(response.data.vehicles || []);
@@ -37,7 +40,18 @@ const VehiclesPage = () => {
       }
     };
     fetchVehicles();
-  }, [vehicleType, location]);
+  }, [vehicleType, pickupLocation]);
+
+  const handleSelectVehicle = (vehicle) => {
+    navigate(`/vehicles/${vehicle.vehicle_id}`, { 
+      state: { 
+        vehicle, 
+        pickupLocation: pickupLocation || 'City Center',
+        pickupDate: pickupDate || new Date().toISOString().split('T')[0],
+        returnDate: returnDate || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      } 
+    });
+  };
 
   const vehicleTypes = [
     { value: 'all', label: 'All Types' },
