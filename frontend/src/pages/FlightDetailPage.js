@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -17,39 +17,48 @@ import {
 import { toast } from 'sonner';
 
 const FlightDetailPage = () => {
-  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const { flightId } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [passengers, setPassengers] = useState([{ firstName: '', lastName: '', email: '', phone: '' }]);
   const [expandedSection, setExpandedSection] = useState('flight');
 
-  // Get flight data from URL params
+  // Get flight data from navigation state or use defaults
+  const stateData = location.state || {};
+  const flight = stateData.flight || {};
+
   const flightData = {
-    flightId: searchParams.get('flightId') || 'FL' + Date.now(),
-    airline: searchParams.get('airline') || 'Emirates',
-    airlineLogo: searchParams.get('airlineLogo') || 'https://images.unsplash.com/photo-1540339832862-474599807836?w=100',
-    flightNumber: searchParams.get('flightNumber') || 'EK 785',
-    departure: searchParams.get('departure') || 'LOS',
-    departureCity: searchParams.get('departureCity') || 'Lagos',
-    departureTime: searchParams.get('departureTime') || '08:30',
-    departureDate: searchParams.get('departureDate') || '2025-02-15',
-    arrival: searchParams.get('arrival') || 'DXB',
-    arrivalCity: searchParams.get('arrivalCity') || 'Dubai',
-    arrivalTime: searchParams.get('arrivalTime') || '19:45',
-    duration: searchParams.get('duration') || '8h 15m',
-    stops: parseInt(searchParams.get('stops') || '0'),
-    stopCity: searchParams.get('stopCity') || '',
-    class: searchParams.get('class') || 'Economy',
-    price: parseFloat(searchParams.get('price') || '650'),
-    seatsAvailable: parseInt(searchParams.get('seats') || '12'),
-    aircraft: searchParams.get('aircraft') || 'Boeing 777-300ER',
-    baggage: searchParams.get('baggage') || '30kg',
-    meal: searchParams.get('meal') !== 'false',
-    wifi: searchParams.get('wifi') !== 'false',
-    entertainment: searchParams.get('entertainment') !== 'false',
+    flightId: flight.flight_id || flightId || 'FL' + Date.now(),
+    airline: flight.airline || 'Emirates',
+    airlineLogo: flight.airline_logo || 'https://upload.wikimedia.org/wikipedia/commons/d/d0/Emirates_logo.svg',
+    flightNumber: flight.flight_number || 'EK 785',
+    departure: flight.origin || 'LOS',
+    departureCity: flight.origin_city || 'Lagos',
+    departureAirport: flight.origin_airport || 'Murtala Muhammed International',
+    departureTime: flight.departure_time || '08:30',
+    departureDate: flight.departure_date || stateData.departureDate || new Date().toISOString().split('T')[0],
+    arrival: flight.destination || 'DXB',
+    arrivalCity: flight.destination_city || 'Dubai',
+    arrivalAirport: flight.destination_airport || 'Dubai International',
+    arrivalTime: flight.arrival_time || '19:45',
+    duration: flight.duration || '8h 15m',
+    stops: flight.stops || 0,
+    stopCities: flight.stop_cities || [],
+    class: flight.cabin_class || 'Economy',
+    price: flight.price_per_person || flight.price || 650,
+    seatsAvailable: flight.available_seats || 12,
+    aircraft: flight.aircraft || 'Boeing 777-300ER',
+    baggage: flight.baggage?.checked || '23kg',
+    amenities: flight.amenities || ['WiFi', 'Entertainment', 'Meals'],
+    meal: flight.meal_included !== false,
+    wifi: flight.amenities?.includes('WiFi') || true,
+    entertainment: flight.amenities?.includes('Entertainment') || true,
+    refundable: flight.refundable || false,
+    airlineRating: flight.airline_rating || 4.5,
   };
 
-  const passengerCount = parseInt(searchParams.get('passengers') || '1');
+  const passengerCount = stateData.passengers || 1;
   const totalPrice = flightData.price * passengerCount;
   const taxes = totalPrice * 0.12;
   const grandTotal = totalPrice + taxes;
