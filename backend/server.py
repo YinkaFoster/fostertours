@@ -713,7 +713,11 @@ async def google_auth(request: Request):
     credential = body.get("credential")
     
     if not credential:
+        logger.error("Google auth: No credential provided")
         raise HTTPException(status_code=400, detail="Google credential required")
+    
+    logger.info(f"Google auth: Received credential, verifying...")
+    logger.info(f"Google auth: Using Client ID: {GOOGLE_CLIENT_ID[:20]}..." if GOOGLE_CLIENT_ID else "Google auth: CLIENT_ID not set!")
     
     # Verify the Google ID token
     try:
@@ -724,18 +728,27 @@ async def google_auth(request: Request):
                 timeout=30.0
             )
             
+            logger.info(f"Google auth: Token verification response status: {response.status_code}")
+            
             if response.status_code != 200:
+                logger.error(f"Google auth: Token verification failed: {response.text}")
                 raise HTTPException(status_code=401, detail="Invalid Google token")
             
             google_data = response.json()
+            logger.info(f"Google auth: Token verified for email: {google_data.get('email')}")
             
             # Verify the audience matches our client ID
-            if google_data.get("aud") != GOOGLE_CLIENT_ID:
+            token_aud = google_data.get("aud")
+            if token_aud != GOOGLE_CLIENT_ID:
+                logger.error(f"Google auth: Audience mismatch. Token aud: {token_aud}, Expected: {GOOGLE_CLIENT_ID}")
                 raise HTTPException(status_code=401, detail="Token not intended for this application")
             
     except httpx.HTTPError as e:
         logger.error(f"Google token verification error: {e}")
         raise HTTPException(status_code=500, detail="Failed to verify Google token")
+    except Exception as e:
+        logger.error(f"Google auth unexpected error: {e}")
+        raise HTTPException(status_code=500, detail=f"Google authentication failed: {str(e)}")
     
     email = google_data.get("email")
     name = google_data.get("name")
