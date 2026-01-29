@@ -77,8 +77,8 @@ const FlightsPage = () => {
     <div className="min-h-screen bg-background" data-testid="flights-page">
       <Navbar />
 
-      {/* Hero Section */}
-      <section className="relative pt-20 pb-32 overflow-hidden">
+      {/* Hero Section - Mobile Optimized */}
+      <section className="relative pt-20 pb-24 sm:pb-32 overflow-hidden">
         <div className="absolute inset-0">
           <img
             src="https://images.unsplash.com/photo-1759173342374-f7702ead3a02?w=1920"
@@ -88,78 +88,78 @@ const FlightsPage = () => {
           <div className="absolute inset-0 hero-overlay" />
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 lg:px-20 pt-12">
-          <div className="text-center text-white mb-8">
-            <h1 className="font-serif text-4xl md:text-5xl mb-4">Find Your Perfect Flight</h1>
-            <p className="text-xl text-white/80 max-w-2xl mx-auto">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 md:px-12 lg:px-20 pt-8 sm:pt-12">
+          <div className="text-center text-white mb-6 sm:mb-8">
+            <h1 className="font-serif text-2xl sm:text-4xl md:text-5xl mb-2 sm:mb-4">Find Your Perfect Flight</h1>
+            <p className="text-sm sm:text-xl text-white/80 max-w-2xl mx-auto px-4">
               Search hundreds of airlines and compare prices to find the best deal
             </p>
           </div>
 
-          {/* Search Form */}
+          {/* Search Form - Mobile Optimized */}
           <Card className="max-w-4xl mx-auto shadow-2xl border-0" data-testid="flight-search-form">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <form onSubmit={handleSearch}>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                  <div className="space-y-2">
-                    <Label>From</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4">
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label className="text-xs sm:text-sm">From</Label>
                     <Input
-                      placeholder="City or Airport (e.g., JFK)"
+                      placeholder="e.g., JFK"
                       value={origin}
                       onChange={(e) => setOrigin(e.target.value)}
-                      className="h-12"
+                      className="h-10 sm:h-12 text-sm"
                       data-testid="origin-input"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label>To</Label>
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label className="text-xs sm:text-sm">To</Label>
                     <Input
-                      placeholder="City or Airport (e.g., LAX)"
+                      placeholder="e.g., LAX"
                       value={destination}
                       onChange={(e) => setDestination(e.target.value)}
-                      className="h-12"
+                      className="h-10 sm:h-12 text-sm"
                       data-testid="destination-input"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Departure</Label>
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label className="text-xs sm:text-sm">Departure</Label>
                     <Input
                       type="date"
                       value={departureDate}
                       onChange={(e) => setDepartureDate(e.target.value)}
-                      className="h-12"
+                      className="h-10 sm:h-12 text-sm"
                       data-testid="departure-date-input"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Return (Optional)</Label>
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label className="text-xs sm:text-sm">Return</Label>
                     <Input
                       type="date"
                       value={returnDate}
                       onChange={(e) => setReturnDate(e.target.value)}
-                      className="h-12"
+                      className="h-10 sm:h-12 text-sm"
                       data-testid="return-date-input"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div className="space-y-2">
-                    <Label>Passengers</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label className="text-xs sm:text-sm">Passengers</Label>
                     <Input
                       type="number"
                       min="1"
                       max="9"
                       value={passengers}
                       onChange={(e) => setPassengers(parseInt(e.target.value))}
-                      className="h-12"
+                      className="h-10 sm:h-12 text-sm"
                       data-testid="passengers-input"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Cabin Class</Label>
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label className="text-xs sm:text-sm">Class</Label>
                     <Select value={cabinClass} onValueChange={setCabinClass}>
-                      <SelectTrigger className="h-12" data-testid="cabin-class-select">
+                      <SelectTrigger className="h-10 sm:h-12 text-sm" data-testid="cabin-class-select">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -170,10 +170,10 @@ const FlightsPage = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="flex items-end">
+                  <div className="flex items-end col-span-2 sm:col-span-1">
                     <Button
                       type="submit"
-                      className="w-full h-12 btn-pill bg-primary"
+                      className="w-full h-10 sm:h-12 btn-pill bg-primary text-sm"
                       disabled={loading}
                       data-testid="search-flights-btn"
                     >
