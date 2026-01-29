@@ -151,7 +151,7 @@ const EventsPage = () => {
                       </div>
                     </CardContent>
                   </Card>
-                </Link>
+                </div>
               ))}
             </div>
           )}
