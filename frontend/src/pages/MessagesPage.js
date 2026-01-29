@@ -10,7 +10,7 @@ import { Badge } from '../components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import {
   MessageCircle, Send, Search, ArrowLeft, MoreVertical,
-  Check, CheckCheck, Loader2, User, Plus
+  Check, CheckCheck, Loader2, User, Plus, Image, Video, Paperclip, X, Phone, VideoIcon, Play
 } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
