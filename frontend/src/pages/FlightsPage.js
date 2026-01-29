@@ -70,7 +70,7 @@ const FlightsPage = () => {
   });
 
   const handleBookFlight = (flight) => {
-    navigate(`/booking/flight/${flight.flight_id}`, { state: { flight } });
+    navigate(`/flights/${flight.flight_id}`, { state: { flight, departureDate, passengers } });
   };
 
   return (
