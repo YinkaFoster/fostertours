@@ -145,7 +145,7 @@ const VehiclesPage = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {vehicles.map((vehicle, index) => (
-                <Link key={vehicle.vehicle_id} to={`/vehicles/${vehicle.vehicle_id}`} data-testid={`vehicle-card-${index}`}>
+                <div key={vehicle.vehicle_id} onClick={() => handleSelectVehicle(vehicle)} className="cursor-pointer" data-testid={`vehicle-card-${index}`}>
                   <Card className="h-full border-0 shadow-soft card-hover overflow-hidden">
                     <div className="h-48 relative">
                       <img
@@ -190,7 +190,7 @@ const VehiclesPage = () => {
                       </div>
                     </CardContent>
                   </Card>
-                </Link>
+                </div>
               ))}
             </div>
           )}
