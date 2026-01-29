@@ -311,9 +311,14 @@ const Dashboard = () => {
                     <Map className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                     <h3 className="font-serif text-xl mb-2">No itineraries yet</h3>
                     <p className="text-muted-foreground mb-4">Create your perfect trip plan!</p>
-                    <Link to="/itinerary/builder">
-                      <Button className="btn-pill bg-primary">Create Itinerary</Button>
-                    </Link>
+                    <div className="flex gap-3 justify-center">
+                      <Link to="/itinerary/ai">
+                        <Button className="btn-pill bg-purple-500 hover:bg-purple-600">AI Planner</Button>
+                      </Link>
+                      <Link to="/itinerary/builder">
+                        <Button variant="outline" className="btn-pill">Manual Builder</Button>
+                      </Link>
+                    </div>
                   </CardContent>
                 </Card>
               ) : (
@@ -337,6 +342,55 @@ const Dashboard = () => {
                         </CardContent>
                       </Card>
                     </Link>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="orders" className="space-y-4">
+              {loading ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto" />
+                </div>
+              ) : orders.length === 0 ? (
+                <Card className="border-0 shadow-soft">
+                  <CardContent className="py-12 text-center">
+                    <ShoppingBag className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="font-serif text-xl mb-2">No orders yet</h3>
+                    <p className="text-muted-foreground mb-4">Browse our travel gear and accessories!</p>
+                    <Link to="/store">
+                      <Button className="btn-pill bg-orange-500 hover:bg-orange-600">Visit Store</Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  {orders.map((order) => (
+                    <Card key={order.order_id} className="border-0 shadow-soft" data-testid={`order-${order.order_id}`}>
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between">
+                          <div className="flex gap-4">
+                            <div className="w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center">
+                              <ShoppingBag className="w-6 h-6 text-orange-500" />
+                            </div>
+                            <div>
+                              <h3 className="font-semibold mb-1">Order #{order.order_id?.slice(-8)}</h3>
+                              <p className="text-sm text-muted-foreground">
+                                {order.items?.length || 0} item(s)
+                              </p>
+                              <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                                <Clock className="w-3 h-3" />
+                                {new Date(order.created_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            {getStatusBadge(order.status)}
+                            <p className="text-lg font-bold mt-2">${order.total?.toFixed(2)}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
               )}
