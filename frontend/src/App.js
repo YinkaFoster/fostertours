@@ -52,6 +52,10 @@ import BookingSuccessPage from "./pages/BookingSuccessPage";
 import RewardsPage from "./pages/RewardsPage";
 import ReferralPage from "./pages/ReferralPage";
 import MessagesPage from "./pages/MessagesPage";
+import StoriesPage from "./pages/StoriesPage";
+import FavoritesPage from "./pages/FavoritesPage";
+import CallsPage from "./pages/CallsPage";
+import LiveMapPage from "./pages/LiveMapPage";
 
 // Router wrapper to handle auth callback
 const AppRouter = () => {
