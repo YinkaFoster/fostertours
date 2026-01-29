@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 const AuthContext = createContext(null);
@@ -59,18 +59,17 @@ export const AuthProvider = ({ children }) => {
     return userData;
   };
 
-  const googleLogin = () => {
-    // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-    const redirectUrl = window.location.origin + '/auth/callback';
-    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
-  };
-
-  const handleOAuthCallback = async (sessionId) => {
-    const response = await axios.post(`${API}/auth/session`, { session_id: sessionId }, {
+  // Direct Google OAuth login - sends credential to backend
+  // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+  const googleLogin = async (credential) => {
+    const response = await axios.post(`${API}/auth/google`, { credential }, {
       withCredentials: true
     });
-    setUser(response.data);
-    return response.data;
+    const { access_token, user: userData } = response.data;
+    localStorage.setItem('token', access_token);
+    setToken(access_token);
+    setUser(userData);
+    return userData;
   };
 
   const logout = async () => {
@@ -91,7 +90,6 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     googleLogin,
-    handleOAuthCallback,
     logout,
     checkAuth
   };
