@@ -203,7 +203,38 @@ const BookingCheckoutPage = () => {
 
         // Update booking status
         toast.success('Payment successful!');
-        navigate(`/booking/success?booking_id=${bookingId}`);
+        
+        // Navigate to appropriate receipt page based on booking type
+        if (bookingData.type === 'flight') {
+          navigate('/flights/receipt', {
+            state: {
+              booking: {
+                booking_id: bookingId,
+                receipt_no: `FR-${new Date().getFullYear()}-${bookingId.slice(-6)}`,
+                payment_status: 'paid',
+                created_at: new Date().toISOString(),
+                passenger_name: `${guestInfo.firstName} ${guestInfo.lastName}`,
+                passenger_email: guestInfo.email,
+                passenger_phone: guestInfo.phone,
+                price: totalAmount,
+                total_amount: totalAmount,
+                guest_info: guestInfo,
+              },
+              flight: bookingData.flight,
+              payment: bookingData.payment || {
+                base_fare: totalAmount * 0.85,
+                taxes: totalAmount * 0.12,
+                service_fee: totalAmount * 0.03,
+                total: totalAmount,
+                method: 'Wallet',
+                transaction_id: `PAY-${bookingId.toUpperCase().slice(-10)}`,
+                gateway: 'Wallet'
+              }
+            }
+          });
+        } else {
+          navigate(`/booking/success?booking_id=${bookingId}`);
+        }
       }
     } catch (error) {
       console.error('Payment error:', error);
