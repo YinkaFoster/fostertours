@@ -256,35 +256,20 @@ frontend:
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 5
+  test_sequence: 6
   run_ui: true
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Travel Stories API endpoints"
+    - "Messaging with Media attachments"
+    - "Favorites API endpoints"
+    - "Calls API endpoints"
+    - "Location sharing API endpoints"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
   - agent: "main"
-    message: "Implemented 3 features: 1) AI Itinerary frontend routing, 2) Admin Panel with full backend and frontend, 3) Itinerary drag-and-drop builder. Please test admin API endpoints first."
-  - agent: "testing"
-    message: "Backend admin API testing complete - all 10 endpoints working correctly with proper security"
-  - agent: "main"
-    message: "Now testing frontend components: Admin Panel page, AI Itinerary page, Itinerary Builder page"
-  - agent: "testing"
-    message: "✅ ADMIN PANEL API TESTING COMPLETE - All 10 admin endpoints tested and working correctly. Security is properly implemented with JWT authentication and admin role verification. All endpoints return 401 for unauthenticated requests and 403 for non-admin users. Comprehensive testing included: dashboard stats, user management (CRUD with pagination/search), booking management (list/update with filters), order management (list/update), and admin privilege management (grant/revoke). Backend is production-ready for admin functionality."
-  - agent: "testing"
-    message: "✅ FRONTEND TESTING COMPLETE - All 3 new frontend pages tested successfully: 1) AI Itinerary Planner (/itinerary/ai) - Complete form with destination, dates, budget, travelers, and 8 interest buttons, proper authentication required. 2) Admin Panel (/admin) - Correct access control, redirects non-admin users to dashboard. 3) Itinerary Builder (/itinerary/builder) - Full form functionality, Add Day/Activity features working, drag-and-drop implemented. All pages properly require authentication. Navbar includes AI Planner link. Registration/login flow working correctly."
-  - agent: "testing"
-    message: "Frontend testing complete - all new pages working correctly"
-  - agent: "main"
-    message: "Added Amadeus API integration for real flight/hotel search and SendGrid for email notifications. Testing these new integrations."
-  - agent: "testing"
-    message: "✅ AMADEUS & SENDGRID INTEGRATION TESTING COMPLETE - All new API integrations tested successfully: 1) Amadeus Flight Search API (POST /api/flights/search) - Working with proper fallback to mock data, returns 10 flights with correct structure. 2) Amadeus Hotel Search API (POST /api/hotels/search) - Working with proper fallback to mock data, returns 6 hotels with correct structure. 3) SendGrid Email Integration - Welcome email endpoint working (POST /api/email/welcome), admin status endpoint properly secured (GET /api/email/status). All endpoints have proper authentication/authorization. API credentials appear to be test/demo keys with limited functionality, but integration code handles failures gracefully with appropriate fallbacks."
-  - agent: "testing"
-    message: "✅ AI CUSTOMER CARE CHATBOT TESTING COMPLETE - New chatbot endpoints tested successfully: POST /api/chatbot/message and DELETE /api/chatbot/session/{session_id}. All 3 test scenarios passed: 1) Initial message returns AI response with session_id and responds intelligently about Foster Tours services. 2) Follow-up message maintains conversation context correctly. 3) Session clearing works properly. Chatbot includes required contact details (WhatsApp: +234 9058 681 268, Instagram: @foster_tours) and uses GPT-5.2 model for intelligent responses. Error handling is robust with fallback messages."
-  - agent: "main"
-    message: "Added custom logo images, multi-currency support, and multi-language support to Foster Tours app. Please perform quick verification test."
-  - agent: "testing"
-    message: "✅ QUICK VERIFICATION COMPLETE - All requested endpoints tested successfully: 1) Health Check (GET /api/health) - Returns healthy status with timestamp, service is running correctly. 2) Flight Search (POST /api/flights/search) - Working perfectly with JFK->LAX route, returns 10 flights with proper structure (flight_id, airline, origin, destination, price), using mock data due to Amadeus test credentials. 3) Hotel Search (POST /api/hotels/search) - Working perfectly for Paris location, returns 6 hotels with proper structure (hotel_id, name, location, price_per_night, rating), using mock data due to Amadeus test credentials. All endpoints return 200 status codes and proper JSON responses. Backend service is healthy and all core functionality is operational."
+    message: "Implemented 5 major features: 1) Travel Stories (Instagram-like 24hr stories with likes/comments), 2) Messaging with media attachments (images/videos), 3) Favorites system (save stories/products/destinations/blog posts), 4) In-app calling with WebRTC, 5) Live map with real-time location sharing via WebSocket. All backend endpoints created. Frontend pages created: StoriesPage, FavoritesPage, CallsPage, LiveMapPage. MessagesPage updated for media support. Navbar updated with new links. Please test backend endpoints first."
