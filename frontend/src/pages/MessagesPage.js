@@ -365,7 +365,32 @@ const MessagesPage = () => {
                               : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-bl-md'
                           }`}
                         >
-                          <p>{msg.content}</p>
+                          {/* Attachments */}
+                          {msg.attachments && msg.attachments.length > 0 && (
+                            <div className="mb-2 space-y-2">
+                              {msg.attachments.map((att, idx) => (
+                                <div key={idx} className="rounded-lg overflow-hidden">
+                                  {att.type === 'image' ? (
+                                    <img 
+                                      src={att.url} 
+                                      alt="attachment" 
+                                      className="max-w-full rounded-lg cursor-pointer hover:opacity-90"
+                                      onClick={() => window.open(att.url, '_blank')}
+                                    />
+                                  ) : att.type === 'video' ? (
+                                    <div className="relative">
+                                      <video 
+                                        src={att.url}
+                                        controls
+                                        className="max-w-full rounded-lg"
+                                      />
+                                    </div>
+                                  ) : null}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {msg.content && <p>{msg.content}</p>}
                           <div className={`flex items-center justify-end gap-1 mt-1 ${
                             msg.sender_id === user?.user_id ? 'text-teal-100' : 'text-slate-400'
                           }`}>
@@ -384,9 +409,54 @@ const MessagesPage = () => {
                     <div ref={messagesEndRef} />
                   </div>
 
+                  {/* Attachment Preview */}
+                  {previewUrls.length > 0 && (
+                    <div className="px-4 py-2 border-t dark:border-slate-800">
+                      <div className="flex gap-2 overflow-x-auto">
+                        {previewUrls.map((preview, idx) => (
+                          <div key={idx} className="relative flex-shrink-0">
+                            {preview.type === 'image' ? (
+                              <img 
+                                src={preview.url} 
+                                alt="" 
+                                className="w-16 h-16 object-cover rounded-lg"
+                              />
+                            ) : (
+                              <div className="w-16 h-16 bg-slate-200 dark:bg-slate-700 rounded-lg flex items-center justify-center">
+                                <Play className="w-6 h-6 text-slate-500" />
+                              </div>
+                            )}
+                            <button
+                              onClick={() => removeAttachment(idx)}
+                              className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Message Input */}
                   <form onSubmit={handleSendMessage} className="p-4 border-t dark:border-slate-800">
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-end">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        accept="image/*,video/*"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <Paperclip className="w-5 h-5" />
+                      </Button>
                       <Input
                         placeholder="Type a message..."
                         value={newMessage}
@@ -396,7 +466,7 @@ const MessagesPage = () => {
                       <Button 
                         type="submit" 
                         className="bg-teal-600 hover:bg-teal-700"
-                        disabled={sending || !newMessage.trim()}
+                        disabled={sending || (!newMessage.trim() && attachments.length === 0)}
                       >
                         {sending ? (
                           <Loader2 className="w-5 h-5 animate-spin" />
