@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -17,7 +17,8 @@ import {
 import { toast } from 'sonner';
 
 const VisaDetailPage = () => {
-  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const { visaId } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [applicantInfo, setApplicantInfo] = useState({
@@ -26,24 +27,29 @@ const VisaDetailPage = () => {
     travelDate: '', purpose: 'tourism'
   });
 
+  // Get visa data from navigation state or use defaults
+  const stateData = location.state || {};
+  const visa = stateData.visa || {};
+
   const visaData = {
-    visaId: searchParams.get('visaId') || 'VS' + Date.now(),
-    country: searchParams.get('country') || 'United Arab Emirates',
-    countryCode: searchParams.get('countryCode') || 'AE',
-    flag: searchParams.get('flag') || '🇦🇪',
-    visaType: searchParams.get('visaType') || 'Tourist Visa',
-    duration: searchParams.get('duration') || '30 Days',
-    validity: searchParams.get('validity') || '60 Days',
-    entries: searchParams.get('entries') || 'Single Entry',
-    processingTime: searchParams.get('processingTime') || '3-5 Business Days',
-    price: parseFloat(searchParams.get('price') || '150'),
-    expressPrice: parseFloat(searchParams.get('expressPrice') || '250'),
-    image: searchParams.get('image') || 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800',
+    visaId: visa.visa_id || visaId || 'VS' + Date.now(),
+    country: visa.country || 'United Arab Emirates',
+    countryCode: visa.country_code || 'AE',
+    flag: visa.flag || '🇦🇪',
+    visaType: visa.visa_type || visa.type || 'Tourist Visa',
+    duration: visa.duration || '30 Days',
+    validity: visa.validity || '60 Days',
+    entries: visa.entries || 'Single Entry',
+    processingTime: visa.processing_time || '3-5 Business Days',
+    price: visa.price || 150,
+    expressPrice: visa.express_price || visa.price * 1.7 || 250,
+    image: visa.image_url || visa.image || 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800',
+    requirements: visa.requirements || [],
   };
 
   const [selectedSpeed, setSelectedSpeed] = useState('standard');
 
-  const requirements = [
+  const requirements = visaData.requirements.length > 0 ? visaData.requirements : [
     'Valid passport with 6+ months validity',
     'Passport-size photograph (white background)',
     'Confirmed flight reservation',
