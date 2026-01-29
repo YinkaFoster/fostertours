@@ -1084,71 +1084,262 @@ async def get_flight(flight_id: str):
 
 # =============== HOTELS ROUTES ===============
 
-def generate_mock_hotels(location: str) -> List[dict]:
-    hotels_data = [
+# Comprehensive hotel database by location
+HOTEL_DATABASE = {
+    "default": [
         {
-            "name": "The Grand Resort & Spa",
-            "rating": 4.8,
-            "price": 299,
-            "amenities": ["Pool", "Spa", "Restaurant", "Gym", "WiFi", "Beach Access"]
-        },
-        {
-            "name": "Ocean View Hotel",
-            "rating": 4.5,
-            "price": 189,
-            "amenities": ["Pool", "Restaurant", "WiFi", "Bar", "Room Service"]
-        },
-        {
-            "name": "City Center Inn",
-            "rating": 4.2,
-            "price": 129,
-            "amenities": ["WiFi", "Restaurant", "Parking", "Business Center"]
-        },
-        {
-            "name": "Luxury Palace Hotel",
+            "name": "The Grand Palace Hotel",
+            "chain": "Luxury Collection",
             "rating": 4.9,
-            "price": 459,
-            "amenities": ["Pool", "Spa", "Golf", "Restaurant", "WiFi", "Concierge", "Private Beach"]
+            "reviews": 2847,
+            "base_price": 450,
+            "type": "luxury",
+            "amenities": ["Infinity Pool", "Full-Service Spa", "Michelin Restaurant", "Fitness Center", "Concierge", "WiFi", "Room Service 24/7", "Valet Parking"],
+            "image": "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800"
         },
         {
-            "name": "Budget Traveler's Inn",
-            "rating": 3.8,
-            "price": 79,
-            "amenities": ["WiFi", "Parking", "Breakfast"]
+            "name": "Oceanfront Resort & Spa",
+            "chain": "Four Seasons",
+            "rating": 4.8,
+            "reviews": 1923,
+            "base_price": 380,
+            "type": "resort",
+            "amenities": ["Private Beach", "Pool", "Spa", "Water Sports", "Restaurant", "Bar", "WiFi", "Kids Club"],
+            "image": "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800"
         },
         {
-            "name": "Boutique Paradise",
+            "name": "Urban Boutique Hotel",
+            "chain": "Independent",
             "rating": 4.6,
-            "price": 219,
-            "amenities": ["Pool", "Restaurant", "WiFi", "Spa", "Rooftop Bar"]
-        }
+            "reviews": 892,
+            "base_price": 220,
+            "type": "boutique",
+            "amenities": ["Rooftop Bar", "Restaurant", "Gym", "WiFi", "Concierge", "Meeting Rooms"],
+            "image": "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800"
+        },
+        {
+            "name": "City Center Marriott",
+            "chain": "Marriott",
+            "rating": 4.4,
+            "reviews": 3421,
+            "base_price": 180,
+            "type": "business",
+            "amenities": ["Pool", "Gym", "Restaurant", "Business Center", "WiFi", "Parking", "Meeting Rooms"],
+            "image": "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800"
+        },
+        {
+            "name": "Hilton Garden Inn",
+            "chain": "Hilton",
+            "rating": 4.3,
+            "reviews": 2156,
+            "base_price": 150,
+            "type": "mid-range",
+            "amenities": ["Pool", "Gym", "Restaurant", "WiFi", "Parking", "Business Center"],
+            "image": "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800"
+        },
+        {
+            "name": "Holiday Inn Express",
+            "chain": "IHG",
+            "rating": 4.1,
+            "reviews": 1876,
+            "base_price": 110,
+            "type": "budget-friendly",
+            "amenities": ["Breakfast Included", "Pool", "WiFi", "Parking", "Fitness Center"],
+            "image": "https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=800"
+        },
+        {
+            "name": "The Ritz-Carlton",
+            "chain": "Ritz-Carlton",
+            "rating": 4.9,
+            "reviews": 1654,
+            "base_price": 550,
+            "type": "luxury",
+            "amenities": ["Spa", "Fine Dining", "Pool", "Club Lounge", "Concierge", "WiFi", "Butler Service", "Limousine"],
+            "image": "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800"
+        },
+        {
+            "name": "Hyatt Regency",
+            "chain": "Hyatt",
+            "rating": 4.5,
+            "reviews": 2890,
+            "base_price": 200,
+            "type": "upscale",
+            "amenities": ["Pool", "Spa", "Multiple Restaurants", "Gym", "WiFi", "Business Center", "Valet"],
+            "image": "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800"
+        },
+        {
+            "name": "Comfort Inn & Suites",
+            "chain": "Choice Hotels",
+            "rating": 3.9,
+            "reviews": 1234,
+            "base_price": 85,
+            "type": "economy",
+            "amenities": ["Free Breakfast", "WiFi", "Pool", "Parking"],
+            "image": "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800"
+        },
+        {
+            "name": "W Hotel",
+            "chain": "W Hotels",
+            "rating": 4.7,
+            "reviews": 987,
+            "base_price": 320,
+            "type": "lifestyle",
+            "amenities": ["WET Pool", "Away Spa", "Living Room Bar", "FIT Gym", "WiFi", "Whatever/Whenever Service"],
+            "image": "https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=800"
+        },
     ]
+}
+
+# Location-specific price multipliers
+LOCATION_PRICING = {
+    "dubai": 1.3, "dxb": 1.3,
+    "paris": 1.2, "cdg": 1.2,
+    "london": 1.25, "lhr": 1.25,
+    "new york": 1.2, "jfk": 1.2, "nyc": 1.2,
+    "tokyo": 1.15, "nrt": 1.15,
+    "singapore": 1.1, "sin": 1.1,
+    "bangkok": 0.7, "bkk": 0.7,
+    "bali": 0.65,
+    "lagos": 0.8, "los": 0.8,
+    "cape town": 0.75, "cpt": 0.75,
+    "mumbai": 0.6, "bom": 0.6,
+    "default": 1.0
+}
+
+def generate_mock_hotels(location: str, check_in: str = None, check_out: str = None, guests: int = 2, rooms: int = 1) -> List[dict]:
+    """Generate comprehensive mock hotel data"""
+    
+    location_lower = location.lower()
+    price_multiplier = LOCATION_PRICING.get(location_lower, LOCATION_PRICING["default"])
+    
+    # Get city info
+    city_code = location.upper()
+    city_info = CITY_DATABASE.get(city_code, {"name": location, "country": "Unknown"})
+    city_name = city_info["name"] if isinstance(city_info, dict) else location
     
     hotels = []
-    for i, h in enumerate(hotels_data):
-        hotels.append({
+    hotel_templates = HOTEL_DATABASE["default"]
+    
+    for idx, template in enumerate(hotel_templates):
+        # Calculate dynamic pricing
+        base_price = template["base_price"] * price_multiplier
+        
+        # Add seasonal variation (random for demo)
+        seasonal_factor = random.uniform(0.9, 1.2)
+        base_price *= seasonal_factor
+        
+        # Room type pricing
+        room_types = [
+            {
+                "type": "Standard Room",
+                "description": "Comfortable room with essential amenities",
+                "price": round(base_price, 2),
+                "beds": "1 Queen Bed",
+                "max_guests": 2,
+                "size": "28 sq m",
+                "view": "City View"
+            },
+            {
+                "type": "Deluxe Room",
+                "description": "Spacious room with premium amenities",
+                "price": round(base_price * 1.4, 2),
+                "beds": "1 King Bed",
+                "max_guests": 2,
+                "size": "35 sq m",
+                "view": "City/Pool View"
+            },
+            {
+                "type": "Superior Suite",
+                "description": "Luxurious suite with separate living area",
+                "price": round(base_price * 2.0, 2),
+                "beds": "1 King Bed + Sofa Bed",
+                "max_guests": 3,
+                "size": "50 sq m",
+                "view": "Premium View"
+            },
+            {
+                "type": "Executive Suite",
+                "description": "Premium suite with executive lounge access",
+                "price": round(base_price * 2.8, 2),
+                "beds": "1 King Bed",
+                "max_guests": 2,
+                "size": "65 sq m",
+                "view": "Panoramic View",
+                "extras": ["Lounge Access", "Free Minibar", "Late Checkout"]
+            }
+        ]
+        
+        # Generate multiple images
+        image_ids = ["1566073771259-6a8506099945", "1582719508461-905c673771fd", "1520250497591-112f2f40a3f4", 
+                     "1551882547-ff40c63fe5fa", "1564501049412-61c2a3083791", "1571003123894-1f0594d2b5d9"]
+        images = [
+            f"https://images.unsplash.com/photo-{image_ids[(idx + i) % len(image_ids)]}?w=800"
+            for i in range(4)
+        ]
+        
+        hotel = {
             "hotel_id": f"htl_{uuid.uuid4().hex[:8]}",
-            "name": h["name"],
-            "location": location,
-            "city": location,
-            "rating": h["rating"],
-            "reviews_count": 100 + i * 50,
-            "price_per_night": h["price"],
-            "image_url": f"https://images.unsplash.com/photo-170283049914{i}-a0634d87d6af?w=800",
-            "images": [
-                f"https://images.unsplash.com/photo-170283049914{i}-a0634d87d6af?w=800",
-                f"https://images.unsplash.com/photo-170918751605{i}-d4929b67e89f?w=800"
+            "name": template["name"],
+            "chain": template["chain"],
+            "location": city_name,
+            "city": city_name,
+            "country": city_info.get("country", "Unknown") if isinstance(city_info, dict) else "Unknown",
+            "address": f"{random.randint(1, 999)} {random.choice(['Main', 'Park', 'Ocean', 'Central', 'Grand'])} {random.choice(['Street', 'Avenue', 'Boulevard', 'Road'])}, {city_name}",
+            "coordinates": {
+                "latitude": random.uniform(-60, 60),
+                "longitude": random.uniform(-180, 180)
+            },
+            "rating": template["rating"],
+            "reviews_count": template["reviews"] + random.randint(-100, 500),
+            "star_rating": 5 if template["type"] == "luxury" else 4 if template["type"] in ["resort", "upscale", "boutique"] else 3,
+            "type": template["type"],
+            "price_per_night": round(base_price * rooms, 2),
+            "original_price": round(base_price * rooms * 1.15, 2) if random.random() < 0.4 else None,
+            "currency": "USD",
+            "image_url": images[0],
+            "images": images,
+            "amenities": template["amenities"],
+            "description": f"Experience exceptional hospitality at {template['name']} in the heart of {city_name}. {'Our luxury property offers world-class amenities and unparalleled service.' if template['type'] == 'luxury' else 'Enjoy comfortable accommodations with modern amenities for a memorable stay.'}",
+            "room_types": room_types,
+            "policies": {
+                "check_in": "15:00",
+                "check_out": "11:00",
+                "cancellation": "Free cancellation up to 24 hours before check-in" if template["type"] in ["luxury", "resort"] else "Free cancellation up to 48 hours before check-in",
+                "pets_allowed": random.choice([True, False]),
+                "smoking": "Non-smoking property"
+            },
+            "nearby": [
+                {"name": "City Center", "distance": f"{random.uniform(0.5, 3):.1f} km"},
+                {"name": "Airport", "distance": f"{random.uniform(10, 40):.0f} km"},
+                {"name": "Beach" if random.random() < 0.5 else "Shopping District", "distance": f"{random.uniform(1, 5):.1f} km"}
             ],
-            "amenities": h["amenities"],
-            "description": f"Experience luxury and comfort at {h['name']}. Located in the heart of {location}.",
-            "room_types": [
-                {"type": "Standard", "price": h["price"], "beds": "1 Queen"},
-                {"type": "Deluxe", "price": h["price"] * 1.5, "beds": "1 King"},
-                {"type": "Suite", "price": h["price"] * 2.5, "beds": "1 King + Living"}
-            ]
-        })
+            "highlights": generate_hotel_highlights(template["type"]),
+            "available_rooms": random.randint(2, 15),
+            "free_cancellation": template["type"] in ["luxury", "resort", "upscale"],
+            "breakfast_included": template["type"] in ["economy", "budget-friendly"] or random.random() < 0.3
+        }
+        
+        hotels.append(hotel)
+    
+    # Sort by rating then price
+    hotels.sort(key=lambda x: (-x["rating"], x["price_per_night"]))
     
     return hotels
+
+def generate_hotel_highlights(hotel_type: str) -> List[str]:
+    """Generate highlights based on hotel type"""
+    highlights = {
+        "luxury": ["Award-winning spa", "Michelin-starred dining", "Butler service", "Private beach access"],
+        "resort": ["All-inclusive options", "Multiple pools", "Kids activities", "Water sports"],
+        "boutique": ["Unique design", "Personalized service", "Local art collection", "Rooftop terrace"],
+        "business": ["Executive lounge", "Meeting facilities", "Airport shuttle", "24h business center"],
+        "mid-range": ["Great value", "Central location", "Comfortable rooms", "Friendly staff"],
+        "budget-friendly": ["Budget-friendly", "Free breakfast", "Clean rooms", "Good location"],
+        "economy": ["Best price guarantee", "Essential amenities", "Free WiFi", "Parking included"],
+        "lifestyle": ["Trendy atmosphere", "Vibrant nightlife", "Instagram-worthy", "Celebrity hotspot"],
+        "upscale": ["Premium amenities", "Fine dining", "Spa services", "Elegant rooms"]
+    }
+    return highlights.get(hotel_type, ["Great location", "Comfortable stay", "Good amenities"])
 
 @api_router.post("/hotels/search")
 async def search_hotels(search: HotelSearch):
