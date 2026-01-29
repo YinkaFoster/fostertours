@@ -27,7 +27,7 @@ const Footer = () => {
                   alt="Foster Tours" 
                   className="h-full w-full object-contain drop-shadow-xl"
                   onError={(e) => {
-                    e.target.parentElement.innerHTML = '<div class="flex items-center gap-2"><div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-teal-500 flex items-center justify-center"><svg class="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg></div></div>';
+                    e.target.parentElement.innerHTML = '<div class="flex items-center gap-2"><div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-emerald-500 flex items-center justify-center"><svg class="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg></div></div>';
                   }}
                 />
               </div>
@@ -65,7 +65,7 @@ const Footer = () => {
 
           {/* Our Services */}
           <div>
-            <h4 className="font-semibold text-sm sm:text-lg mb-3 sm:mb-4 text-teal-400">Our Services</h4>
+            <h4 className="font-semibold text-sm sm:text-lg mb-3 sm:mb-4 text-emerald-400">Our Services</h4>
             <ul className="space-y-1.5 sm:space-y-2">
               {[
                 { label: 'Flights', href: '/flights', icon: Plane },
@@ -81,7 +81,7 @@ const Footer = () => {
                     to={link.href}
                     className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-xs sm:text-sm group"
                   >
-                    <link.icon className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-teal-500 group-hover:text-teal-400" />
+                    <link.icon className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-500 group-hover:text-emerald-400" />
                     {link.label}
                   </Link>
                 </li>
@@ -91,7 +91,7 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h4 className="font-semibold text-sm sm:text-lg mb-3 sm:mb-4 text-teal-400">Quick Links</h4>
+            <h4 className="font-semibold text-sm sm:text-lg mb-3 sm:mb-4 text-emerald-400">Quick Links</h4>
             <ul className="space-y-1.5 sm:space-y-2">
               {[
                 { label: 'About Us', href: '/about' },
@@ -116,7 +116,7 @@ const Footer = () => {
 
           {/* Support */}
           <div>
-            <h4 className="font-semibold text-sm sm:text-lg mb-3 sm:mb-4 text-teal-400">Support</h4>
+            <h4 className="font-semibold text-sm sm:text-lg mb-3 sm:mb-4 text-emerald-400">Support</h4>
             <ul className="space-y-1.5 sm:space-y-2">
               {[
                 { label: 'Help Center', href: '/help' },
@@ -141,7 +141,7 @@ const Footer = () => {
 
           {/* Contact Information */}
           <div>
-            <h4 className="font-semibold text-lg mb-4 text-teal-400">Contact Us</h4>
+            <h4 className="font-semibold text-lg mb-4 text-emerald-400">Contact Us</h4>
             <div className="space-y-3">
               {/* WhatsApp */}
               <a 
@@ -178,10 +178,10 @@ const Footer = () => {
               {/* Email */}
               <a 
                 href="mailto:support@fostertours.com"
-                className="flex items-start gap-2 text-sm text-slate-400 hover:text-teal-400 transition-colors group"
+                className="flex items-start gap-2 text-sm text-slate-400 hover:text-emerald-400 transition-colors group"
               >
-                <div className="w-7 h-7 rounded-full bg-teal-600/20 flex items-center justify-center flex-shrink-0 group-hover:bg-teal-600/30">
-                  <Mail className="w-3.5 h-3.5 text-teal-500" />
+                <div className="w-7 h-7 rounded-full bg-emerald-600/20 flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-600/30">
+                  <Mail className="w-3.5 h-3.5 text-emerald-500" />
                 </div>
                 <div>
                   <p className="font-medium text-white text-xs">Email</p>
@@ -204,7 +204,7 @@ const Footer = () => {
 
           {/* Newsletter */}
           <div>
-            <h4 className="font-semibold text-lg mb-4 text-teal-400">Stay Updated</h4>
+            <h4 className="font-semibold text-lg mb-4 text-emerald-400">Stay Updated</h4>
             <p className="text-slate-400 text-sm mb-3">
               Subscribe for exclusive deals and travel tips.
             </p>
@@ -222,8 +222,8 @@ const Footer = () => {
             {/* Customer Support Badge */}
             <div className="mt-4 p-3 bg-slate-800/50 rounded-xl border border-slate-700">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-teal-500/20 flex items-center justify-center">
-                  <Headphones className="w-4 h-4 text-teal-400" />
+                <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                  <Headphones className="w-4 h-4 text-emerald-400" />
                 </div>
                 <div>
                   <p className="font-medium text-white text-xs">24/7 AI Support</p>
