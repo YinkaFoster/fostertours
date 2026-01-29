@@ -325,6 +325,18 @@ frontend:
         agent: "testing"
         comment: "✅ Itinerary Builder page tested successfully. All form elements working: trip title input, description textarea, start/end date inputs, destinations input. Add Day button functional - successfully adds new day cards. Add Activity button opens dialog modal correctly. Save button present. Budget tracking displays estimated total. Page properly requires authentication and redirects to login when not authenticated. Drag-and-drop functionality implemented with dnd-kit library."
 
+  - task: "Login Flow and /home Redirect"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/Login.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ COMPLETE LOGIN FLOW TESTED SUCCESSFULLY: All 4 test scenarios PASSED with admin@fostertours.com credentials: 1) Email/Password login correctly redirects to /home page (not /dashboard) - verified URL path and dashboard elements load properly, 2) Already authenticated users automatically redirected from /login to /home - authentication state properly managed, 3) Navigation links working correctly - user dropdown shows 'Home' link that navigates to /home, all main navigation links (Flights, Hotels, Events) functional and clickable, 4) Logout flow working - redirects to login page, re-login successful and redirects back to /home. Mobile navigation tested - Account button correctly links to /home. Dashboard page loads with welcome message, wallet/bookings/rewards cards visible. Authentication, routing, and UI elements all working as specified."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
