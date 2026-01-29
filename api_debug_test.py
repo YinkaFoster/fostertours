@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv('/app/backend/.env')
 
-BASE_URL = "https://wanderlust-386.preview.emergentagent.com/api"
+BASE_URL = "https://trip-planner-pro-6.preview.emergentagent.com/api"
 
 def test_amadeus_integration():
     """Test Amadeus API integration with detailed debugging"""
