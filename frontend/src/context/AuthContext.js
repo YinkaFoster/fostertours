@@ -78,14 +78,21 @@ export const AuthProvider = ({ children }) => {
   // Direct Google OAuth login - sends credential to backend
   // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
   const googleLogin = async (credential) => {
-    const response = await axios.post(`${API}/auth/google`, { credential }, {
-      withCredentials: true
-    });
-    const { access_token, user: userData } = response.data;
-    localStorage.setItem('token', access_token);
-    setToken(access_token);
-    setUser(userData);
-    return userData;
+    try {
+      console.log('Google login: Sending credential to backend...');
+      const response = await axios.post(`${API}/auth/google`, { credential }, {
+        withCredentials: true
+      });
+      const { access_token, user: userData } = response.data;
+      console.log('Google login successful:', userData);
+      localStorage.setItem('token', access_token);
+      setToken(access_token);
+      setUser(userData);
+      return userData;
+    } catch (error) {
+      console.error('Google login error:', error.response?.data || error.message);
+      throw error;
+    }
   };
 
   const logout = async () => {
