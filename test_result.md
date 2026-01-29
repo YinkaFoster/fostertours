@@ -251,15 +251,18 @@ backend:
 
   - task: "Calls API endpoints"
     implemented: true
-    working: "NA"
+    working: false
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented WebRTC call signaling. Endpoints: POST /api/calls/initiate, POST /api/calls/{id}/answer, POST /api/calls/{id}/reject, POST /api/calls/{id}/end, GET /api/calls/history, GET /api/calls/{id}. WebSocket at /ws/calls/{user_id}"
+      - working: false
+        agent: "testing"
+        comment: "❌ Calls API endpoints exist but failing validation. POST /api/calls/initiate returns 404 because it validates that receiver_id exists in database before creating call. Authentication works correctly (401 without token). GET /api/calls/history works correctly (returns 200 with empty call history). The API logic is sound but requires valid user IDs for call creation. Cannot test call operations (answer/reject/end) without successful call initiation."
 
   - task: "Location Sharing API endpoints"
     implemented: true
