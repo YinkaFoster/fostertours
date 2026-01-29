@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -18,6 +18,7 @@ const API = process.env.REACT_APP_BACKEND_URL + '/api';
 
 const PaystackMockPage = () => {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   
@@ -35,6 +36,13 @@ const PaystackMockPage = () => {
   const amount = parseFloat(searchParams.get('amount') || '0');
   const email = searchParams.get('email');
   const bookingId = searchParams.get('booking_id');
+  
+  // Get booking data from navigation state or session storage
+  const stateData = location.state || {};
+  const storedBooking = sessionStorage.getItem('pendingBooking');
+  const pendingBooking = storedBooking ? JSON.parse(storedBooking) : {};
+  const bookingData = stateData.bookingData || pendingBooking.bookingData || {};
+  const guestInfo = stateData.guestInfo || pendingBooking.guestInfo || {};
 
   useEffect(() => {
     if (!isAuthenticated) {
