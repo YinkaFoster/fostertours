@@ -299,18 +299,22 @@ const Login = () => {
 
               {/* Google OAuth Login - Direct Integration */}
               <div className="flex justify-center">
-                <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-                  <GoogleLogin
-                    onSuccess={handleGoogleSuccess}
-                    onError={handleGoogleError}
-                    useOneTap
-                    theme="outline"
-                    size="large"
-                    width="100%"
-                    text="continue_with"
-                    shape="pill"
-                  />
-                </GoogleOAuthProvider>
+                {GOOGLE_CLIENT_ID ? (
+                  <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      onError={handleGoogleError}
+                      theme="outline"
+                      size="large"
+                      width={300}
+                      text="continue_with"
+                      shape="rectangular"
+                      logo_alignment="center"
+                    />
+                  </GoogleOAuthProvider>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Google Sign-In not configured</p>
+                )}
               </div>
             </CardContent>
           </Card>
