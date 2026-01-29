@@ -172,9 +172,23 @@ const BookingCheckoutPage = () => {
         if (paymentResponse.data.status) {
           const { authorization_url, reference, access_code } = paymentResponse.data.data;
           
+          // Store booking data for receipt page
+          sessionStorage.setItem('pendingBooking', JSON.stringify({
+            bookingId,
+            bookingData,
+            guestInfo,
+            totalAmount: finalAmount
+          }));
+          
           if (paymentResponse.data.is_mock) {
             // Mock mode - navigate to mock payment page
-            navigate(`/booking/paystack-mock?reference=${reference}&amount=${finalAmount}&email=${guestInfo.email}&booking_id=${bookingId}`);
+            navigate(`/booking/paystack-mock?reference=${reference}&amount=${finalAmount}&email=${guestInfo.email}&booking_id=${bookingId}`, {
+              state: {
+                bookingData,
+                guestInfo,
+                totalAmount: finalAmount
+              }
+            });
           } else {
             // Real Paystack - redirect to payment page
             window.location.href = authorization_url;
