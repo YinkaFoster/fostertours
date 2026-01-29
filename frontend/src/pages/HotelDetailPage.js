@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -17,31 +17,47 @@ import {
 import { toast } from 'sonner';
 
 const HotelDetailPage = () => {
-  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const { hotelId } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [selectedRoom, setSelectedRoom] = useState(0);
   const [guestInfo, setGuestInfo] = useState({ firstName: '', lastName: '', email: '', phone: '', specialRequests: '' });
 
+  // Get hotel data from navigation state or use defaults
+  const stateData = location.state || {};
+  const hotel = stateData.hotel || {};
+  
   const hotelData = {
-    hotelId: searchParams.get('hotelId') || 'HT' + Date.now(),
-    name: searchParams.get('name') || 'Burj Al Arab Jumeirah',
-    image: searchParams.get('image') || 'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800',
-    location: searchParams.get('location') || 'Dubai, UAE',
-    address: searchParams.get('address') || 'Jumeirah Beach Road, Dubai',
-    rating: parseFloat(searchParams.get('rating') || '4.9'),
-    reviewCount: parseInt(searchParams.get('reviews') || '2450'),
-    stars: parseInt(searchParams.get('stars') || '5'),
-    checkIn: searchParams.get('checkIn') || '2025-02-15',
-    checkOut: searchParams.get('checkOut') || '2025-02-18',
-    guests: parseInt(searchParams.get('guests') || '2'),
-    description: searchParams.get('description') || 'Experience unparalleled luxury at the world\'s most iconic hotel. The Burj Al Arab offers exceptional service, stunning views, and world-class amenities.',
+    hotelId: hotel.hotel_id || hotelId || 'HT' + Date.now(),
+    name: hotel.name || 'Luxury Hotel & Resort',
+    image: hotel.image_url || hotel.images?.[0] || 'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800',
+    images: hotel.images || ['https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800'],
+    location: hotel.location || hotel.city || 'Dubai, UAE',
+    address: hotel.address || 'Premium Location',
+    rating: hotel.rating || 4.5,
+    reviewCount: hotel.reviews_count || 500,
+    stars: hotel.star_rating || 5,
+    checkIn: stateData.checkIn || new Date().toISOString().split('T')[0],
+    checkOut: stateData.checkOut || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    guests: stateData.guests || 2,
+    description: hotel.description || 'Experience unparalleled luxury at this world-class hotel. Exceptional service, stunning views, and world-class amenities await you.',
+    amenities: hotel.amenities || ['WiFi', 'Pool', 'Spa', 'Restaurant', 'Gym'],
+    pricePerNight: hotel.price_per_night || 200,
   };
 
-  const rooms = [
-    { name: 'Deluxe Suite', price: 850, size: '170 sqm', beds: '1 King', view: 'Sea View', image: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=400' },
-    { name: 'Panoramic Suite', price: 1200, size: '220 sqm', beds: '1 King', view: 'Panoramic Sea', image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=400' },
-    { name: 'Royal Suite', price: 2500, size: '780 sqm', beds: '2 King', view: '360° Views', image: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400' },
+  // Use hotel's room types if available, otherwise use defaults
+  const rooms = hotel.room_types?.length > 0 ? hotel.room_types.map(r => ({
+    name: r.type,
+    price: r.price,
+    size: r.size || '40 sqm',
+    beds: r.beds || '1 King',
+    view: r.view || 'City View',
+    image: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=400'
+  })) : [
+    { name: 'Standard Room', price: hotelData.pricePerNight, size: '35 sqm', beds: '1 Queen', view: 'City View', image: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=400' },
+    { name: 'Deluxe Room', price: hotelData.pricePerNight * 1.4, size: '45 sqm', beds: '1 King', view: 'Pool View', image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=400' },
+    { name: 'Suite', price: hotelData.pricePerNight * 2.2, size: '65 sqm', beds: '1 King + Sofa', view: 'Premium View', image: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400' },
   ];
 
   const amenities = [
@@ -53,8 +69,8 @@ const HotelDetailPage = () => {
     { icon: Waves, label: 'Swimming Pool' },
   ];
 
-  const nights = Math.ceil((new Date(hotelData.checkOut) - new Date(hotelData.checkIn)) / (1000 * 60 * 60 * 24));
-  const roomPrice = rooms[selectedRoom].price;
+  const nights = Math.max(1, Math.ceil((new Date(hotelData.checkOut) - new Date(hotelData.checkIn)) / (1000 * 60 * 60 * 24)));
+  const roomPrice = rooms[selectedRoom]?.price || hotelData.pricePerNight;
   const totalPrice = roomPrice * nights;
   const taxes = totalPrice * 0.15;
   const grandTotal = totalPrice + taxes;
