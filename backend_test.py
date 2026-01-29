@@ -1881,6 +1881,9 @@ class TravelToursAPITester:
         # AI Customer Care Chatbot Tests
         self.run_chatbot_tests()
         
+        # NEW: Social Features Tests
+        self.run_social_features_tests()
+        
         # Print summary
         print("\n" + "=" * 50)
         print("📊 TEST SUMMARY")
