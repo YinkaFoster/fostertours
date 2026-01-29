@@ -722,56 +722,224 @@ AIRLINE_LOGOS = {
     "UA": "https://upload.wikimedia.org/wikipedia/en/e/e0/United_Airlines_Logo.svg",
     "DL": "https://upload.wikimedia.org/wikipedia/commons/d/d1/Delta_logo.svg",
     "AF": "https://upload.wikimedia.org/wikipedia/commons/4/44/Air_France_Logo.svg",
-    "KL": "https://upload.wikimedia.org/wikipedia/commons/c/c7/KLM_logo.svg"
+    "KL": "https://upload.wikimedia.org/wikipedia/commons/c/c7/KLM_logo.svg",
+    "TK": "https://upload.wikimedia.org/wikipedia/commons/0/00/Turkish_Airlines_logo_2019_compact.svg",
+    "EY": "https://upload.wikimedia.org/wikipedia/commons/7/79/Etihad_Airways_logo.svg",
+    "CX": "https://upload.wikimedia.org/wikipedia/en/1/17/Cathay_Pacific_logo.svg",
+    "NH": "https://upload.wikimedia.org/wikipedia/commons/9/9a/All_Nippon_Airways_Logo.svg",
+    "JL": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Japan_Airlines_logo_%28Japan_Airlines%29.svg"
 }
 
-# City names mapping
-CITY_NAMES = {
-    "NYC": "New York", "LAX": "Los Angeles", "LHR": "London", "DXB": "Dubai",
-    "SIN": "Singapore", "HKG": "Hong Kong", "CDG": "Paris", "NRT": "Tokyo",
-    "SYD": "Sydney", "JFK": "New York", "ORD": "Chicago", "MIA": "Miami",
-    "SFO": "San Francisco", "BOS": "Boston", "SEA": "Seattle", "ATL": "Atlanta",
-    "MAD": "Madrid", "BCN": "Barcelona", "FCO": "Rome", "AMS": "Amsterdam"
+# Comprehensive city database
+CITY_DATABASE = {
+    "JFK": {"name": "New York", "country": "USA", "timezone": "EST", "airport": "John F. Kennedy International"},
+    "LAX": {"name": "Los Angeles", "country": "USA", "timezone": "PST", "airport": "Los Angeles International"},
+    "LHR": {"name": "London", "country": "UK", "timezone": "GMT", "airport": "Heathrow Airport"},
+    "DXB": {"name": "Dubai", "country": "UAE", "timezone": "GST", "airport": "Dubai International"},
+    "SIN": {"name": "Singapore", "country": "Singapore", "timezone": "SGT", "airport": "Changi Airport"},
+    "HKG": {"name": "Hong Kong", "country": "China", "timezone": "HKT", "airport": "Hong Kong International"},
+    "CDG": {"name": "Paris", "country": "France", "timezone": "CET", "airport": "Charles de Gaulle"},
+    "NRT": {"name": "Tokyo", "country": "Japan", "timezone": "JST", "airport": "Narita International"},
+    "SYD": {"name": "Sydney", "country": "Australia", "timezone": "AEST", "airport": "Sydney Airport"},
+    "ORD": {"name": "Chicago", "country": "USA", "timezone": "CST", "airport": "O'Hare International"},
+    "MIA": {"name": "Miami", "country": "USA", "timezone": "EST", "airport": "Miami International"},
+    "SFO": {"name": "San Francisco", "country": "USA", "timezone": "PST", "airport": "San Francisco International"},
+    "BOS": {"name": "Boston", "country": "USA", "timezone": "EST", "airport": "Logan International"},
+    "SEA": {"name": "Seattle", "country": "USA", "timezone": "PST", "airport": "Seattle-Tacoma International"},
+    "ATL": {"name": "Atlanta", "country": "USA", "timezone": "EST", "airport": "Hartsfield-Jackson"},
+    "MAD": {"name": "Madrid", "country": "Spain", "timezone": "CET", "airport": "Adolfo Suárez Madrid–Barajas"},
+    "BCN": {"name": "Barcelona", "country": "Spain", "timezone": "CET", "airport": "Barcelona-El Prat"},
+    "FCO": {"name": "Rome", "country": "Italy", "timezone": "CET", "airport": "Leonardo da Vinci–Fiumicino"},
+    "AMS": {"name": "Amsterdam", "country": "Netherlands", "timezone": "CET", "airport": "Schiphol"},
+    "FRA": {"name": "Frankfurt", "country": "Germany", "timezone": "CET", "airport": "Frankfurt Airport"},
+    "IST": {"name": "Istanbul", "country": "Turkey", "timezone": "TRT", "airport": "Istanbul Airport"},
+    "DOH": {"name": "Doha", "country": "Qatar", "timezone": "AST", "airport": "Hamad International"},
+    "AUH": {"name": "Abu Dhabi", "country": "UAE", "timezone": "GST", "airport": "Abu Dhabi International"},
+    "BKK": {"name": "Bangkok", "country": "Thailand", "timezone": "ICT", "airport": "Suvarnabhumi Airport"},
+    "ICN": {"name": "Seoul", "country": "South Korea", "timezone": "KST", "airport": "Incheon International"},
+    "PEK": {"name": "Beijing", "country": "China", "timezone": "CST", "airport": "Beijing Capital International"},
+    "DEL": {"name": "New Delhi", "country": "India", "timezone": "IST", "airport": "Indira Gandhi International"},
+    "BOM": {"name": "Mumbai", "country": "India", "timezone": "IST", "airport": "Chhatrapati Shivaji Maharaj"},
+    "LOS": {"name": "Lagos", "country": "Nigeria", "timezone": "WAT", "airport": "Murtala Muhammed International"},
+    "ABV": {"name": "Abuja", "country": "Nigeria", "timezone": "WAT", "airport": "Nnamdi Azikiwe International"},
+    "CPT": {"name": "Cape Town", "country": "South Africa", "timezone": "SAST", "airport": "Cape Town International"},
+    "JNB": {"name": "Johannesburg", "country": "South Africa", "timezone": "SAST", "airport": "O.R. Tambo International"},
+    "CAI": {"name": "Cairo", "country": "Egypt", "timezone": "EET", "airport": "Cairo International"},
+    "GRU": {"name": "São Paulo", "country": "Brazil", "timezone": "BRT", "airport": "São Paulo–Guarulhos"},
+    "MEX": {"name": "Mexico City", "country": "Mexico", "timezone": "CST", "airport": "Benito Juárez International"},
+    "YYZ": {"name": "Toronto", "country": "Canada", "timezone": "EST", "airport": "Toronto Pearson International"},
+    "YVR": {"name": "Vancouver", "country": "Canada", "timezone": "PST", "airport": "Vancouver International"},
 }
 
-# Mock flight data generator (fallback)
+# City names mapping (backward compatible)
+CITY_NAMES = {code: data["name"] for code, data in CITY_DATABASE.items()}
+
+# Comprehensive airline database
+AIRLINE_DATABASE = [
+    {"name": "Emirates", "code": "EK", "country": "UAE", "hub": "DXB", "rating": 4.8, "class": "premium"},
+    {"name": "Qatar Airways", "code": "QR", "country": "Qatar", "hub": "DOH", "rating": 4.9, "class": "premium"},
+    {"name": "Singapore Airlines", "code": "SQ", "country": "Singapore", "hub": "SIN", "rating": 4.9, "class": "premium"},
+    {"name": "Lufthansa", "code": "LH", "country": "Germany", "hub": "FRA", "rating": 4.5, "class": "premium"},
+    {"name": "British Airways", "code": "BA", "country": "UK", "hub": "LHR", "rating": 4.3, "class": "premium"},
+    {"name": "American Airlines", "code": "AA", "country": "USA", "hub": "DFW", "rating": 4.0, "class": "standard"},
+    {"name": "United Airlines", "code": "UA", "country": "USA", "hub": "ORD", "rating": 3.9, "class": "standard"},
+    {"name": "Delta Air Lines", "code": "DL", "country": "USA", "hub": "ATL", "rating": 4.2, "class": "standard"},
+    {"name": "Air France", "code": "AF", "country": "France", "hub": "CDG", "rating": 4.4, "class": "premium"},
+    {"name": "KLM Royal Dutch", "code": "KL", "country": "Netherlands", "hub": "AMS", "rating": 4.4, "class": "premium"},
+    {"name": "Turkish Airlines", "code": "TK", "country": "Turkey", "hub": "IST", "rating": 4.6, "class": "premium"},
+    {"name": "Etihad Airways", "code": "EY", "country": "UAE", "hub": "AUH", "rating": 4.7, "class": "premium"},
+    {"name": "Cathay Pacific", "code": "CX", "country": "Hong Kong", "hub": "HKG", "rating": 4.6, "class": "premium"},
+    {"name": "ANA", "code": "NH", "country": "Japan", "hub": "NRT", "rating": 4.8, "class": "premium"},
+    {"name": "Japan Airlines", "code": "JL", "country": "Japan", "hub": "NRT", "rating": 4.7, "class": "premium"},
+]
+
+# Flight route configurations with typical prices and durations
+ROUTE_CONFIGS = {
+    # US Domestic
+    ("JFK", "LAX"): {"duration_min": 330, "base_price": 250, "distance": 2475},
+    ("JFK", "MIA"): {"duration_min": 180, "base_price": 180, "distance": 1090},
+    ("JFK", "ORD"): {"duration_min": 150, "base_price": 150, "distance": 740},
+    ("LAX", "SFO"): {"duration_min": 75, "base_price": 100, "distance": 337},
+    # Transatlantic
+    ("JFK", "LHR"): {"duration_min": 420, "base_price": 550, "distance": 3459},
+    ("JFK", "CDG"): {"duration_min": 450, "base_price": 580, "distance": 3635},
+    ("LAX", "LHR"): {"duration_min": 600, "base_price": 650, "distance": 5456},
+    # Middle East
+    ("JFK", "DXB"): {"duration_min": 780, "base_price": 750, "distance": 6843},
+    ("LHR", "DXB"): {"duration_min": 420, "base_price": 450, "distance": 3403},
+    # Asia
+    ("JFK", "NRT"): {"duration_min": 840, "base_price": 900, "distance": 6740},
+    ("JFK", "SIN"): {"duration_min": 1080, "base_price": 1000, "distance": 9534},
+    ("LAX", "SIN"): {"duration_min": 1020, "base_price": 850, "distance": 8770},
+    ("LHR", "SIN"): {"duration_min": 780, "base_price": 700, "distance": 6764},
+    ("LHR", "HKG"): {"duration_min": 720, "base_price": 680, "distance": 5994},
+    # Africa
+    ("LHR", "LOS"): {"duration_min": 390, "base_price": 600, "distance": 3107},
+    ("JFK", "JNB"): {"duration_min": 960, "base_price": 1100, "distance": 7969},
+    ("DXB", "LOS"): {"duration_min": 480, "base_price": 550, "distance": 3890},
+}
+
+import random
+from datetime import datetime, timedelta
+
 def generate_mock_flights(origin: str, destination: str, date: str, passengers: int) -> List[dict]:
-    airlines = [
-        {"name": "Emirates", "code": "EK", "logo": AIRLINE_LOGOS.get("EK", "")},
-        {"name": "Qatar Airways", "code": "QR", "logo": AIRLINE_LOGOS.get("QR", "")},
-        {"name": "Singapore Airlines", "code": "SQ", "logo": AIRLINE_LOGOS.get("SQ", "")},
-        {"name": "Lufthansa", "code": "LH", "logo": AIRLINE_LOGOS.get("LH", "")},
-        {"name": "British Airways", "code": "BA", "logo": AIRLINE_LOGOS.get("BA", "")},
-    ]
+    """Generate comprehensive mock flight data"""
+    origin = origin.upper()
+    destination = destination.upper()
+    
+    # Get route config or generate default
+    route_key = (origin, destination)
+    reverse_key = (destination, origin)
+    
+    if route_key in ROUTE_CONFIGS:
+        config = ROUTE_CONFIGS[route_key]
+    elif reverse_key in ROUTE_CONFIGS:
+        config = ROUTE_CONFIGS[reverse_key]
+    else:
+        # Generate default config based on assumed distance
+        config = {"duration_min": 300, "base_price": 400, "distance": 3000}
+    
+    origin_city = CITY_DATABASE.get(origin, {"name": origin, "airport": origin})
+    dest_city = CITY_DATABASE.get(destination, {"name": destination, "airport": destination})
     
     flights = []
-    base_prices = [450, 520, 680, 890, 1200, 350, 750]
     
-    for i, airline in enumerate(airlines):
-        for j in range(2):
-            flight_num = f"{airline['code']}{100 + i * 10 + j}"
-            stops = j % 3
-            base_price = base_prices[(i + j) % len(base_prices)]
+    # Select 6-8 random airlines for this route
+    selected_airlines = random.sample(AIRLINE_DATABASE, min(8, len(AIRLINE_DATABASE)))
+    
+    departure_times = ["06:00", "07:30", "09:00", "10:30", "12:00", "14:00", "16:30", "18:00", "20:00", "22:30"]
+    
+    for idx, airline in enumerate(selected_airlines):
+        # Generate 1-2 flights per airline
+        num_flights = random.randint(1, 2)
+        
+        for flight_idx in range(num_flights):
+            # Calculate price with variations
+            price_multiplier = 1.0
+            if airline["class"] == "premium":
+                price_multiplier = random.uniform(1.2, 1.6)
+            else:
+                price_multiplier = random.uniform(0.8, 1.1)
             
-            flights.append({
+            # Add time-of-day pricing
+            dep_time = departure_times[(idx * 2 + flight_idx) % len(departure_times)]
+            hour = int(dep_time.split(":")[0])
+            if 6 <= hour <= 9:  # Morning premium
+                price_multiplier *= 1.15
+            elif 18 <= hour <= 21:  # Evening premium
+                price_multiplier *= 1.1
+            
+            base_price = config["base_price"] * price_multiplier
+            
+            # Calculate duration with variations
+            stops = 0
+            if random.random() < 0.3:  # 30% chance of 1 stop
+                stops = 1
+                base_price *= 0.85  # Cheaper with stops
+            
+            duration_mins = config["duration_min"] + (stops * random.randint(90, 180))
+            duration_hours = duration_mins // 60
+            duration_remaining_mins = duration_mins % 60
+            
+            # Calculate arrival time
+            dep_hour, dep_min = map(int, dep_time.split(":"))
+            arr_mins = dep_hour * 60 + dep_min + duration_mins
+            arr_hour = (arr_mins // 60) % 24
+            arr_min = arr_mins % 60
+            next_day = arr_mins >= 1440
+            arrival_time = f"{arr_hour:02d}:{arr_min:02d}" + ("+1" if next_day else "")
+            
+            flight = {
                 "flight_id": f"fl_{uuid.uuid4().hex[:8]}",
                 "airline": airline["name"],
-                "airline_logo": airline["logo"],
-                "flight_number": flight_num,
+                "airline_code": airline["code"],
+                "airline_logo": AIRLINE_LOGOS.get(airline["code"], ""),
+                "airline_rating": airline["rating"],
+                "flight_number": f"{airline['code']}{random.randint(100, 999)}",
                 "origin": origin,
-                "origin_city": CITY_NAMES.get(origin, origin),
+                "origin_city": origin_city["name"],
+                "origin_airport": origin_city.get("airport", origin),
                 "destination": destination,
-                "destination_city": CITY_NAMES.get(destination, destination),
-                "departure_time": f"{6 + i * 3}:{'00' if j == 0 else '30'}",
-                "arrival_time": f"{14 + i * 2}:{'45' if j == 0 else '15'}",
-                "duration": f"{8 + stops * 2}h {30 + j * 15}m",
-                "price": base_price * passengers,
+                "destination_city": dest_city["name"],
+                "destination_airport": dest_city.get("airport", destination),
+                "departure_date": date,
+                "departure_time": dep_time,
+                "arrival_time": arrival_time,
+                "duration": f"{duration_hours}h {duration_remaining_mins}m",
+                "duration_minutes": duration_mins,
+                "price": round(base_price * passengers, 2),
+                "price_per_person": round(base_price, 2),
+                "currency": "USD",
                 "stops": stops,
+                "stop_cities": [random.choice(["FRA", "IST", "DXB", "DOH", "AMS", "LHR"])] if stops > 0 else [],
                 "cabin_class": "economy",
-                "available_seats": 15 + i * 5
-            })
+                "available_seats": random.randint(3, 45),
+                "aircraft": random.choice(["Boeing 777-300ER", "Airbus A380", "Boeing 787 Dreamliner", "Airbus A350-900", "Boeing 737 MAX"]),
+                "amenities": generate_flight_amenities(airline["class"]),
+                "baggage": {
+                    "cabin": "1 x 7kg",
+                    "checked": "1 x 23kg" if airline["class"] == "premium" else "1 x 20kg"
+                },
+                "refundable": random.choice([True, False]),
+                "meal_included": airline["class"] == "premium" or random.random() < 0.5
+            }
+            
+            flights.append(flight)
+    
+    # Sort by price
+    flights.sort(key=lambda x: x["price"])
     
     return flights
+
+def generate_flight_amenities(airline_class: str) -> List[str]:
+    """Generate amenities based on airline class"""
+    basic = ["USB Charging", "In-flight Entertainment"]
+    standard = basic + ["WiFi Available", "Snacks"]
+    premium = standard + ["Gourmet Meals", "Premium Entertainment", "Extra Legroom", "Priority Boarding", "Lounge Access"]
+    
+    if airline_class == "premium":
+        return premium
+    return standard
 
 def parse_amadeus_flights(response_data: list, origin: str, destination: str) -> List[dict]:
     """Parse Amadeus flight offers response into our format"""
