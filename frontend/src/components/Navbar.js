@@ -191,6 +191,24 @@ const Navbar = () => {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
+                    <Link to="/calls" className="flex items-center gap-2">
+                      <Phone className="w-4 h-4" />
+                      Calls
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/favorites" className="flex items-center gap-2">
+                      <Bookmark className="w-4 h-4" />
+                      Favorites
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/map" className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4" />
+                      Live Map
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link to="/itinerary" className="flex items-center gap-2" data-testid="nav-itinerary">
                       <Map className="w-4 h-4" />
                       My Itineraries
