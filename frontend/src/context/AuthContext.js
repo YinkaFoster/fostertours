@@ -42,21 +42,37 @@ export const AuthProvider = ({ children }) => {
   }, [checkAuth]);
 
   const login = async (email, password) => {
-    const response = await axios.post(`${API}/auth/login`, { email, password });
-    const { access_token, user: userData } = response.data;
-    localStorage.setItem('token', access_token);
-    setToken(access_token);
-    setUser(userData);
-    return userData;
+    try {
+      const response = await axios.post(`${API}/auth/login`, { email, password }, {
+        withCredentials: true
+      });
+      const { access_token, user: userData } = response.data;
+      console.log('Login successful, setting token and user', userData);
+      localStorage.setItem('token', access_token);
+      setToken(access_token);
+      setUser(userData);
+      return userData;
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
   };
 
   const register = async (email, password, name, phone) => {
-    const response = await axios.post(`${API}/auth/register`, { email, password, name, phone });
-    const { access_token, user: userData } = response.data;
-    localStorage.setItem('token', access_token);
-    setToken(access_token);
-    setUser(userData);
-    return userData;
+    try {
+      const response = await axios.post(`${API}/auth/register`, { email, password, name, phone }, {
+        withCredentials: true
+      });
+      const { access_token, user: userData } = response.data;
+      console.log('Registration successful, setting token and user', userData);
+      localStorage.setItem('token', access_token);
+      setToken(access_token);
+      setUser(userData);
+      return userData;
+    } catch (error) {
+      console.error('Register error:', error);
+      throw error;
+    }
   };
 
   // Direct Google OAuth login - sends credential to backend
