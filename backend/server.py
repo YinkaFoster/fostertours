@@ -571,20 +571,38 @@ async def register(user_data: UserCreate):
 
 @api_router.post("/auth/login", response_model=TokenResponse)
 async def login(credentials: UserLogin):
+    logger.info(f"Login attempt for email: {credentials.email}")
     user = await db.users.find_one({"email": credentials.email}, {"_id": 0})
     if not user:
+        logger.warning(f"User not found: {credentials.email}")
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     # Check both password fields (for compatibility)
     stored_password = user.get("password") or user.get("hashed_password")
-    if not stored_password or not verify_password(credentials.password, stored_password):
+    logger.info(f"Found stored password: {bool(stored_password)}")
+    
+    if not stored_password:
+        logger.warning(f"No password stored for user: {credentials.email}")
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    try:
+        is_valid = verify_password(credentials.password, stored_password)
+        logger.info(f"Password verification result: {is_valid}")
+    except Exception as e:
+        logger.error(f"Password verification error: {e}")
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    if not is_valid:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     token = create_token(user["user_id"], user["email"], user.get("is_admin", False))
     
     created_at = user.get("created_at")
     if isinstance(created_at, str):
-        created_at = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+        try:
+            created_at = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+        except:
+            created_at = datetime.now(timezone.utc)
     
     user_response = UserResponse(
         user_id=user["user_id"],
