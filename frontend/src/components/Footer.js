@@ -15,24 +15,24 @@ const LOGO_URL = "https://customer-assets.emergentagent.com/job_journeyquest-9/a
 const Footer = () => {
   return (
     <footer className="bg-slate-900 text-white" data-testid="footer">
-      {/* Main Footer */}
-      <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8">
+      {/* Main Footer - Mobile Optimized */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 lg:px-20 py-10 sm:py-16">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 sm:gap-8">
           {/* Brand */}
-          <div className="space-y-4 lg:col-span-1">
+          <div className="space-y-3 sm:space-y-4 col-span-2 sm:col-span-2 md:col-span-1 lg:col-span-1">
             <Link to="/" className="inline-block group">
-              <div className="h-20 w-20 flex items-center justify-center transform group-hover:scale-105 transition-transform">
+              <div className="h-16 sm:h-20 w-16 sm:w-20 flex items-center justify-center transform group-hover:scale-105 transition-transform">
                 <img 
                   src={LOGO_URL} 
                   alt="Foster Tours" 
                   className="h-full w-full object-contain drop-shadow-xl"
                   onError={(e) => {
-                    e.target.parentElement.innerHTML = '<div class="flex items-center gap-2"><div class="w-14 h-14 rounded-full bg-teal-500 flex items-center justify-center"><svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg></div><span class="text-2xl font-serif font-semibold text-white">Foster Tours</span></div>';
+                    e.target.parentElement.innerHTML = '<div class="flex items-center gap-2"><div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-teal-500 flex items-center justify-center"><svg class="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg></div></div>';
                   }}
                 />
               </div>
             </Link>
-            <p className="text-slate-400 text-sm leading-relaxed">
+            <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
               Your trusted partner for unforgettable travel experiences.
             </p>
             <div className="flex gap-2">
@@ -65,16 +65,16 @@ const Footer = () => {
 
           {/* Our Services */}
           <div>
-            <h4 className="font-semibold text-lg mb-4 text-teal-400">Our Services</h4>
-            <ul className="space-y-2">
+            <h4 className="font-semibold text-sm sm:text-lg mb-3 sm:mb-4 text-teal-400">Our Services</h4>
+            <ul className="space-y-1.5 sm:space-y-2">
               {[
-                { label: 'Flight Booking', href: '/flights', icon: Plane },
-                { label: 'Hotel Reservations', href: '/hotels', icon: Hotel },
-                { label: 'Tours & Events', href: '/events', icon: Calendar },
-                { label: 'Vehicle Rentals', href: '/vehicles', icon: Car },
-                { label: 'Visa Assistance', href: '/visa', icon: FileText },
-                { label: 'Travel Store', href: '/store', icon: ShoppingBag },
-                { label: 'AI Trip Planner', href: '/itinerary/ai', icon: Sparkles },
+                { label: 'Flights', href: '/flights', icon: Plane },
+                { label: 'Hotels', href: '/hotels', icon: Hotel },
+                { label: 'Events', href: '/events', icon: Calendar },
+                { label: 'Vehicles', href: '/vehicles', icon: Car },
+                { label: 'Visa', href: '/visa', icon: FileText },
+                { label: 'Store', href: '/store', icon: ShoppingBag },
+                { label: 'AI Planner', href: '/itinerary/ai', icon: Sparkles },
               ].map((link) => (
                 <li key={link.href}>
                   <Link
