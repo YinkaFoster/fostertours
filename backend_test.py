@@ -1108,6 +1108,716 @@ class TravelToursAPITester:
         
         print(f"\n📊 Chatbot Tests Summary: {self.tests_passed}/{self.tests_run} passed")
 
+    # =============== SOCIAL FEATURES TESTS ===============
+    
+    def test_stories_get_all_unauthorized(self):
+        """Test getting all stories without authentication (should work - public endpoint)"""
+        return self.run_test("Get All Stories (Public)", "GET", "stories", 200)
+
+    def test_stories_create_unauthorized(self):
+        """Test creating story without authentication (should fail)"""
+        # Save current token
+        original_token = self.token
+        self.token = None
+        
+        story_data = {
+            "caption": "Test story",
+            "location": "Dubai"
+        }
+        
+        success, response = self.run_test("Create Story (No Auth)", "POST", "stories", 401, story_data)
+        
+        # Restore token
+        self.token = original_token
+        
+        return success
+
+    def test_stories_create_with_auth(self):
+        """Test creating story with authentication"""
+        if not self.token:
+            self.log_result("Create Story (Authenticated)", False, None, "No token available")
+            return False, {}
+        
+        story_data = {
+            "caption": "Beautiful sunset in Dubai Marina! 🌅",
+            "location": "Dubai Marina, UAE"
+        }
+        
+        print(f"\n📸 Testing Story Creation...")
+        print(f"   Caption: {story_data['caption']}")
+        print(f"   Location: {story_data['location']}")
+        
+        success, response = self.run_test("Create Story (Authenticated)", "POST", "stories", 200, story_data)
+        
+        if success and response:
+            # Store story_id for subsequent tests
+            if isinstance(response, dict) and 'story' in response:
+                story = response['story']
+                self.test_story_id = story.get('story_id')
+                print(f"   Story created with ID: {self.test_story_id}")
+                
+                # Verify story structure
+                required_fields = ['story_id', 'user_id', 'caption', 'location', 'created_at', 'expires_at']
+                missing_fields = [field for field in required_fields if field not in story]
+                
+                if missing_fields:
+                    self.log_result("Story Creation - Structure", False, None, f"Missing fields: {missing_fields}")
+                else:
+                    self.log_result("Story Creation - Structure", True)
+        
+        return success, response
+
+    def test_stories_get_single(self):
+        """Test getting single story and recording view"""
+        if not hasattr(self, 'test_story_id') or not self.test_story_id:
+            # Create a story first
+            success, response = self.test_stories_create_with_auth()
+            if not success:
+                self.log_result("Get Single Story", False, None, "Failed to create test story")
+                return False, {}
+        
+        success, response = self.run_test("Get Single Story", "GET", f"stories/{self.test_story_id}", 200)
+        
+        if success and response:
+            # Verify story structure
+            if isinstance(response, dict):
+                required_fields = ['story_id', 'user_id', 'caption', 'views_count']
+                missing_fields = [field for field in required_fields if field not in response]
+                
+                if missing_fields:
+                    self.log_result("Single Story - Structure", False, None, f"Missing fields: {missing_fields}")
+                else:
+                    self.log_result("Single Story - Structure", True)
+                    print(f"   Views count: {response.get('views_count', 0)}")
+        
+        return success, response
+
+    def test_stories_like_unauthorized(self):
+        """Test liking story without authentication (should fail)"""
+        if not hasattr(self, 'test_story_id') or not self.test_story_id:
+            self.log_result("Like Story (No Auth)", False, None, "No test story available")
+            return False, {}
+        
+        # Save current token
+        original_token = self.token
+        self.token = None
+        
+        success, response = self.run_test("Like Story (No Auth)", "POST", f"stories/{self.test_story_id}/like", 401)
+        
+        # Restore token
+        self.token = original_token
+        
+        return success
+
+    def test_stories_like_with_auth(self):
+        """Test liking/unliking story with authentication"""
+        if not self.token:
+            self.log_result("Like Story (Authenticated)", False, None, "No token available")
+            return False, {}
+        
+        if not hasattr(self, 'test_story_id') or not self.test_story_id:
+            self.log_result("Like Story (Authenticated)", False, None, "No test story available")
+            return False, {}
+        
+        print(f"\n❤️ Testing Story Like/Unlike...")
+        print(f"   Story ID: {self.test_story_id}")
+        
+        # Like the story
+        success1, response1 = self.run_test("Like Story", "POST", f"stories/{self.test_story_id}/like", 200)
+        
+        if success1 and response1:
+            print(f"   Like response: {response1}")
+        
+        # Try to like again (should handle gracefully)
+        success2, response2 = self.run_test("Like Story Again", "POST", f"stories/{self.test_story_id}/like", 200)
+        
+        return success1 and success2
+
+    def test_stories_comments_get(self):
+        """Test getting story comments"""
+        if not hasattr(self, 'test_story_id') or not self.test_story_id:
+            self.log_result("Get Story Comments", False, None, "No test story available")
+            return False, {}
+        
+        return self.run_test("Get Story Comments", "GET", f"stories/{self.test_story_id}/comments", 200)
+
+    def test_stories_comments_add_unauthorized(self):
+        """Test adding comment without authentication (should fail)"""
+        if not hasattr(self, 'test_story_id') or not self.test_story_id:
+            self.log_result("Add Comment (No Auth)", False, None, "No test story available")
+            return False, {}
+        
+        # Save current token
+        original_token = self.token
+        self.token = None
+        
+        comment_data = {
+            "content": "Great story!"
+        }
+        
+        success, response = self.run_test("Add Comment (No Auth)", "POST", f"stories/{self.test_story_id}/comments", 401, comment_data)
+        
+        # Restore token
+        self.token = original_token
+        
+        return success
+
+    def test_stories_comments_add_with_auth(self):
+        """Test adding comment with authentication"""
+        if not self.token:
+            self.log_result("Add Comment (Authenticated)", False, None, "No token available")
+            return False, {}
+        
+        if not hasattr(self, 'test_story_id') or not self.test_story_id:
+            self.log_result("Add Comment (Authenticated)", False, None, "No test story available")
+            return False, {}
+        
+        comment_data = {
+            "content": "Amazing view! 😍 I love Dubai Marina!"
+        }
+        
+        print(f"\n💬 Testing Story Comments...")
+        print(f"   Comment: {comment_data['content']}")
+        
+        success, response = self.run_test("Add Comment (Authenticated)", "POST", f"stories/{self.test_story_id}/comments", 200, comment_data)
+        
+        if success and response:
+            # Store comment_id for potential cleanup
+            if isinstance(response, dict) and 'comment' in response:
+                comment = response['comment']
+                self.test_comment_id = comment.get('comment_id')
+                print(f"   Comment created with ID: {self.test_comment_id}")
+        
+        return success, response
+
+    # =============== FAVORITES API TESTS ===============
+    
+    def test_favorites_add_unauthorized(self):
+        """Test adding favorite without authentication (should fail)"""
+        # Save current token
+        original_token = self.token
+        self.token = None
+        
+        favorite_data = {
+            "item_type": "story",
+            "item_id": "test_story_123"
+        }
+        
+        success, response = self.run_test("Add Favorite (No Auth)", "POST", "favorites", 401, favorite_data)
+        
+        # Restore token
+        self.token = original_token
+        
+        return success
+
+    def test_favorites_add_with_auth(self):
+        """Test adding favorites with authentication"""
+        if not self.token:
+            self.log_result("Add Favorites (Authenticated)", False, None, "No token available")
+            return False, {}
+        
+        print(f"\n⭐ Testing Favorites System...")
+        
+        # Test different item types
+        favorites_to_add = [
+            {"item_type": "story", "item_id": "story_123"},
+            {"item_type": "product", "item_id": "prod_456"},
+            {"item_type": "destination", "item_id": "dest_789"},
+            {"item_type": "blog_post", "item_id": "post_abc"}
+        ]
+        
+        results = []
+        
+        for favorite in favorites_to_add:
+            print(f"   Adding favorite: {favorite['item_type']} - {favorite['item_id']}")
+            success, response = self.run_test(f"Add Favorite ({favorite['item_type']})", "POST", "favorites", 200, favorite)
+            results.append(success)
+            
+            if success and response:
+                print(f"   Response: {response}")
+        
+        return all(results)
+
+    def test_favorites_get_with_auth(self):
+        """Test getting user's favorites with authentication"""
+        if not self.token:
+            self.log_result("Get Favorites (Authenticated)", False, None, "No token available")
+            return False, {}
+        
+        success, response = self.run_test("Get User Favorites", "GET", "favorites", 200)
+        
+        if success and response:
+            # Verify response structure
+            if isinstance(response, dict):
+                favorites = response.get('favorites', [])
+                print(f"   User has {len(favorites)} favorites")
+                
+                if favorites:
+                    first_favorite = favorites[0]
+                    required_fields = ['favorite_id', 'user_id', 'item_type', 'item_id', 'created_at']
+                    missing_fields = [field for field in required_fields if field not in first_favorite]
+                    
+                    if missing_fields:
+                        self.log_result("Favorites - Structure", False, None, f"Missing fields: {missing_fields}")
+                    else:
+                        self.log_result("Favorites - Structure", True)
+        
+        return success, response
+
+    def test_favorites_get_unauthorized(self):
+        """Test getting favorites without authentication (should fail)"""
+        # Save current token
+        original_token = self.token
+        self.token = None
+        
+        success, response = self.run_test("Get Favorites (No Auth)", "GET", "favorites", 401)
+        
+        # Restore token
+        self.token = original_token
+        
+        return success
+
+    def test_favorites_check_with_auth(self):
+        """Test checking if item is favorited"""
+        if not self.token:
+            self.log_result("Check Favorite (Authenticated)", False, None, "No token available")
+            return False, {}
+        
+        # Check a story that we might have favorited
+        success, response = self.run_test("Check Favorite Status", "GET", "favorites/check/story/story_123", 200)
+        
+        if success and response:
+            # Verify response structure
+            if isinstance(response, dict):
+                is_favorited = response.get('is_favorited', False)
+                print(f"   Item is favorited: {is_favorited}")
+        
+        return success, response
+
+    def test_favorites_remove_with_auth(self):
+        """Test removing favorite with authentication"""
+        if not self.token:
+            self.log_result("Remove Favorite (Authenticated)", False, None, "No token available")
+            return False, {}
+        
+        # Try to remove a favorite
+        success, response = self.run_test("Remove Favorite", "DELETE", "favorites/story/story_123", 200)
+        
+        return success, response
+
+    def test_favorites_remove_unauthorized(self):
+        """Test removing favorite without authentication (should fail)"""
+        # Save current token
+        original_token = self.token
+        self.token = None
+        
+        success, response = self.run_test("Remove Favorite (No Auth)", "DELETE", "favorites/story/story_123", 401)
+        
+        # Restore token
+        self.token = original_token
+        
+        return success
+
+    # =============== CALLS API TESTS ===============
+    
+    def test_calls_initiate_unauthorized(self):
+        """Test initiating call without authentication (should fail)"""
+        # Save current token
+        original_token = self.token
+        self.token = None
+        
+        call_data = {
+            "receiver_id": "user_123",
+            "call_type": "video"
+        }
+        
+        success, response = self.run_test("Initiate Call (No Auth)", "POST", "calls/initiate", 401, call_data)
+        
+        # Restore token
+        self.token = original_token
+        
+        return success
+
+    def test_calls_initiate_with_auth(self):
+        """Test initiating call with authentication"""
+        if not self.token:
+            self.log_result("Initiate Call (Authenticated)", False, None, "No token available")
+            return False, {}
+        
+        call_data = {
+            "receiver_id": "user_receiver_123",
+            "call_type": "video"
+        }
+        
+        print(f"\n📞 Testing Calls System...")
+        print(f"   Call type: {call_data['call_type']}")
+        print(f"   Receiver: {call_data['receiver_id']}")
+        
+        success, response = self.run_test("Initiate Call (Authenticated)", "POST", "calls/initiate", 200, call_data)
+        
+        if success and response:
+            # Store call_id for subsequent tests
+            if isinstance(response, dict):
+                call = response.get('call', {})
+                self.test_call_id = call.get('call_id')
+                print(f"   Call initiated with ID: {self.test_call_id}")
+                
+                # Verify call structure
+                required_fields = ['call_id', 'caller_id', 'receiver_id', 'call_type', 'status']
+                missing_fields = [field for field in required_fields if field not in call]
+                
+                if missing_fields:
+                    self.log_result("Call Initiation - Structure", False, None, f"Missing fields: {missing_fields}")
+                else:
+                    self.log_result("Call Initiation - Structure", True)
+                    print(f"   Call status: {call.get('status')}")
+        
+        return success, response
+
+    def test_calls_answer_unauthorized(self):
+        """Test answering call without authentication (should fail)"""
+        if not hasattr(self, 'test_call_id') or not self.test_call_id:
+            self.log_result("Answer Call (No Auth)", False, None, "No test call available")
+            return False, {}
+        
+        # Save current token
+        original_token = self.token
+        self.token = None
+        
+        success, response = self.run_test("Answer Call (No Auth)", "POST", f"calls/{self.test_call_id}/answer", 401)
+        
+        # Restore token
+        self.token = original_token
+        
+        return success
+
+    def test_calls_answer_with_auth(self):
+        """Test answering call with authentication"""
+        if not self.token:
+            self.log_result("Answer Call (Authenticated)", False, None, "No token available")
+            return False, {}
+        
+        if not hasattr(self, 'test_call_id') or not self.test_call_id:
+            self.log_result("Answer Call (Authenticated)", False, None, "No test call available")
+            return False, {}
+        
+        success, response = self.run_test("Answer Call (Authenticated)", "POST", f"calls/{self.test_call_id}/answer", 200)
+        
+        return success, response
+
+    def test_calls_reject_with_auth(self):
+        """Test rejecting call with authentication"""
+        if not self.token:
+            self.log_result("Reject Call (Authenticated)", False, None, "No token available")
+            return False, {}
+        
+        # Create a new call for rejection test
+        call_data = {
+            "receiver_id": "user_receiver_456",
+            "call_type": "voice"
+        }
+        
+        success, response = self.run_test("Create Call for Rejection", "POST", "calls/initiate", 200, call_data)
+        
+        if success and response:
+            call = response.get('call', {})
+            call_id = call.get('call_id')
+            
+            if call_id:
+                success2, response2 = self.run_test("Reject Call (Authenticated)", "POST", f"calls/{call_id}/reject", 200)
+                return success2
+        
+        return False
+
+    def test_calls_end_with_auth(self):
+        """Test ending call with authentication"""
+        if not self.token:
+            self.log_result("End Call (Authenticated)", False, None, "No token available")
+            return False, {}
+        
+        if not hasattr(self, 'test_call_id') or not self.test_call_id:
+            self.log_result("End Call (Authenticated)", False, None, "No test call available")
+            return False, {}
+        
+        success, response = self.run_test("End Call (Authenticated)", "POST", f"calls/{self.test_call_id}/end", 200)
+        
+        return success, response
+
+    def test_calls_history_unauthorized(self):
+        """Test getting call history without authentication (should fail)"""
+        # Save current token
+        original_token = self.token
+        self.token = None
+        
+        success, response = self.run_test("Get Call History (No Auth)", "GET", "calls/history", 401)
+        
+        # Restore token
+        self.token = original_token
+        
+        return success
+
+    def test_calls_history_with_auth(self):
+        """Test getting call history with authentication"""
+        if not self.token:
+            self.log_result("Get Call History (Authenticated)", False, None, "No token available")
+            return False, {}
+        
+        success, response = self.run_test("Get Call History (Authenticated)", "GET", "calls/history", 200)
+        
+        if success and response:
+            # Verify response structure
+            if isinstance(response, dict):
+                calls = response.get('calls', [])
+                print(f"   User has {len(calls)} calls in history")
+                
+                if calls:
+                    first_call = calls[0]
+                    required_fields = ['call_id', 'caller_id', 'receiver_id', 'call_type', 'status']
+                    missing_fields = [field for field in required_fields if field not in first_call]
+                    
+                    if missing_fields:
+                        self.log_result("Call History - Structure", False, None, f"Missing fields: {missing_fields}")
+                    else:
+                        self.log_result("Call History - Structure", True)
+        
+        return success, response
+
+    # =============== LOCATION SHARING API TESTS ===============
+    
+    def test_location_update_unauthorized(self):
+        """Test updating location without authentication (should fail)"""
+        # Save current token
+        original_token = self.token
+        self.token = None
+        
+        location_data = {
+            "latitude": 25.2048,
+            "longitude": 55.2708
+        }
+        
+        success, response = self.run_test("Update Location (No Auth)", "POST", "location/update", 401, location_data)
+        
+        # Restore token
+        self.token = original_token
+        
+        return success
+
+    def test_location_update_with_auth(self):
+        """Test updating location with authentication"""
+        if not self.token:
+            self.log_result("Update Location (Authenticated)", False, None, "No token available")
+            return False, {}
+        
+        location_data = {
+            "latitude": 25.2048,  # Dubai coordinates
+            "longitude": 55.2708
+        }
+        
+        print(f"\n📍 Testing Location Sharing...")
+        print(f"   Latitude: {location_data['latitude']}")
+        print(f"   Longitude: {location_data['longitude']}")
+        
+        success, response = self.run_test("Update Location (Authenticated)", "POST", "location/update", 200, location_data)
+        
+        if success and response:
+            print(f"   Location update response: {response}")
+        
+        return success, response
+
+    def test_location_toggle_unauthorized(self):
+        """Test toggling location sharing without authentication (should fail)"""
+        # Save current token
+        original_token = self.token
+        self.token = None
+        
+        toggle_data = {
+            "enabled": True
+        }
+        
+        success, response = self.run_test("Toggle Location Sharing (No Auth)", "POST", "location/toggle", 401, toggle_data)
+        
+        # Restore token
+        self.token = original_token
+        
+        return success
+
+    def test_location_toggle_with_auth(self):
+        """Test toggling location sharing with authentication"""
+        if not self.token:
+            self.log_result("Toggle Location Sharing (Authenticated)", False, None, "No token available")
+            return False, {}
+        
+        # Enable location sharing
+        toggle_data = {
+            "enabled": True
+        }
+        
+        success1, response1 = self.run_test("Enable Location Sharing", "POST", "location/toggle", 200, toggle_data)
+        
+        # Disable location sharing
+        toggle_data["enabled"] = False
+        success2, response2 = self.run_test("Disable Location Sharing", "POST", "location/toggle", 200, toggle_data)
+        
+        return success1 and success2
+
+    def test_location_share_with_unauthorized(self):
+        """Test sharing location with user without authentication (should fail)"""
+        # Save current token
+        original_token = self.token
+        self.token = None
+        
+        share_data = {
+            "user_id": "user_friend_123"
+        }
+        
+        success, response = self.run_test("Share Location With User (No Auth)", "POST", "location/share-with", 401, share_data)
+        
+        # Restore token
+        self.token = original_token
+        
+        return success
+
+    def test_location_share_with_auth(self):
+        """Test sharing location with user with authentication"""
+        if not self.token:
+            self.log_result("Share Location With User (Authenticated)", False, None, "No token available")
+            return False, {}
+        
+        share_data = {
+            "user_id": "user_friend_123"
+        }
+        
+        success, response = self.run_test("Share Location With User (Authenticated)", "POST", "location/share-with", 200, share_data)
+        
+        return success, response
+
+    def test_location_friends_unauthorized(self):
+        """Test getting friends' locations without authentication (should fail)"""
+        # Save current token
+        original_token = self.token
+        self.token = None
+        
+        success, response = self.run_test("Get Friends Locations (No Auth)", "GET", "location/friends", 401)
+        
+        # Restore token
+        self.token = original_token
+        
+        return success
+
+    def test_location_friends_with_auth(self):
+        """Test getting friends' locations with authentication"""
+        if not self.token:
+            self.log_result("Get Friends Locations (Authenticated)", False, None, "No token available")
+            return False, {}
+        
+        success, response = self.run_test("Get Friends Locations (Authenticated)", "GET", "location/friends", 200)
+        
+        if success and response:
+            # Verify response structure
+            if isinstance(response, dict):
+                locations = response.get('locations', [])
+                print(f"   Found {len(locations)} friends sharing location")
+                
+                if locations:
+                    first_location = locations[0]
+                    required_fields = ['user_id', 'latitude', 'longitude', 'updated_at']
+                    missing_fields = [field for field in required_fields if field not in first_location]
+                    
+                    if missing_fields:
+                        self.log_result("Friends Locations - Structure", False, None, f"Missing fields: {missing_fields}")
+                    else:
+                        self.log_result("Friends Locations - Structure", True)
+        
+        return success, response
+
+    def test_location_my_sharing_unauthorized(self):
+        """Test getting sharing settings without authentication (should fail)"""
+        # Save current token
+        original_token = self.token
+        self.token = None
+        
+        success, response = self.run_test("Get My Sharing Settings (No Auth)", "GET", "location/my-sharing", 401)
+        
+        # Restore token
+        self.token = original_token
+        
+        return success
+
+    def test_location_my_sharing_with_auth(self):
+        """Test getting sharing settings with authentication"""
+        if not self.token:
+            self.log_result("Get My Sharing Settings (Authenticated)", False, None, "No token available")
+            return False, {}
+        
+        success, response = self.run_test("Get My Sharing Settings (Authenticated)", "GET", "location/my-sharing", 200)
+        
+        if success and response:
+            # Verify response structure
+            if isinstance(response, dict):
+                sharing_enabled = response.get('sharing_enabled', False)
+                visible_to = response.get('visible_to', [])
+                print(f"   Sharing enabled: {sharing_enabled}")
+                print(f"   Visible to {len(visible_to)} users")
+        
+        return success, response
+
+    def run_social_features_tests(self):
+        """Run all social features tests"""
+        print("\n📱 Starting Social Features API Tests")
+        print("=" * 50)
+        
+        # Travel Stories Tests
+        print("\n📸 Testing Travel Stories API")
+        print("-" * 30)
+        self.test_stories_get_all_unauthorized()
+        self.test_stories_create_unauthorized()
+        self.test_stories_create_with_auth()
+        self.test_stories_get_single()
+        self.test_stories_like_unauthorized()
+        self.test_stories_like_with_auth()
+        self.test_stories_comments_get()
+        self.test_stories_comments_add_unauthorized()
+        self.test_stories_comments_add_with_auth()
+        
+        # Favorites Tests
+        print("\n⭐ Testing Favorites API")
+        print("-" * 30)
+        self.test_favorites_add_unauthorized()
+        self.test_favorites_add_with_auth()
+        self.test_favorites_get_unauthorized()
+        self.test_favorites_get_with_auth()
+        self.test_favorites_check_with_auth()
+        self.test_favorites_remove_unauthorized()
+        self.test_favorites_remove_with_auth()
+        
+        # Calls Tests
+        print("\n📞 Testing Calls API")
+        print("-" * 30)
+        self.test_calls_initiate_unauthorized()
+        self.test_calls_initiate_with_auth()
+        self.test_calls_answer_unauthorized()
+        self.test_calls_answer_with_auth()
+        self.test_calls_reject_with_auth()
+        self.test_calls_end_with_auth()
+        self.test_calls_history_unauthorized()
+        self.test_calls_history_with_auth()
+        
+        # Location Sharing Tests
+        print("\n📍 Testing Location Sharing API")
+        print("-" * 30)
+        self.test_location_update_unauthorized()
+        self.test_location_update_with_auth()
+        self.test_location_toggle_unauthorized()
+        self.test_location_toggle_with_auth()
+        self.test_location_share_with_unauthorized()
+        self.test_location_share_with_auth()
+        self.test_location_friends_unauthorized()
+        self.test_location_friends_with_auth()
+        self.test_location_my_sharing_unauthorized()
+        self.test_location_my_sharing_with_auth()
+        
+        print(f"\n📊 Social Features Tests Summary: {self.tests_passed}/{self.tests_run} passed")
+
     def run_all_tests(self):
         """Run all API tests"""
         print("🚀 Starting Travel & Tours API Tests")
