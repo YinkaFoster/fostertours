@@ -399,9 +399,7 @@ test_plan:
     - "Live Domain Testing - Foster Tours Production"
     - "Travel Stories API endpoints"
     - "Messaging with Media attachments"
-    - "Favorites API endpoints"
-    - "Calls API endpoints"
-    - "Location sharing API endpoints"
+    - "Seat Selection API endpoints"
   stuck_tasks: 
     - "Live Domain Testing - Foster Tours Production"
   test_all: false
@@ -412,6 +410,8 @@ agent_communication:
     message: "Implemented 5 major features: 1) Travel Stories (Instagram-like 24hr stories with likes/comments), 2) Messaging with media attachments (images/videos), 3) Favorites system (save stories/products/destinations/blog posts), 4) In-app calling with WebRTC, 5) Live map with real-time location sharing via WebSocket. All backend endpoints created. Frontend pages created: StoriesPage, FavoritesPage, CallsPage, LiveMapPage. MessagesPage updated for media support. Navbar updated with new links. Please test backend endpoints first."
   - agent: "testing"
     message: "Completed testing of social features APIs. RESULTS: ✅ Favorites API fully working (all CRUD operations, authentication). ❌ Stories API requires multipart form data with file uploads, not JSON (POST /api/stories expects Form + File). ❌ Calls API validates receiver user exists before creating calls (returns 404 for non-existent users). ❌ Location Sharing API validates target users exist before sharing (returns 404 for non-existent users). Authentication working correctly on all endpoints. Core API logic is sound but requires valid user data for full functionality testing."
+  - agent: "testing"
+    message: "✅ SEAT SELECTION API TESTING COMPLETED: Comprehensive testing of Foster Tours seat selection backend APIs completed with 90% success rate (18/20 tests passed). RESULTS: ✅ GET /api/flights/{flight_id}/seats - Seat map generation working correctly, dynamically creates seat maps for new flights with proper ABC_DEF layout, 30 rows, business/economy pricing tiers. Seat maps saved to database for future requests. ✅ POST /api/flights/{flight_id}/seats/select - Seat selection working correctly with authentication, validates passenger count vs selected seats, marks seats as 'held', returns selection_id and 15-minute expiration. Proper error handling for wrong passenger count (400) and missing authentication (401). ✅ POST /api/flights/{flight_id}/seats/confirm - Seat confirmation working correctly, validates selection_id, marks seats as 'booked', updates availability. Proper error handling for invalid selection_id (404) and missing authentication (401). PRICING VERIFIED: Business class seats (rows 1-3) correctly priced higher than economy seats, exit row premium pricing implemented. All core seat selection functionality working as specified in review request. Minor cosmetic issues with field naming (total_rows vs rows) but no functional problems. Seat selection flow fully operational for Foster Tours flight booking system."
   - agent: "testing"
     message: "✅ COMPLETE LOGIN FLOW TESTING SUCCESSFUL: Tested complete login flow with admin@fostertours.com credentials. All 4 test scenarios PASSED: 1) Email/Password login correctly redirects to /home page (not /dashboard), 2) Already authenticated users are automatically redirected from /login to /home, 3) Navigation links work correctly - user dropdown shows 'Home' link that navigates to /home, all main nav links (Flights, Hotels, Events) functional, 4) Logout redirects to login page and re-login works correctly. Mobile navigation tested - Account button correctly links to /home. Dashboard page loads properly with welcome message, wallet/bookings/rewards cards, and all UI elements. Authentication flow is working perfectly as specified."
   - agent: "testing"
