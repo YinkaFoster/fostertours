@@ -95,6 +95,7 @@ const Login = () => {
   };
 
   const handleGoogleSuccess = async (credentialResponse) => {
+    console.log('Google OAuth success, credential received');
     setLoading(true);
     try {
       await googleLogin(credentialResponse.credential);
@@ -104,13 +105,15 @@ const Login = () => {
       }, 100);
     } catch (error) {
       console.error('Google login failed:', error);
-      toast.error(error.response?.data?.detail || 'Google login failed');
+      const errorMessage = error.response?.data?.detail || error.message || 'Google login failed';
+      toast.error(errorMessage);
       setLoading(false);
     }
   };
 
-  const handleGoogleError = () => {
-    toast.error('Google login failed. Please try again.');
+  const handleGoogleError = (error) => {
+    console.error('Google OAuth error:', error);
+    toast.error('Google sign-in was cancelled or failed. Please try again.');
   };
 
   // Show loading while checking auth
