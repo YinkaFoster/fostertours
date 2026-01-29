@@ -56,17 +56,17 @@ const Navbar = () => {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 nav-blur bg-background/80 border-b border-border/50" data-testid="navbar">
-      <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20">
-        <div className="flex items-center justify-between h-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 lg:px-20">
+        <div className="flex items-center justify-between h-14 sm:h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2" data-testid="nav-logo">
-            <div className="h-14 px-1 flex items-center">
+            <div className="h-10 sm:h-14 px-1 flex items-center">
               <img 
                 src={LOGO_URL} 
                 alt="Foster Tours" 
-                className="h-12 w-auto object-contain drop-shadow-lg hover:scale-105 transition-transform"
+                className="h-8 sm:h-12 w-auto object-contain drop-shadow-lg hover:scale-105 transition-transform"
                 onError={(e) => {
-                  e.target.parentElement.innerHTML = '<div class="flex items-center gap-2"><div class="w-10 h-10 rounded-full bg-teal-500 flex items-center justify-center"><svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg></div><span class="text-xl font-serif font-bold text-primary">Foster Tours</span></div>';
+                  e.target.parentElement.innerHTML = '<div class="flex items-center gap-2"><div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-teal-500 flex items-center justify-center"><svg class="w-4 h-4 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg></div><span class="text-lg sm:text-xl font-serif font-bold text-primary">Foster Tours</span></div>';
                 }}
               />
             </div>
