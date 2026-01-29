@@ -207,6 +207,66 @@ backend:
         agent: "testing"
         comment: "✅ AI Customer Care Chatbot tested successfully. All 3 test scenarios passed: 1) Initial message (POST /api/chatbot/message) - Returns AI response with session_id, responds intelligently about Foster Tours visa services, includes contact details (WhatsApp: +234 9058 681 268, Instagram: @foster_tours). 2) Follow-up message with session - Maintains conversation context correctly, provides contextual response knowing we're talking about visas, session_id maintained properly. 3) Clear session (DELETE /api/chatbot/session/{session_id}) - Returns success message and clears session correctly. Chatbot uses GPT-5.2 model via Emergent LLM integration and handles errors gracefully with fallback messages containing contact information."
 
+  - task: "Travel Stories API endpoints"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented Instagram-like stories with 24hr expiration. Endpoints: GET /api/stories, GET /api/stories/feed, POST /api/stories (multipart), GET/PUT/DELETE /api/stories/{id}, POST /api/stories/{id}/like, GET/POST /api/stories/{id}/comments"
+
+  - task: "Messaging with Media API endpoints"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added media attachment support to messaging. New endpoint: POST /api/messages/send-with-media (multipart form with files). File upload endpoints: POST /api/upload/file, POST /api/upload/chunk/*"
+
+  - task: "Favorites API endpoints"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented favorites for stories, destinations, products, blog posts. Endpoints: GET /api/favorites, POST /api/favorites, DELETE /api/favorites/{type}/{id}, GET /api/favorites/check/{type}/{id}"
+
+  - task: "Calls API endpoints"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented WebRTC call signaling. Endpoints: POST /api/calls/initiate, POST /api/calls/{id}/answer, POST /api/calls/{id}/reject, POST /api/calls/{id}/end, GET /api/calls/history, GET /api/calls/{id}. WebSocket at /ws/calls/{user_id}"
+
+  - task: "Location Sharing API endpoints"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented live location sharing with opt-in. Endpoints: POST /api/location/update, POST /api/location/toggle, POST /api/location/share-with, POST /api/location/stop-sharing-with, GET /api/location/friends, GET /api/location/my-sharing. WebSocket at /ws/location/{user_id}"
+
 frontend:
   - task: "AI Itinerary Planner routing"
     implemented: true
