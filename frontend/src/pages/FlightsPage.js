@@ -196,15 +196,49 @@ const FlightsPage = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
                   <div className="space-y-1.5 sm:space-y-2">
                     <Label className="text-xs sm:text-sm">Passengers</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      max="9"
-                      value={passengers}
-                      onChange={(e) => setPassengers(parseInt(e.target.value))}
-                      className="h-10 sm:h-12 text-sm"
-                      data-testid="passengers-input"
-                    />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full h-10 sm:h-12 justify-start text-sm font-normal"
+                          data-testid="passengers-input"
+                        >
+                          <Users className="w-4 h-4 mr-2" />
+                          {totalPassengers} {totalPassengers === 1 ? 'Traveler' : 'Travelers'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-72 p-4">
+                        <div className="space-y-1">
+                          <PassengerCounter
+                            label="Adults"
+                            sublabel="12+ years"
+                            value={adults}
+                            onChange={setAdults}
+                            min={1}
+                            max={9}
+                          />
+                          <PassengerCounter
+                            label="Children"
+                            sublabel="2-11 years"
+                            value={children}
+                            onChange={setChildren}
+                            min={0}
+                            max={8}
+                          />
+                          <PassengerCounter
+                            label="Infants"
+                            sublabel="Under 2 years"
+                            value={infants}
+                            onChange={setInfants}
+                            min={0}
+                            max={Math.min(adults, 4)}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-3">
+                          Infants must travel with an adult (max 1 infant per adult)
+                        </p>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   <div className="space-y-1.5 sm:space-y-2">
                     <Label className="text-xs sm:text-sm">Class</Label>
