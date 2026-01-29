@@ -1050,37 +1050,164 @@ async def search_flights(search: FlightSearch):
             logger.error(f"Flight search error: {e}")
     
     # Fallback to mock data
-    logger.info("Using mock flight data")
+    logger.info("Using local flight data")
     flights = generate_mock_flights(
         search.origin,
         search.destination,
         search.departure_date,
         search.passengers
     )
-    return {"flights": flights, "total": len(flights), "source": "mock"}
+    return {"flights": flights, "total": len(flights), "source": "local"}
 
 @api_router.get("/flights/{flight_id}")
 async def get_flight(flight_id: str):
-    # Generate a mock flight detail
+    # Generate a comprehensive mock flight detail
     return {
         "flight_id": flight_id,
         "airline": "Emirates",
-        "airline_logo": "https://upload.wikimedia.org/wikipedia/commons/d/d0/Emirates_logo.svg",
+        "airline_code": "EK",
+        "airline_logo": AIRLINE_LOGOS.get("EK", ""),
+        "airline_rating": 4.8,
         "flight_number": "EK101",
         "origin": "JFK",
         "origin_city": "New York",
+        "origin_airport": "John F. Kennedy International",
         "destination": "DXB",
         "destination_city": "Dubai",
+        "destination_airport": "Dubai International",
+        "departure_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         "departure_time": "09:00",
         "arrival_time": "07:30+1",
         "duration": "12h 30m",
+        "duration_minutes": 750,
         "price": 850.00,
+        "price_per_person": 850.00,
+        "currency": "USD",
         "stops": 0,
+        "stop_cities": [],
         "cabin_class": "economy",
         "available_seats": 25,
         "aircraft": "Boeing 777-300ER",
-        "amenities": ["WiFi", "Entertainment", "Meals", "USB Charging"]
+        "amenities": ["Premium Entertainment", "Gourmet Meals", "USB Charging", "WiFi Available", "Extra Legroom", "Priority Boarding"],
+        "baggage": {
+            "cabin": "1 x 7kg",
+            "checked": "1 x 23kg"
+        },
+        "refundable": True,
+        "meal_included": True
     }
+
+@api_router.get("/airports")
+async def get_airports(q: str = Query(None, description="Search query")):
+    """Get list of available airports with search functionality"""
+    airports = [
+        {"code": code, "city": data["name"], "country": data["country"], "airport": data["airport"]}
+        for code, data in CITY_DATABASE.items()
+    ]
+    
+    if q:
+        q_lower = q.lower()
+        airports = [
+            a for a in airports
+            if q_lower in a["code"].lower() 
+            or q_lower in a["city"].lower() 
+            or q_lower in a["country"].lower()
+            or q_lower in a["airport"].lower()
+        ]
+    
+    return {"airports": sorted(airports, key=lambda x: x["city"]), "total": len(airports)}
+
+@api_router.get("/airlines")
+async def get_airlines():
+    """Get list of available airlines"""
+    airlines = [
+        {
+            "code": a["code"],
+            "name": a["name"],
+            "country": a["country"],
+            "hub": a["hub"],
+            "rating": a["rating"],
+            "logo": AIRLINE_LOGOS.get(a["code"], "")
+        }
+        for a in AIRLINE_DATABASE
+    ]
+    return {"airlines": airlines, "total": len(airlines)}
+
+@api_router.get("/popular-routes")
+async def get_popular_routes():
+    """Get popular flight routes"""
+    popular = [
+        {"from": "JFK", "to": "LHR", "from_city": "New York", "to_city": "London", "avg_price": 550},
+        {"from": "LAX", "to": "NRT", "from_city": "Los Angeles", "to_city": "Tokyo", "avg_price": 900},
+        {"from": "JFK", "to": "CDG", "from_city": "New York", "to_city": "Paris", "avg_price": 580},
+        {"from": "LHR", "to": "DXB", "from_city": "London", "to_city": "Dubai", "avg_price": 450},
+        {"from": "SIN", "to": "SYD", "from_city": "Singapore", "to_city": "Sydney", "avg_price": 400},
+        {"from": "JFK", "to": "MIA", "from_city": "New York", "to_city": "Miami", "avg_price": 180},
+        {"from": "LHR", "to": "JFK", "from_city": "London", "to_city": "New York", "avg_price": 550},
+        {"from": "DXB", "to": "LOS", "from_city": "Dubai", "to_city": "Lagos", "avg_price": 550},
+    ]
+    return {"routes": popular}
+
+@api_router.get("/popular-destinations")
+async def get_popular_destinations():
+    """Get popular travel destinations"""
+    destinations = [
+        {
+            "code": "DXB",
+            "city": "Dubai",
+            "country": "UAE",
+            "description": "Luxury shopping, ultramodern architecture, and lively nightlife",
+            "image": "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800",
+            "avg_hotel_price": 200,
+            "best_time": "Nov - Mar"
+        },
+        {
+            "code": "CDG",
+            "city": "Paris",
+            "country": "France",
+            "description": "The City of Light with iconic landmarks and world-class cuisine",
+            "image": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800",
+            "avg_hotel_price": 250,
+            "best_time": "Apr - Jun, Sep - Oct"
+        },
+        {
+            "code": "NRT",
+            "city": "Tokyo",
+            "country": "Japan",
+            "description": "Ancient temples meet futuristic technology",
+            "image": "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800",
+            "avg_hotel_price": 180,
+            "best_time": "Mar - May, Sep - Nov"
+        },
+        {
+            "code": "SIN",
+            "city": "Singapore",
+            "country": "Singapore",
+            "description": "Garden city with stunning architecture and diverse cuisine",
+            "image": "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800",
+            "avg_hotel_price": 220,
+            "best_time": "Feb - Apr"
+        },
+        {
+            "code": "BCN",
+            "city": "Barcelona",
+            "country": "Spain",
+            "description": "Gaudí's masterpieces, beaches, and vibrant nightlife",
+            "image": "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800",
+            "avg_hotel_price": 150,
+            "best_time": "May - Jun, Sep - Oct"
+        },
+        {
+            "code": "BKK",
+            "city": "Bangkok",
+            "country": "Thailand",
+            "description": "Ornate temples, bustling markets, and amazing street food",
+            "image": "https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=800",
+            "avg_hotel_price": 80,
+            "best_time": "Nov - Feb"
+        },
+    ]
+    return {"destinations": destinations}
 
 # =============== HOTELS ROUTES ===============
 
