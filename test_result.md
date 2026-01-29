@@ -236,15 +236,18 @@ backend:
 
   - task: "Favorites API endpoints"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented favorites for stories, destinations, products, blog posts. Endpoints: GET /api/favorites, POST /api/favorites, DELETE /api/favorites/{type}/{id}, GET /api/favorites/check/{type}/{id}"
+      - working: true
+        agent: "testing"
+        comment: "✅ Favorites API tested successfully. All endpoints working correctly: 1) POST /api/favorites - Creates favorites for different item types (story, product, destination, blog_post), returns proper structure with favorite_id, user_id, item_type, item_id, created_at. 2) GET /api/favorites - Returns user's favorites with correct authentication (401 without token). 3) GET /api/favorites/check/{type}/{id} - Checks if item is favorited, returns is_favorited boolean. 4) DELETE /api/favorites/{type}/{id} - Removes favorites correctly. Authentication working properly on all endpoints."
 
   - task: "Calls API endpoints"
     implemented: true
