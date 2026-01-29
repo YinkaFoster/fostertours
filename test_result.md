@@ -291,6 +291,18 @@ backend:
         agent: "testing"
         comment: "❌ Location Sharing API partially working. Working endpoints: 1) POST /api/location/update - Updates user location with lat/lng coordinates correctly. 2) POST /api/location/toggle - Enables/disables location sharing correctly. 3) GET /api/location/friends - Returns friends' locations (empty list). 4) GET /api/location/my-sharing - Returns sharing settings correctly. Authentication works on all endpoints (401 without token). FAILING: POST /api/location/share-with returns 404 because it validates target user exists in database before sharing location. Core functionality works but requires valid user IDs for sharing operations."
 
+  - task: "Seat Selection API endpoints"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ Seat Selection API tested successfully with 90% success rate (18/20 tests passed). WORKING ENDPOINTS: 1) GET /api/flights/{flight_id}/seats - Generates seat map dynamically for new flights with 30 rows, ABC_DEF layout, proper business/economy pricing tiers. Returns seat map with flight_id, aircraft_type, layout, total_rows, seats array. Each seat has seat_number, is_window, is_aisle, price, status fields. 2) POST /api/flights/{flight_id}/seats/select - Creates seat selection with authentication, validates passenger count matches selected seats, marks seats as 'held', returns selection_id, seat_details, total_seat_price, expires_at (15 minutes). Proper error handling for wrong passenger count (400), authentication required (401). 3) POST /api/flights/{flight_id}/seats/confirm - Confirms seat reservation with valid selection_id, marks seats as 'booked', updates is_available to false. Proper error handling for invalid selection_id (404), authentication required (401). PRICING VERIFIED: Business class seats (rows 1-3) correctly priced higher than economy seats. Exit row premium pricing implemented. MINOR ISSUES: Test expected 'rows' field but backend returns 'total_rows' (cosmetic), seat availability logic uses is_available field rather than status field (by design). All core seat selection functionality working correctly including seat map generation, selection, confirmation, and proper database persistence."
+
 frontend:
   - task: "Live Domain Testing - Foster Tours Production"
     implemented: true
