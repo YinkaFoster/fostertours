@@ -198,6 +198,86 @@ class TravelToursAPITester:
         
         return self.run_test("Get Current User", "GET", "auth/me", 200)
 
+    def test_get_current_user_unauthorized(self):
+        """Test getting current user without token (should fail)"""
+        # Save current token
+        original_token = self.token
+        self.token = None
+        
+        success, response = self.run_test("Get Current User (No Auth)", "GET", "auth/me", 401)
+        
+        # Restore token
+        self.token = original_token
+        
+        return success
+
+    def test_logout(self):
+        """Test user logout"""
+        if not self.token:
+            self.log_result("User Logout", False, None, "No token available")
+            return False, {}
+        
+        success, response = self.run_test("User Logout", "POST", "auth/logout", 200)
+        
+        if success:
+            # Clear token after logout
+            self.token = None
+            print("   Token cleared after logout")
+        
+        return success, response
+
+    def test_cors_preflight(self):
+        """Test CORS preflight requests"""
+        print(f"\n🌐 Testing CORS Configuration...")
+        
+        # Test CORS for different origins
+        origins_to_test = [
+            "https://fostertour.com",
+            "http://localhost:3000",
+            "https://journey-planner-370.preview.emergentagent.com"
+        ]
+        
+        results = []
+        
+        for origin in origins_to_test:
+            print(f"   Testing origin: {origin}")
+            
+            # Test OPTIONS request for preflight
+            headers = {
+                'Origin': origin,
+                'Access-Control-Request-Method': 'POST',
+                'Access-Control-Request-Headers': 'Content-Type,Authorization'
+            }
+            
+            try:
+                url = f"{self.base_url}/auth/login"
+                response = self.session.options(url, headers=headers, timeout=30)
+                
+                print(f"   Status: {response.status_code}")
+                
+                # Check CORS headers
+                cors_headers = {
+                    'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+                    'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+                    'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers')
+                }
+                
+                print(f"   CORS Headers: {cors_headers}")
+                
+                # Verify CORS headers are present
+                if cors_headers['Access-Control-Allow-Origin']:
+                    self.log_result(f"CORS Preflight ({origin})", True)
+                    results.append(True)
+                else:
+                    self.log_result(f"CORS Preflight ({origin})", False, None, "Missing CORS headers")
+                    results.append(False)
+                    
+            except Exception as e:
+                self.log_result(f"CORS Preflight ({origin})", False, None, str(e))
+                results.append(False)
+        
+        return all(results)
+
     def test_featured_destinations(self):
         """Test featured destinations endpoint"""
         return self.run_test("Featured Destinations", "GET", "destinations/featured", 200)
