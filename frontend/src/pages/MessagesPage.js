@@ -29,7 +29,10 @@ const MessagesPage = () => {
   const [sending, setSending] = useState(false);
   const [searchUsers, setSearchUsers] = useState([]);
   const [showNewMessage, setShowNewMessage] = useState(false);
+  const [attachments, setAttachments] = useState([]);
+  const [previewUrls, setPreviewUrls] = useState([]);
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (isAuthenticated) {
