@@ -396,6 +396,7 @@ class Message(BaseModel):
     content: str
     read: bool = False
     created_at: datetime
+    attachments: Optional[List[Dict[str, Any]]] = None  # {type: 'image'|'video', url: str, thumbnail: str}
 
 class Conversation(BaseModel):
     conversation_id: str
@@ -403,6 +404,61 @@ class Conversation(BaseModel):
     last_message: Optional[str] = None
     last_message_at: Optional[datetime] = None
     created_at: datetime
+
+# Story Models (Instagram-like 24hr stories)
+class StoryMedia(BaseModel):
+    media_id: str
+    type: str  # image, video
+    url: str
+    thumbnail: Optional[str] = None
+
+class Story(BaseModel):
+    story_id: str
+    user_id: str
+    media: List[StoryMedia]
+    caption: Optional[str] = None
+    location: Optional[str] = None
+    views_count: int = 0
+    likes_count: int = 0
+    created_at: datetime
+    expires_at: datetime
+
+class StoryComment(BaseModel):
+    comment_id: str
+    story_id: str
+    user_id: str
+    content: str
+    created_at: datetime
+
+# Favorites Models
+class Favorite(BaseModel):
+    favorite_id: str
+    user_id: str
+    item_type: str  # story, destination, product, blog_post
+    item_id: str
+    created_at: datetime
+
+# Call Models (WebRTC)
+class CallSession(BaseModel):
+    call_id: str
+    caller_id: str
+    receiver_id: str
+    call_type: str  # voice, video
+    status: str  # ringing, active, ended, missed, rejected
+    started_at: Optional[datetime] = None
+    ended_at: Optional[datetime] = None
+    duration: Optional[int] = None  # in seconds
+    created_at: datetime
+
+# Location Sharing Models
+class UserLocation(BaseModel):
+    user_id: str
+    latitude: float
+    longitude: float
+    accuracy: Optional[float] = None
+    sharing_enabled: bool = True
+    visible_to: List[str] = []  # list of user_ids who can see location
+    updated_at: datetime
 
 # =============== HELPER FUNCTIONS ===============
 
