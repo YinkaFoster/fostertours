@@ -124,6 +124,39 @@ const AppRouter = () => {
         }
       />
       
+      {/* Stories */}
+      <Route path="/stories" element={<StoriesPage />} />
+      
+      {/* Favorites */}
+      <Route
+        path="/favorites"
+        element={
+          <ProtectedRoute>
+            <FavoritesPage />
+          </ProtectedRoute>
+        }
+      />
+      
+      {/* Calls */}
+      <Route
+        path="/calls"
+        element={
+          <ProtectedRoute>
+            <CallsPage />
+          </ProtectedRoute>
+        }
+      />
+      
+      {/* Live Map */}
+      <Route
+        path="/map"
+        element={
+          <ProtectedRoute>
+            <LiveMapPage />
+          </ProtectedRoute>
+        }
+      />
+      
       {/* Payment Callbacks */}
       <Route path="/payment/success" element={<PaymentSuccess />} />
       <Route path="/payment/cancel" element={<PaymentCancel />} />
