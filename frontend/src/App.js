@@ -58,6 +58,7 @@ import HotelDetailPage from "./pages/HotelDetailPage";
 import EventDetailPage from "./pages/EventDetailPage";
 import VehicleDetailPage from "./pages/VehicleDetailPage";
 import VisaDetailPage from "./pages/VisaDetailPage";
+import FlightReceiptPage from "./pages/FlightReceiptPage";
 import FavoritesPage from "./pages/FavoritesPage";
 import CallsPage from "./pages/CallsPage";
 import LiveMapPage from "./pages/LiveMapPage";
