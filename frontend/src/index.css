@@ -253,3 +253,295 @@ html {
     display: contents !important;
   }
 }
+
+/* ===== MOBILE OPTIMIZATION STYLES ===== */
+
+/* Mobile-first responsive utilities */
+@layer utilities {
+  /* Mobile safe area padding */
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  
+  .safe-area-inset-top {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+
+  /* Mobile touch targets - minimum 44px */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Mobile text scaling */
+  .text-mobile-sm {
+    @apply text-xs sm:text-sm;
+  }
+  
+  .text-mobile-base {
+    @apply text-sm sm:text-base;
+  }
+  
+  .text-mobile-lg {
+    @apply text-base sm:text-lg;
+  }
+  
+  .text-mobile-xl {
+    @apply text-lg sm:text-xl;
+  }
+  
+  .text-mobile-2xl {
+    @apply text-xl sm:text-2xl;
+  }
+  
+  .text-mobile-3xl {
+    @apply text-2xl sm:text-3xl md:text-4xl;
+  }
+  
+  .text-mobile-4xl {
+    @apply text-3xl sm:text-4xl md:text-5xl;
+  }
+  
+  .text-mobile-hero {
+    @apply text-3xl sm:text-4xl md:text-5xl lg:text-6xl;
+  }
+
+  /* Mobile spacing */
+  .px-mobile {
+    @apply px-4 sm:px-6 md:px-8 lg:px-12;
+  }
+  
+  .py-mobile {
+    @apply py-4 sm:py-6 md:py-8;
+  }
+  
+  .gap-mobile {
+    @apply gap-3 sm:gap-4 md:gap-6;
+  }
+
+  /* Mobile-friendly scrolling */
+  .scroll-snap-x {
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .scroll-snap-item {
+    scroll-snap-align: start;
+  }
+
+  /* Hide on mobile, show on desktop */
+  .mobile-hidden {
+    @apply hidden sm:block;
+  }
+  
+  /* Show on mobile, hide on desktop */
+  .desktop-hidden {
+    @apply block sm:hidden;
+  }
+
+  /* Mobile card styles */
+  .mobile-card {
+    @apply p-3 sm:p-4 md:p-6;
+  }
+
+  /* Mobile bottom navigation safe area */
+  .pb-bottom-nav {
+    @apply pb-20 sm:pb-0;
+  }
+}
+
+/* Mobile Bottom Navigation Bar */
+.mobile-bottom-nav {
+  @apply fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-t border-border;
+  padding-bottom: env(safe-area-inset-bottom, 8px);
+}
+
+.mobile-bottom-nav-item {
+  @apply flex flex-col items-center justify-center py-2 px-1 text-muted-foreground hover:text-primary transition-colors;
+}
+
+.mobile-bottom-nav-item.active {
+  @apply text-primary;
+}
+
+.mobile-bottom-nav-item svg {
+  @apply w-5 h-5 mb-1;
+}
+
+.mobile-bottom-nav-item span {
+  @apply text-[10px] font-medium;
+}
+
+/* Mobile Hero Section Adjustments */
+@media (max-width: 640px) {
+  .hero-mobile-adjust {
+    min-height: calc(100vh - 60px);
+    min-height: calc(100dvh - 60px); /* Dynamic viewport height */
+  }
+  
+  .hero-content-mobile {
+    @apply pt-20 pb-8;
+  }
+}
+
+/* Mobile Form Inputs */
+@media (max-width: 640px) {
+  input, select, textarea {
+    font-size: 16px !important; /* Prevent zoom on iOS */
+  }
+}
+
+/* Mobile Cards - Full Width */
+@media (max-width: 640px) {
+  .mobile-full-card {
+    @apply mx-0 rounded-none border-x-0;
+  }
+}
+
+/* Mobile Modal/Sheet Adjustments */
+@media (max-width: 640px) {
+  .mobile-sheet {
+    @apply max-h-[90vh] overflow-y-auto;
+  }
+}
+
+/* Mobile Grid Adjustments */
+.mobile-grid-1 {
+  @apply grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4;
+}
+
+.mobile-grid-2 {
+  @apply grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5;
+}
+
+/* Mobile Horizontal Scroll Containers */
+.mobile-scroll-container {
+  @apply flex overflow-x-auto gap-3 pb-4 scrollbar-hide scroll-snap-x;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-scroll-item {
+  @apply flex-shrink-0 scroll-snap-item;
+}
+
+/* Mobile Search Bar */
+.mobile-search-bar {
+  @apply sticky top-16 z-40 bg-background/95 backdrop-blur-lg py-3 px-4 border-b;
+}
+
+/* Mobile Floating Action Button */
+.mobile-fab {
+  @apply fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-primary text-white shadow-lg flex items-center justify-center;
+  @apply hover:scale-110 active:scale-95 transition-transform;
+}
+
+@media (min-width: 640px) {
+  .mobile-fab {
+    @apply bottom-6 right-6;
+  }
+}
+
+/* Mobile Pull-to-Refresh Indicator */
+.pull-to-refresh {
+  @apply flex items-center justify-center py-4 text-muted-foreground;
+}
+
+/* Mobile Image Optimization */
+.mobile-image-cover {
+  @apply w-full h-48 sm:h-56 md:h-64 object-cover;
+}
+
+/* Mobile Tab Bar */
+.mobile-tabs {
+  @apply w-full overflow-x-auto scrollbar-hide;
+}
+
+.mobile-tabs [role="tablist"] {
+  @apply flex gap-1 min-w-max px-4;
+}
+
+/* Mobile Button Sizes */
+@media (max-width: 640px) {
+  .btn-mobile-full {
+    @apply w-full py-3;
+  }
+}
+
+/* Mobile Typography Adjustments */
+@media (max-width: 640px) {
+  h1.mobile-heading {
+    @apply text-2xl leading-tight;
+  }
+  
+  h2.mobile-heading {
+    @apply text-xl leading-tight;
+  }
+  
+  p.mobile-text {
+    @apply text-sm leading-relaxed;
+  }
+}
+
+/* Mobile Swipe Indicator */
+.swipe-indicator {
+  @apply flex justify-center gap-1.5 py-2;
+}
+
+.swipe-indicator-dot {
+  @apply w-1.5 h-1.5 rounded-full bg-muted-foreground/30 transition-all;
+}
+
+.swipe-indicator-dot.active {
+  @apply w-4 bg-primary;
+}
+
+/* Mobile Loading Skeleton */
+.mobile-skeleton {
+  @apply animate-pulse bg-muted rounded;
+}
+
+/* Mobile Empty State */
+.mobile-empty-state {
+  @apply flex flex-col items-center justify-center py-12 px-6 text-center;
+}
+
+.mobile-empty-state svg {
+  @apply w-16 h-16 text-muted-foreground/50 mb-4;
+}
+
+/* Mobile Error State */
+.mobile-error-state {
+  @apply flex flex-col items-center justify-center py-8 px-4 text-center bg-destructive/10 rounded-lg;
+}
+
+/* iOS-style Active States */
+@media (max-width: 640px) {
+  .ios-press:active {
+    @apply opacity-70 scale-[0.98];
+    transition: all 0.1s ease;
+  }
+}
+
+/* Prevent text selection on mobile buttons */
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile Sticky Headers */
+.mobile-sticky-header {
+  @apply sticky top-0 z-30 bg-background/95 backdrop-blur-lg;
+}
+
+/* Mobile Section Spacing */
+.mobile-section {
+  @apply py-8 sm:py-12 md:py-16 lg:py-20;
+}
+
+/* Responsive Container */
+.container-mobile {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12;
+}
+
