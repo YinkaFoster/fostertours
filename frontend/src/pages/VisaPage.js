@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Button } from '../components/ui/button';
@@ -13,6 +13,7 @@ import axios from 'axios';
 const API = process.env.REACT_APP_BACKEND_URL + '/api';
 
 const VisaPage = () => {
+  const navigate = useNavigate();
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -29,6 +30,10 @@ const VisaPage = () => {
     };
     fetchPackages();
   }, []);
+
+  const handleSelectVisa = (visa) => {
+    navigate(`/visa/${visa.visa_id}`, { state: { visa } });
+  };
 
   return (
     <div className="min-h-screen bg-background" data-testid="visa-page">
