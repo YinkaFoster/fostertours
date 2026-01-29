@@ -95,23 +95,50 @@ const MessagesPage = () => {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !selectedConversation?.other_user?.user_id) return;
+    if ((!newMessage.trim() && attachments.length === 0) || !selectedConversation?.other_user?.user_id) return;
 
     setSending(true);
     try {
-      const response = await axios.post(
-        `${API}/messages/send?receiver_id=${selectedConversation.other_user.user_id}&content=${encodeURIComponent(newMessage)}`,
-        {},
-        { headers: getAuthHeaders() }
-      );
+      let response;
+      
+      if (attachments.length > 0) {
+        // Send with media
+        const formData = new FormData();
+        formData.append('receiver_id', selectedConversation.other_user.user_id);
+        formData.append('content', newMessage);
+        attachments.forEach(file => {
+          formData.append('files', file);
+        });
+        
+        response = await axios.post(
+          `${API}/messages/send-with-media`,
+          formData,
+          { 
+            headers: {
+              ...getAuthHeaders(),
+              'Content-Type': 'multipart/form-data'
+            }
+          }
+        );
+      } else {
+        // Send text only
+        response = await axios.post(
+          `${API}/messages/send?receiver_id=${selectedConversation.other_user.user_id}&content=${encodeURIComponent(newMessage)}`,
+          {},
+          { headers: getAuthHeaders() }
+        );
+      }
       
       setMessages(prev => [...prev, response.data.message]);
       setNewMessage('');
+      setAttachments([]);
+      setPreviewUrls([]);
       
       // Update conversation in list
+      const lastMsg = newMessage || (attachments.length > 0 ? '[Media]' : '');
       setConversations(prev => prev.map(c => 
         c.conversation_id === selectedConversation.conversation_id
-          ? { ...c, last_message: newMessage, last_message_at: new Date().toISOString() }
+          ? { ...c, last_message: lastMsg, last_message_at: new Date().toISOString() }
           : c
       ));
     } catch (error) {
@@ -120,6 +147,42 @@ const MessagesPage = () => {
     } finally {
       setSending(false);
     }
+  };
+
+  const handleFileSelect = (e) => {
+    const files = Array.from(e.target.files);
+    const validFiles = files.filter(file => {
+      const isImage = file.type.startsWith('image/');
+      const isVideo = file.type.startsWith('video/');
+      
+      if (isImage && file.size > 10 * 1024 * 1024) {
+        toast.error(`${file.name} exceeds 10MB limit`);
+        return false;
+      }
+      if (isVideo && file.size > 50 * 1024 * 1024) {
+        toast.error(`${file.name} exceeds 50MB limit`);
+        return false;
+      }
+      if (!isImage && !isVideo) {
+        toast.error(`${file.name} is not supported`);
+        return false;
+      }
+      return true;
+    });
+
+    const previews = validFiles.map(file => ({
+      url: URL.createObjectURL(file),
+      type: file.type.startsWith('video/') ? 'video' : 'image'
+    }));
+
+    setAttachments(prev => [...prev, ...validFiles]);
+    setPreviewUrls(prev => [...prev, ...previews]);
+  };
+
+  const removeAttachment = (index) => {
+    URL.revokeObjectURL(previewUrls[index].url);
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+    setPreviewUrls(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSearchUsers = async (query) => {
