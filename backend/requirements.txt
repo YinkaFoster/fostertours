@@ -31,3 +31,4 @@ aiohttp
 aiofiles
 websockets
 python-magic
+aiofiles
