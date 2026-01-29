@@ -278,7 +278,87 @@ class TravelToursAPITester:
         
         return all(results)
 
-    def test_featured_destinations(self):
+    def run_authentication_tests(self):
+        """Run comprehensive authentication system tests"""
+        print("\n🔐 Starting Authentication System Tests")
+        print("=" * 60)
+        
+        # Test 1: User Registration
+        print("\n📝 Testing User Registration...")
+        reg_success, reg_response = self.test_user_registration()
+        
+        # Test 2: Admin Login
+        print("\n👑 Testing Admin Login...")
+        admin_success, admin_response = self.test_admin_login()
+        
+        # Test 3: Regular User Login
+        print("\n🔑 Testing User Login...")
+        login_success, login_response = self.test_user_login()
+        
+        # Test 4: Wrong Password Login
+        print("\n❌ Testing Wrong Password...")
+        wrong_pass_success, _ = self.test_login_wrong_password()
+        
+        # Test 5: Get Current User (Authenticated)
+        print("\n👤 Testing Get Current User...")
+        me_success, me_response = self.test_get_current_user()
+        
+        # Test 6: Get Current User (Unauthorized)
+        print("\n🚫 Testing Unauthorized Access...")
+        unauth_success, _ = self.test_get_current_user_unauthorized()
+        
+        # Test 7: CORS Verification
+        print("\n🌐 Testing CORS Configuration...")
+        cors_success = self.test_cors_preflight()
+        
+        # Test 8: Logout
+        print("\n🚪 Testing Logout...")
+        logout_success, _ = self.test_logout()
+        
+        # Summary
+        print(f"\n📊 Authentication Tests Summary:")
+        print(f"   ✅ User Registration: {'PASSED' if reg_success else 'FAILED'}")
+        print(f"   ✅ Admin Login: {'PASSED' if admin_success else 'FAILED'}")
+        print(f"   ✅ User Login: {'PASSED' if login_success else 'FAILED'}")
+        print(f"   ✅ Wrong Password (401): {'PASSED' if wrong_pass_success else 'FAILED'}")
+        print(f"   ✅ Get Current User: {'PASSED' if me_success else 'FAILED'}")
+        print(f"   ✅ Unauthorized Access (401): {'PASSED' if unauth_success else 'FAILED'}")
+        print(f"   ✅ CORS Headers: {'PASSED' if cors_success else 'FAILED'}")
+        print(f"   ✅ Logout: {'PASSED' if logout_success else 'FAILED'}")
+        
+        # Detailed verification
+        if reg_success and reg_response:
+            print(f"\n📋 Registration Details:")
+            user = reg_response.get('user', {})
+            print(f"   User ID: {user.get('user_id')}")
+            print(f"   Email: {user.get('email')}")
+            print(f"   Name: {user.get('name')}")
+            print(f"   Token provided: {bool(reg_response.get('access_token'))}")
+        
+        if admin_success and admin_response:
+            print(f"\n👑 Admin Login Details:")
+            user = admin_response.get('user', {})
+            print(f"   Admin User ID: {user.get('user_id')}")
+            print(f"   Is Admin: {user.get('is_admin')}")
+            print(f"   Admin Token provided: {bool(admin_response.get('access_token'))}")
+        
+        if me_success and me_response:
+            print(f"\n👤 Current User Details:")
+            print(f"   User ID: {me_response.get('user_id')}")
+            print(f"   Email: {me_response.get('email')}")
+            print(f"   Name: {me_response.get('name')}")
+            print(f"   Wallet Balance: ${me_response.get('wallet_balance', 0)}")
+        
+        return {
+            'registration': reg_success,
+            'admin_login': admin_success,
+            'user_login': login_success,
+            'wrong_password': wrong_pass_success,
+            'get_current_user': me_success,
+            'unauthorized_access': unauth_success,
+            'cors': cors_success,
+            'logout': logout_success
+        }
         """Test featured destinations endpoint"""
         return self.run_test("Featured Destinations", "GET", "destinations/featured", 200)
 
