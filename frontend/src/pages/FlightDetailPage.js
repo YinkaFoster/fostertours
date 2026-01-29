@@ -88,15 +88,16 @@ const FlightDetailPage = () => {
       return;
     }
 
-    // Validate passenger info
-    const isValid = passengers.every(p => p.firstName && p.lastName);
+    // Validate passenger info (only first and last name required)
+    const isValid = passengers.every(p => p.firstName?.trim() && p.lastName?.trim());
     if (!isValid) {
-      toast.error('Please fill in all passenger details');
+      toast.error('Please fill in passenger first and last names before selecting seats');
       return;
     }
 
+    console.log('Opening seat selection for flight:', flightData.flightId);
     setShowSeatSelection(true);
-    setExpandedSection('seats');
+    setExpandedSection('');  // Close the card when showing seat selection
   };
 
   const handleSeatSelect = (seatData) => {
