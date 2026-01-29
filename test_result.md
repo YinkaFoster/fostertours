@@ -275,6 +275,9 @@ backend:
       - working: "NA"
         agent: "main"
         comment: "Implemented live location sharing with opt-in. Endpoints: POST /api/location/update, POST /api/location/toggle, POST /api/location/share-with, POST /api/location/stop-sharing-with, GET /api/location/friends, GET /api/location/my-sharing. WebSocket at /ws/location/{user_id}"
+      - working: false
+        agent: "testing"
+        comment: "❌ Location Sharing API partially working. Working endpoints: 1) POST /api/location/update - Updates user location with lat/lng coordinates correctly. 2) POST /api/location/toggle - Enables/disables location sharing correctly. 3) GET /api/location/friends - Returns friends' locations (empty list). 4) GET /api/location/my-sharing - Returns sharing settings correctly. Authentication works on all endpoints (401 without token). FAILING: POST /api/location/share-with returns 404 because it validates target user exists in database before sharing location. Core functionality works but requires valid user IDs for sharing operations."
 
 frontend:
   - task: "AI Itinerary Planner routing"
