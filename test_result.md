@@ -384,12 +384,14 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Live Domain Testing - Foster Tours Production"
     - "Travel Stories API endpoints"
     - "Messaging with Media attachments"
     - "Favorites API endpoints"
     - "Calls API endpoints"
     - "Location sharing API endpoints"
-  stuck_tasks: []
+  stuck_tasks: 
+    - "Live Domain Testing - Foster Tours Production"
   test_all: false
   test_priority: "high_first"
 
