@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -17,34 +17,40 @@ import {
 import { toast } from 'sonner';
 
 const EventDetailPage = () => {
-  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const { eventId } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [ticketCount, setTicketCount] = useState(1);
   const [selectedTier, setSelectedTier] = useState(0);
   const [attendeeInfo, setAttendeeInfo] = useState({ name: '', email: '', phone: '' });
 
+  // Get event data from navigation state or use defaults
+  const stateData = location.state || {};
+  const event = stateData.event || {};
+
   const eventData = {
-    eventId: searchParams.get('eventId') || 'EV' + Date.now(),
-    title: searchParams.get('title') || 'Dubai Desert Safari Experience',
-    image: searchParams.get('image') || 'https://images.unsplash.com/photo-1451337516015-6b6e9a44a8a3?w=800',
-    category: searchParams.get('category') || 'Adventure',
-    date: searchParams.get('date') || '2025-02-20',
-    time: searchParams.get('time') || '3:00 PM - 10:00 PM',
-    location: searchParams.get('location') || 'Dubai Desert Conservation Reserve',
-    address: searchParams.get('address') || 'Al Maha Road, Dubai, UAE',
-    rating: parseFloat(searchParams.get('rating') || '4.8'),
-    reviewCount: parseInt(searchParams.get('reviews') || '1256'),
-    duration: searchParams.get('duration') || '7 hours',
-    description: 'Experience the magic of the Arabian desert with our premium safari package. Enjoy dune bashing, camel rides, sandboarding, henna painting, BBQ dinner, and live entertainment under the stars.',
-    highlights: ['4x4 Dune Bashing', 'Camel Riding', 'Sandboarding', 'BBQ Dinner', 'Belly Dance Show', 'Henna Painting'],
-    included: ['Hotel pickup & drop-off', 'Professional guide', 'All activities', 'Dinner & refreshments', 'Traditional costumes for photos'],
+    eventId: event.event_id || eventId || 'EV' + Date.now(),
+    title: event.title || event.name || 'Dubai Desert Safari Experience',
+    image: event.image_url || event.image || 'https://images.unsplash.com/photo-1451337516015-6b6e9a44a8a3?w=800',
+    category: event.category || 'Adventure',
+    date: event.date || stateData.date || '2025-02-20',
+    time: event.time || '3:00 PM - 10:00 PM',
+    location: event.location || event.venue || 'Dubai Desert Conservation Reserve',
+    address: event.address || 'Premium Location',
+    rating: event.rating || 4.8,
+    reviewCount: event.reviews_count || 500,
+    duration: event.duration || '3 hours',
+    price: event.price || 75,
+    description: event.description || 'Experience an unforgettable event with premium amenities and world-class entertainment. Join us for an amazing time!',
+    highlights: event.highlights || ['Amazing Experience', 'Professional Staff', 'Premium Amenities', 'Great Food', 'Live Entertainment'],
+    included: event.included || ['Entry tickets', 'Refreshments', 'Souvenir'],
   };
 
   const ticketTiers = [
-    { name: 'Standard', price: 75, perks: ['All basic activities', 'BBQ dinner', 'Shared vehicle'] },
-    { name: 'Premium', price: 120, perks: ['All activities', 'Premium BBQ', 'Semi-private vehicle', 'VIP seating'] },
-    { name: 'VIP', price: 200, perks: ['Private vehicle', 'Gourmet dinner', 'Priority access', 'Photo package', 'Souvenir'] },
+    { name: 'Standard', price: eventData.price, perks: ['General admission', 'Basic amenities', 'Shared seating'] },
+    { name: 'Premium', price: Math.round(eventData.price * 1.5), perks: ['Priority entry', 'Premium seating', 'Refreshments included'] },
+    { name: 'VIP', price: Math.round(eventData.price * 2.5), perks: ['VIP entry', 'Best seats', 'Full package', 'Meet & greet', 'Souvenir'] },
   ];
 
   const ticketPrice = ticketTiers[selectedTier].price;
