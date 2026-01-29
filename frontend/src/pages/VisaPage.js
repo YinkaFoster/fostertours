@@ -93,7 +93,20 @@ const VisaPage = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {packages.map((pkg, index) => (
-                <Card key={pkg.package_id} className="h-full border-0 shadow-soft card-hover overflow-hidden" data-testid={`visa-card-${index}`}>
+                <Card 
+                  key={pkg.package_id} 
+                  className="h-full border-0 shadow-soft card-hover overflow-hidden cursor-pointer" 
+                  data-testid={`visa-card-${index}`}
+                  onClick={() => handleSelectVisa({
+                    visa_id: pkg.package_id,
+                    country: pkg.country,
+                    visa_type: pkg.visa_type,
+                    price: pkg.price,
+                    processing_time: pkg.processing_time,
+                    requirements: pkg.documents_required,
+                    image_url: pkg.image_url
+                  })}
+                >
                   <div className="h-40 relative">
                     <img
                       src={pkg.image_url}
