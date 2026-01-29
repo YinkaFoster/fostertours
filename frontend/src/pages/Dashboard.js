@@ -9,7 +9,8 @@ import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import {
   Plane, Hotel, Calendar, Car, FileText, Wallet, Map, ArrowRight,
-  Clock, MapPin, CheckCircle, XCircle, AlertCircle
+  Clock, MapPin, CheckCircle, XCircle, AlertCircle, ShoppingBag,
+  BookOpen, Camera, Heart, Gift, MessageCircle, Phone, Settings, User
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -19,6 +20,8 @@ const Dashboard = () => {
   const { user } = useAuth();
   const [bookings, setBookings] = useState([]);
   const [itineraries, setItineraries] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [rewardsPoints, setRewardsPoints] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const getAuthHeaders = () => {
@@ -29,7 +32,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [bookingsRes, itinerariesRes] = await Promise.all([
+        const [bookingsRes, itinerariesRes, ordersRes, rewardsRes] = await Promise.all([
           axios.get(`${API}/bookings`, {
             headers: getAuthHeaders(),
             withCredentials: true
@@ -37,10 +40,20 @@ const Dashboard = () => {
           axios.get(`${API}/itineraries`, {
             headers: getAuthHeaders(),
             withCredentials: true
-          })
+          }),
+          axios.get(`${API}/orders`, {
+            headers: getAuthHeaders(),
+            withCredentials: true
+          }).catch(() => ({ data: { orders: [] } })),
+          axios.get(`${API}/rewards/status`, {
+            headers: getAuthHeaders(),
+            withCredentials: true
+          }).catch(() => ({ data: { points_balance: 0 } }))
         ]);
         setBookings(bookingsRes.data.bookings || []);
         setItineraries(itinerariesRes.data.itineraries || []);
+        setOrders(ordersRes.data.orders || []);
+        setRewardsPoints(rewardsRes.data.points_balance || 0);
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
       } finally {
@@ -77,11 +90,29 @@ const Dashboard = () => {
     return icons[type] || Plane;
   };
 
+  // Dashboard sections matching user flow diagram
+  const dashboardSections = [
+    { icon: Map, label: 'Itineraries', href: '/itinerary', color: 'bg-purple-500', desc: 'Plan your trips' },
+    { icon: Plane, label: 'Flights', href: '/flights', color: 'bg-blue-500', desc: 'Search flights' },
+    { icon: Hotel, label: 'Hotels', href: '/hotels', color: 'bg-amber-500', desc: 'Book stays' },
+    { icon: Calendar, label: 'Events', href: '/events', color: 'bg-emerald-500', desc: 'Find experiences' },
+    { icon: Car, label: 'Vehicles', href: '/vehicles', color: 'bg-red-500', desc: 'Rent cars' },
+    { icon: FileText, label: 'Visa', href: '/visa', color: 'bg-cyan-500', desc: 'Apply for visas' },
+    { icon: BookOpen, label: 'Blog', href: '/blog', color: 'bg-pink-500', desc: 'Travel guides' },
+    { icon: ShoppingBag, label: 'Store', href: '/store', color: 'bg-orange-500', desc: 'Shop gear' },
+    { icon: Wallet, label: 'Wallet', href: '/wallet', color: 'bg-teal-500', desc: 'Manage funds' },
+    { icon: User, label: 'Profile', href: '/profile/edit', color: 'bg-slate-500', desc: 'Your settings' },
+  ];
+
   const quickActions = [
     { icon: Plane, label: 'Book Flight', href: '/flights', color: 'text-blue-500' },
     { icon: Hotel, label: 'Find Hotel', href: '/hotels', color: 'text-amber-500' },
-    { icon: Calendar, label: 'Browse Events', href: '/events', color: 'text-emerald-500' },
-    { icon: Map, label: 'Plan Trip', href: '/itinerary/builder', color: 'text-purple-500' },
+    { icon: Map, label: 'AI Planner', href: '/itinerary/ai', color: 'text-purple-500' },
+    { icon: Camera, label: 'Stories', href: '/stories', color: 'text-pink-500' },
+    { icon: Heart, label: 'Favorites', href: '/favorites', color: 'text-red-500' },
+    { icon: Gift, label: 'Rewards', href: '/rewards', color: 'text-amber-500' },
+    { icon: MessageCircle, label: 'Messages', href: '/messages', color: 'text-teal-500' },
+    { icon: Phone, label: 'Calls', href: '/calls', color: 'text-green-500' },
   ];
 
   return (
@@ -101,31 +132,28 @@ const Dashboard = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <Card className="border-0 shadow-soft" data-testid="wallet-card">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Wallet className="w-6 h-6 text-primary" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <Link to="/wallet">
+              <Card className="border-0 shadow-soft card-hover" data-testid="wallet-card">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-teal-500/10 flex items-center justify-center">
+                      <Wallet className="w-6 h-6 text-teal-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Wallet Balance</p>
+                      <p className="text-2xl font-bold">${user?.wallet_balance?.toFixed(2) || '0.00'}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Wallet Balance</p>
-                    <p className="text-2xl font-bold">${user?.wallet_balance?.toFixed(2) || '0.00'}</p>
-                  </div>
-                </div>
-                <Link to="/wallet">
-                  <Button variant="link" className="mt-2 p-0 h-auto text-primary">
-                    Top up <ArrowRight className="w-4 h-4 ml-1" />
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </Link>
 
             <Card className="border-0 shadow-soft" data-testid="bookings-card">
               <CardContent className="p-6">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center">
-                    <Calendar className="w-6 h-6 text-secondary" />
+                  <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center">
+                    <Calendar className="w-6 h-6 text-blue-500" />
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Active Bookings</p>
@@ -137,25 +165,27 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-soft" data-testid="trips-card">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                    <Map className="w-6 h-6 text-emerald-500" />
+            <Link to="/rewards">
+              <Card className="border-0 shadow-soft card-hover" data-testid="rewards-card">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center">
+                      <Gift className="w-6 h-6 text-amber-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Reward Points</p>
+                      <p className="text-2xl font-bold">{rewardsPoints.toLocaleString()}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Saved Trips</p>
-                    <p className="text-2xl font-bold">{itineraries.length}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </Link>
 
             <Card className="border-0 shadow-soft" data-testid="completed-card">
               <CardContent className="p-6">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center">
-                    <CheckCircle className="w-6 h-6 text-blue-500" />
+                  <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center">
+                    <CheckCircle className="w-6 h-6 text-green-500" />
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Completed</p>
@@ -168,18 +198,38 @@ const Dashboard = () => {
             </Card>
           </div>
 
+          {/* Dashboard Sections Grid */}
+          <div className="mb-8">
+            <h2 className="font-serif text-xl mb-4">Explore Services</h2>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              {dashboardSections.map((section) => (
+                <Link key={section.href} to={section.href}>
+                  <Card className="border-0 shadow-soft card-hover h-full">
+                    <CardContent className="p-4 text-center">
+                      <div className={`w-12 h-12 rounded-xl ${section.color} flex items-center justify-center mx-auto mb-3`}>
+                        <section.icon className="w-6 h-6 text-white" />
+                      </div>
+                      <h3 className="font-semibold text-sm">{section.label}</h3>
+                      <p className="text-xs text-muted-foreground mt-1">{section.desc}</p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </div>
+
           {/* Quick Actions */}
           <div className="mb-8">
             <h2 className="font-serif text-xl mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
               {quickActions.map((action) => (
                 <Link key={action.href} to={action.href} data-testid={`quick-action-${action.label.toLowerCase().replace(' ', '-')}`}>
                   <Card className="border-0 shadow-soft card-hover">
-                    <CardContent className="p-4 flex items-center gap-3">
+                    <CardContent className="p-3 flex flex-col items-center gap-2">
                       <div className={`w-10 h-10 rounded-full ${action.color} bg-current/10 flex items-center justify-center`}>
                         <action.icon className={`w-5 h-5 ${action.color}`} />
                       </div>
-                      <span className="font-medium">{action.label}</span>
+                      <span className="font-medium text-xs text-center">{action.label}</span>
                     </CardContent>
                   </Card>
                 </Link>
@@ -192,6 +242,7 @@ const Dashboard = () => {
             <TabsList>
               <TabsTrigger value="bookings" data-testid="bookings-tab">My Bookings</TabsTrigger>
               <TabsTrigger value="itineraries" data-testid="itineraries-tab">My Itineraries</TabsTrigger>
+              <TabsTrigger value="orders" data-testid="orders-tab">Store Orders</TabsTrigger>
             </TabsList>
 
             <TabsContent value="bookings" className="space-y-4">
