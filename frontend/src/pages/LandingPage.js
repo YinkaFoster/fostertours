@@ -170,17 +170,42 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Services Section */}
-      <section className="py-20 px-6 md:px-12 lg:px-20 bg-muted/30" data-testid="services-section">
+      {/* Services Section - Mobile Optimized */}
+      <section className="py-12 sm:py-16 md:py-20 px-4 sm:px-6 md:px-12 lg:px-20 bg-muted/30" data-testid="services-section">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="font-serif text-4xl md:text-5xl mb-4">Our Services</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="font-serif text-2xl sm:text-4xl md:text-5xl mb-2 sm:mb-4">Our Services</h2>
+            <p className="text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
               Everything you need for the perfect trip, all in one place
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {/* Mobile: Horizontal scroll, Desktop: Grid */}
+          <div className="sm:hidden overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
+            <div className="flex gap-3 min-w-max">
+              {services.map((service, index) => (
+                <Link
+                  key={service.title}
+                  to={service.link}
+                  className="group flex-shrink-0 w-28"
+                  data-testid={`service-${service.title.toLowerCase()}`}
+                >
+                  <Card className="h-full card-hover border-0 shadow-soft ios-press">
+                    <CardContent className="p-3 text-center">
+                      <div className={`w-12 h-12 rounded-xl ${service.color} bg-current/10 flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform duration-300`}>
+                        <service.icon className={`w-6 h-6 ${service.color}`} />
+                      </div>
+                      <h3 className="font-semibold text-xs mb-0.5">{service.title}</h3>
+                      <p className="text-[10px] text-muted-foreground line-clamp-1">{service.desc}</p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </div>
+          
+          {/* Desktop Grid */}
+          <div className="hidden sm:grid grid-cols-3 lg:grid-cols-6 gap-4">
             {services.map((service, index) => (
               <Link
                 key={service.title}
@@ -203,13 +228,13 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Featured Destinations */}
-      <section className="py-20 px-6 md:px-12 lg:px-20" data-testid="destinations-section">
+      {/* Featured Destinations - Mobile Optimized */}
+      <section className="py-12 sm:py-16 md:py-20 px-4 sm:px-6 md:px-12 lg:px-20" data-testid="destinations-section">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-12">
+          <div className="flex items-center justify-between mb-6 sm:mb-12">
             <div>
-              <h2 className="font-serif text-4xl md:text-5xl mb-2">Featured Destinations</h2>
-              <p className="text-muted-foreground">Handpicked places for your next adventure</p>
+              <h2 className="font-serif text-2xl sm:text-4xl md:text-5xl mb-1 sm:mb-2">Featured Destinations</h2>
+              <p className="text-sm sm:text-base text-muted-foreground">Handpicked places for your next adventure</p>
             </div>
             <Link to="/destinations">
               <Button variant="outline" className="hidden md:flex items-center gap-2">
